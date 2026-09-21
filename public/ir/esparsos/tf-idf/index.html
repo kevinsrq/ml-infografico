@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TF-IDF: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="TF-IDF"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Frequência do termo × raridade na coleção (Spärck Jones, 1972)"
+      data-icon="fa-weight-scale"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════════════ MÓDULO 01 — INTUIÇÃO ══════════════════════ -->
+    <section class="slide-section" data-nav="Intuição" data-icon="fa-lightbulb">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Contar palavras não basta: <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">é preciso saber quais contam mais</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Karen Spärck Jones (1972) formalizou a intuição que sustenta toda a busca léxica até hoje: a importância de um
+          termo é inversamente proporcional ao número de documentos em que ele aparece. O TF-IDF combina dois sinais
+          independentes — <strong class="text-cyan-300">frequência no documento</strong> e <strong class="text-brand-300">raridade na coleção</strong>.
+        </p>
+      </div>
+
+      <!-- Citação -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-6 sm:p-8 mb-8">
+        <div class="absolute -right-6 -bottom-6 text-slate-800/40 text-9xl pointer-events-none font-serif">“</div>
+        <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center shrink-0 text-brand-400 text-2xl">
+            <i class="fa-solid fa-quote-left"></i>
+          </div>
+          <div>
+            <blockquote class="text-lg sm:text-xl font-medium text-slate-100 italic">
+              "The specificity of a term can be quantified as an inverse function of the number of documents in which it occurs."
+            </blockquote>
+            <p class="text-xs text-brand-400 font-mono mt-2">— Karen Spärck Jones (1972) • <em>A statistical interpretation of term specificity</em></p>
+            <p class="text-slate-400 text-xs mt-1">Um termo que está em todo lugar não separa nada. Um termo que está em poucos lugares aponta direto para eles.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dois sinais -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-mono font-semibold border border-cyan-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-hashtag"></i> Sinal 1 · TF
+            </span>
+            <span class="text-xs text-slate-500 font-mono">local ao documento</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Frequência do Termo</h3>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            Quanto mais o termo se repete <strong>dentro</strong> do documento, mais esse documento parece falar sobre ele.
+            $\mathrm{tf}(t, D)$ é uma contagem: olha um documento por vez e ignora o resto da coleção.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6 glow-indigo">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-3 py-1 rounded-lg bg-brand-500/10 text-brand-400 text-xs font-mono font-semibold border border-brand-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-gem"></i> Sinal 2 · IDF
+            </span>
+            <span class="text-xs text-slate-500 font-mono">global à coleção</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Frequência Inversa de Documentos</h3>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            Quanto mais raro o termo <strong>na coleção inteira</strong>, mais ele discrimina quando aparece.
+            $\mathrm{idf}(t)$ olha só quantos documentos contêm o termo — nunca quantas vezes.
+          </p>
+        </div>
+      </div>
+
+      <!-- Simulador 1: raio-X do termo -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass-chart text-brand-400"></i> Raio-X do termo
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Clique em qualquer palavra do acervo — os números são recontados na hora.</p>
+          </div>
+          <span class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-cyan-300">
+            Acervo: <span id="m1-n">5</span> documentos
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div class="lg:col-span-3">
+            <div class="text-xs text-slate-400 mb-2 font-medium">Acervo de exames laboratoriais</div>
+            <div id="m1-corpus" class="space-y-2"><!-- gerado em JS --></div>
+          </div>
+
+          <div class="lg:col-span-2 space-y-3">
+            <div class="text-xs text-slate-400 mb-2 font-medium">Diagnóstico do termo selecionado</div>
+            <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono">Termo</div>
+              <div id="m1-term" class="text-2xl font-bold text-brand-300 font-mono truncate">jejum</div>
+              <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
+                <div class="p-2.5 rounded-lg bg-surface-900 border border-slate-800">
+                  <div class="text-slate-500 text-[10px] uppercase font-mono">Ocorrências totais</div>
+                  <div id="m1-total" class="text-lg font-bold text-cyan-300 font-mono">0</div>
+                </div>
+                <div class="p-2.5 rounded-lg bg-surface-900 border border-slate-800">
+                  <div class="text-slate-500 text-[10px] uppercase font-mono">df(t) · documentos</div>
+                  <div id="m1-df" class="text-lg font-bold text-brand-300 font-mono">0</div>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5">
+                  <span>Poder discriminante <span class="font-mono">(1 − df/N)</span></span>
+                  <span id="m1-disc-val" class="font-mono text-slate-200">0%</span>
+                </div>
+                <div class="h-2.5 rounded-full bg-surface-900 border border-slate-800 overflow-hidden">
+                  <div id="m1-disc-bar" class="h-full rounded-full bg-gradient-to-r from-brand-500 to-cyan-400 transition-all duration-300" style="width:0%"></div>
+                </div>
+              </div>
+              <p id="m1-verdict" class="text-[11px] text-slate-400 mt-4 leading-relaxed"></p>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/30 text-[11px] text-slate-300 leading-relaxed">
+              <div class="flex items-center gap-2 text-rose-400 font-medium mb-1">
+                <i class="fa-solid fa-triangle-exclamation"></i> Por que a contagem crua falha
+              </div>
+              Num ranking por contagem pura, "de" e "horas" pesariam tanto quanto "glicemia". O documento mais longo e
+              mais repetitivo venceria quase sempre — independentemente de falar do assunto certo.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════ MÓDULO 02 — TF ══════════════════════ -->
+    <section class="slide-section" data-nav="TF" data-icon="fa-hashtag">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-hashtag"></i> Módulo 02 • Frequência do Termo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          TF: contagem bruta <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">e por que ela vira log</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A relevância não cresce linearmente com a repetição: um documento que cita "jejum" 10 vezes não é 10 vezes mais
+          sobre jejum do que um que cita 1 vez. A variante logarítmica achata esse crescimento — é o primeiro remendo
+          histórico, e o antepassado direto da saturação do BM25.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-2xl bg-surface-900 border border-slate-800">
+          <div class="text-xs font-mono text-cyan-400 mb-2"><i class="fa-solid fa-1"></i> TF bruto</div>
+          <div class="text-slate-200 text-sm">$w = \mathrm{tf}(t, D)$</div>
+          <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">Contagem direta, sem teto. Simples e o mais enviesado a favor de documentos repetitivos.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-2"><i class="fa-solid fa-chart-line"></i> TF logarítmico</div>
+          <div class="text-slate-200 text-sm">$w = 1 + \ln \mathrm{tf}$, se $\mathrm{tf} > 0$</div>
+          <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">Rendimentos decrescentes: a 2ª ocorrência vale muito; a 10ª quase nada. Padrão em quase toda implementação séria.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-surface-900 border border-slate-800">
+          <div class="text-xs font-mono text-amber-400 mb-2"><i class="fa-solid fa-toggle-on"></i> TF binário</div>
+          <div class="text-slate-200 text-sm">$w = 1$ se $\mathrm{tf} > 0$, senão $0$</div>
+          <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">Só interessa se o termo está presente. Útil em textos curtos, onde repetir é ruído.</p>
+        </div>
+      </div>
+
+      <!-- Simulador 2 -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800">
+          <div class="flex items-center gap-3">
+            <label for="m2-term" class="text-xs text-slate-400 font-medium">Termo observado:</label>
+            <select id="m2-term" onchange="renderTfLab()" class="bg-surface-950 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none"></select>
+          </div>
+          <div class="flex items-center gap-2 bg-surface-950 px-2 py-1.5 rounded-lg border border-slate-800">
+            <button onclick="setTfVariant('bruto')" data-tfv="bruto" class="tf-btn px-2.5 py-1 text-xs rounded font-mono transition">bruto</button>
+            <button onclick="setTfVariant('log')" data-tfv="log" class="tf-btn px-2.5 py-1 text-xs rounded font-mono transition">log</button>
+            <button onclick="setTfVariant('binario')" data-tfv="binario" class="tf-btn px-2.5 py-1 text-xs rounded font-mono transition">binário</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-5">
+          <div>
+            <div class="text-xs text-slate-400 mb-3">Peso por documento — recalculado a cada troca de variante</div>
+            <div id="m2-bars" class="space-y-2.5"><!-- gerado em JS --></div>
+            <p id="m2-note" class="text-[11px] text-slate-500 mt-4 leading-relaxed"></p>
+          </div>
+
+          <div>
+            <div class="text-xs text-slate-400 mb-3">Curva do peso em função da contagem</div>
+            <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+              <div class="overflow-x-auto">
+                <svg id="m2-curve" viewBox="0 0 420 240" class="w-full h-auto min-w-[320px]"></svg>
+              </div>
+            </div>
+            <div class="mt-3 p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/30 text-[11px] text-slate-300 leading-relaxed">
+              <div class="flex items-center gap-2 text-amber-400 font-medium mb-1">
+                <i class="fa-solid fa-circle-exclamation"></i> Repare
+              </div>
+              No TF bruto, D5 (que repete "jejum" 3 vezes) dispara sozinho. No TF logarítmico, a distância entre ele e os
+              demais encolhe. Nenhuma das duas variantes, porém, sabe que D5 é simplesmente <em>mais longo</em> — essa
+              conta só aparece no BM25.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════ MÓDULO 03 — IDF ══════════════════════ -->
+    <section class="slide-section" data-nav="IDF" data-icon="fa-gem">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-gem"></i> Módulo 03 • Raridade na Coleção
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          IDF: <span class="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">quanto mais raro, mais pesa</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O IDF é a única parte da fórmula que enxerga a coleção inteira. Ele transforma $\mathrm{df}(t)$ — o número de
+          documentos que contêm o termo — em um peso contínuo. Não existe rótulo "raro/comum": existe uma curva.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><i class="fa-solid fa-square-root-variable text-brand-400"></i> As três variantes usuais</h3>
+          <div class="space-y-3 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="text-brand-300 font-mono text-[11px] mb-1">clássico</div>
+              $$\mathrm{idf}(t) = \ln\frac{N}{\mathrm{df}(t)}$$
+              <p class="text-[11px] text-slate-400 mt-1">Zera para termo presente em todos os documentos. Estoura (divisão por zero) para termo ausente da coleção.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="text-emerald-300 font-mono text-[11px] mb-1">suavizado — padrão do <span class="font-semibold">scikit-learn</span></div>
+              $$\mathrm{idf}(t) = \ln\frac{1+N}{1+\mathrm{df}(t)} + 1$$
+              <p class="text-[11px] text-slate-400 mt-1">O $+1$ no numerador e no denominador finge um documento extra contendo tudo; o $+1$ final impede que um termo onipresente seja totalmente descartado.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="text-amber-300 font-mono text-[11px] mb-1">probabilístico — a ponte para o BM25</div>
+              $$\mathrm{idf}(t) = \ln\frac{N - \mathrm{df}(t)}{\mathrm{df}(t)}$$
+              <p class="text-[11px] text-slate-400 mt-1">Razão de chances entre conter e não conter o termo. É a forma que o BM25 herda (com suavização adicional) — pode ficar negativa para termos muito comuns.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-chart-area text-purple-400"></i> Curva e tabela ao vivo</h3>
+            <div class="flex items-center gap-1.5 bg-surface-950 px-2 py-1.5 rounded-lg border border-slate-800">
+              <button onclick="setIdfVariant('classico')" data-idfv="classico" class="idf-btn px-2.5 py-1 text-xs rounded font-mono transition">clássico</button>
+              <button onclick="setIdfVariant('suavizado')" data-idfv="suavizado" class="idf-btn px-2.5 py-1 text-xs rounded font-mono transition">suavizado</button>
+              <button onclick="setIdfVariant('prob')" data-idfv="prob" class="idf-btn px-2.5 py-1 text-xs rounded font-mono transition">probabilístico</button>
+            </div>
+          </div>
+
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-3 mb-4">
+            <div class="overflow-x-auto">
+              <svg id="m3-curve" viewBox="0 0 420 220" class="w-full h-auto min-w-[320px]"></svg>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-400 mb-2">Vocabulário da coleção, ordenado por peso</div>
+          <div class="overflow-x-auto max-h-64 overflow-y-auto rounded-xl border border-slate-800">
+            <table class="w-full text-xs font-mono">
+              <thead class="bg-surface-950 sticky top-0">
+                <tr class="text-slate-500 text-[10px] uppercase">
+                  <th class="text-left px-3 py-2">termo</th>
+                  <th class="text-right px-3 py-2">df</th>
+                  <th class="text-right px-3 py-2">df/N</th>
+                  <th class="text-right px-3 py-2">idf</th>
+                </tr>
+              </thead>
+              <tbody id="m3-table" class="divide-y divide-slate-800/80"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════ MÓDULO 04 — SCORE COMPLETO ══════════════════════ -->
+    <section class="slide-section" data-nav="Score & Ranking" data-icon="fa-ranking-star">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-ranking-star"></i> Módulo 04 • Score e Ranking
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Laboratório TF-IDF: <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">edite a consulta, veja o ranking virar</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O score de um documento é a soma das contribuições de cada termo da consulta. Cada célula da tabela abaixo é
+          calculada em JavaScript a partir do texto que você digita — não há número fixo nesta página.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="text-center text-slate-200 text-sm sm:text-base">
+          $$\mathrm{score}(D, Q) \;=\; \sum_{t \in Q} \underbrace{w_{\mathrm{tf}}(t, D)}_{\text{frequência}} \;\cdot\; \underbrace{\mathrm{idf}(t)}_{\text{raridade}}$$
+        </div>
+      </div>
+
+      <!-- Simulador principal -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <!-- Controles -->
+        <div class="pb-5 border-b border-slate-800 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+            <div class="flex-1">
+              <label for="q-input" class="text-xs text-slate-400 font-medium flex items-center gap-2 mb-1.5">
+                <i class="fa-solid fa-keyboard text-brand-400"></i> Consulta ($Q$)
+              </label>
+              <input id="q-input" type="text" value="jejum glicemia" oninput="renderLab()" spellcheck="false"
+                     class="w-full bg-surface-950 border border-slate-700 text-white text-sm font-mono rounded-xl px-4 py-2.5 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 focus:outline-none">
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="setQuery('jejum glicemia')" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono transition">jejum glicemia</button>
+              <button onclick="setQuery('jejum')" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono transition">jejum</button>
+              <button onclick="setQuery('urina manhã')" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono transition">urina manhã</button>
+              <button onclick="setQuery('de horas')" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono transition">de horas</button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-slate-400 font-medium">TF:</span>
+              <div class="flex items-center gap-1 bg-surface-950 px-1.5 py-1 rounded-lg border border-slate-800">
+                <button onclick="setLabTf('bruto')" data-labtf="bruto" class="labtf-btn px-2 py-0.5 text-[11px] rounded font-mono transition">bruto</button>
+                <button onclick="setLabTf('log')" data-labtf="log" class="labtf-btn px-2 py-0.5 text-[11px] rounded font-mono transition">log</button>
+                <button onclick="setLabTf('binario')" data-labtf="binario" class="labtf-btn px-2 py-0.5 text-[11px] rounded font-mono transition">binário</button>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-slate-400 font-medium">IDF:</span>
+              <div class="flex items-center gap-1 bg-surface-950 px-1.5 py-1 rounded-lg border border-slate-800">
+                <button onclick="setLabIdf('classico')" data-labidf="classico" class="labidf-btn px-2 py-0.5 text-[11px] rounded font-mono transition">clássico</button>
+                <button onclick="setLabIdf('suavizado')" data-labidf="suavizado" class="labidf-btn px-2 py-0.5 text-[11px] rounded font-mono transition">suavizado</button>
+                <button onclick="setLabIdf('prob')" data-labidf="prob" class="labidf-btn px-2 py-0.5 text-[11px] rounded font-mono transition">prob.</button>
+              </div>
+            </div>
+            <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer select-none">
+              <input id="lab-norm" type="checkbox" onchange="renderLab()" class="w-3.5 h-3.5 accent-brand-500">
+              Normalizar pelo tamanho do documento (cosseno $\ell_2$)
+            </label>
+          </div>
+
+          <div id="q-terms" class="flex flex-wrap items-center gap-2 text-[11px]"><!-- chips dos termos --></div>
+        </div>
+
+        <!-- Tabela célula a célula -->
+        <div class="pt-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-table-cells text-cyan-400"></i> Matriz de cálculo</h3>
+            <span class="text-[11px] text-slate-500 font-mono">N = <span id="lab-n">5</span> documentos</span>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-xs font-mono min-w-[600px]">
+              <thead id="lab-thead" class="bg-surface-950 text-slate-500 text-[10px] uppercase"></thead>
+              <tbody id="lab-tbody" class="divide-y divide-slate-800/80"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Ranking -->
+        <div class="pt-6 mt-6 border-t border-slate-800">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-medal text-emerald-400"></i> Ranking ao vivo</h3>
+            <span class="text-[11px] text-slate-500">Barras segmentadas por termo da consulta</span>
+          </div>
+          <div id="lab-ranking" class="space-y-2.5"><!-- gerado em JS --></div>
+          <p id="lab-insight" class="text-[11px] text-slate-400 mt-4 leading-relaxed p-3 rounded-xl bg-surface-950 border border-slate-800"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════ MÓDULO 05 — LIMITES + QUIZ ══════════════════════ -->
+    <section class="slide-section" data-nav="Limites & Quiz" data-icon="fa-graduation-cap">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Limitações & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Onde o TF-IDF trava e <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">por que o BM25 nasceu</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O TF-IDF já resolve a maior parte do problema: raridade importa, frequência importa. O que falta são dois
+          ajustes de calibragem — e um limite conceitual que nenhum modelo léxico resolve sozinho.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30 flex flex-col justify-between">
+          <div>
+            <div class="text-rose-400 text-xs font-mono font-bold mb-2"><i class="fa-solid fa-arrow-trend-up"></i> Limite 1</div>
+            <h4 class="font-bold text-white text-sm">TF sem saturação</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Repetir 3 vezes vale quase 3 vezes mais. Documento repetitivo sobe no ranking sem ser mais relevante.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-emerald-400">BM25: curva de saturação com $k_1$.</div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30 flex flex-col justify-between">
+          <div>
+            <div class="text-rose-400 text-xs font-mono font-bold mb-2"><i class="fa-solid fa-ruler-horizontal"></i> Limite 2</div>
+            <h4 class="font-bold text-white text-sm">Ignora o tamanho do documento</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Texto longo repete mais palavras só por ser longo. A normalização cosseno ajuda, mas é grosseira.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-emerald-400">BM25: normaliza por $|D|/\mathrm{avgdl}$ com $b$.</div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30 flex flex-col justify-between">
+          <div>
+            <div class="text-amber-400 text-xs font-mono font-bold mb-2"><i class="fa-solid fa-language"></i> Limite 3</div>
+            <h4 class="font-bold text-white text-sm">Vocabulary mismatch</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">"glicemia" e "açúcar no sangue" são termos ortogonais. Sem sinônimo, sem match — o score é zero.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-brand-400">Modelos densos: embeddings semânticos.</div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30 flex flex-col justify-between">
+          <div>
+            <div class="text-amber-400 text-xs font-mono font-bold mb-2"><i class="fa-solid fa-shuffle"></i> Limite 4</div>
+            <h4 class="font-bold text-white text-sm">Bag-of-words: ordem não existe</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">"exame sem jejum" e "jejum sem exame" têm vetores idênticos. Negação e contexto são invisíveis.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-brand-400">Cross-encoders: atenção sobre a sequência.</div>
+        </div>
+      </div>
+
+      <!-- Glossário + código -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-book text-brand-400"></i> Glossário da fórmula</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <tbody class="divide-y divide-slate-800/80">
+                <tr><td class="py-2 pr-4 font-mono text-brand-300 align-top whitespace-nowrap">$N$</td><td class="py-2 text-slate-400">Número total de documentos da coleção (aqui, 5).</td></tr>
+                <tr><td class="py-2 pr-4 font-mono text-brand-300 align-top whitespace-nowrap">$D$</td><td class="py-2 text-slate-400">Um documento da coleção.</td></tr>
+                <tr><td class="py-2 pr-4 font-mono text-brand-300 align-top whitespace-nowrap">$t$</td><td class="py-2 text-slate-400">Um termo (palavra) da consulta.</td></tr>
+                <tr><td class="py-2 pr-4 font-mono text-brand-300 align-top whitespace-nowrap">$Q$</td><td class="py-2 text-slate-400">O conjunto de termos da consulta.</td></tr>
+                <tr><td class="py-2 pr-4 font-mono text-cyan-300 align-top whitespace-nowrap">$\mathrm{tf}(t,D)$</td><td class="py-2 text-slate-400">Quantas vezes o termo $t$ aparece no documento $D$.</td></tr>
+                <tr><td class="py-2 pr-4 font-mono text-cyan-300 align-top whitespace-nowrap">$\mathrm{df}(t)$</td><td class="py-2 text-slate-400">Em quantos documentos da coleção o termo aparece ao menos uma vez.</td></tr>
+                <tr><td class="py-2 pr-4 font-mono text-emerald-300 align-top whitespace-nowrap">$\mathrm{idf}(t)$</td><td class="py-2 text-slate-400">Peso de raridade do termo. Quanto menor o $\mathrm{df}$, maior o $\mathrm{idf}$.</td></tr>
+                <tr><td class="py-2 pr-4 font-mono text-emerald-300 align-top whitespace-nowrap">$\mathrm{score}(D,Q)$</td><td class="py-2 text-slate-400">Soma de $w_{\mathrm{tf}} \cdot \mathrm{idf}$ sobre os termos da consulta; ordena os documentos.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800">
+          <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-code text-cyan-400"></i> Na prática</h3>
+          <p class="text-[11px] text-slate-400 mb-3 leading-relaxed">
+            Ninguém implementa a fórmula à mão em produção. <span class="font-mono text-slate-300">TfidfVectorizer</span>
+            (scikit-learn) usa IDF suavizado e normalização $\ell_2$ por padrão — exatamente as opções do simulador do módulo 04.
+          </p>
+          <pre class="bg-surface-950 border border-slate-800 rounded-xl p-4 overflow-x-auto text-[11px] leading-relaxed font-mono text-slate-300"><code><span class="text-brand-400">from</span> sklearn.feature_extraction.text <span class="text-brand-400">import</span> TfidfVectorizer
+
+documentos = [
+    <span class="text-emerald-300">"hemograma completo sem jejum"</span>,
+    <span class="text-emerald-300">"glicemia de jejum exige jejum de 8 horas"</span>,
+    <span class="text-slate-600"># ...</span>
+]
+
+vec = TfidfVectorizer()          <span class="text-slate-600"># idf suavizado + norma L2</span>
+matriz = vec.fit_transform(documentos)
+
+consulta = vec.transform([<span class="text-emerald-300">"jejum glicemia"</span>])
+scores = (matriz @ consulta.T).toarray().ravel()
+
+<span class="text-brand-400">for</span> i <span class="text-brand-400">in</span> scores.argsort()[::-<span class="text-amber-300">1</span>]:
+    <span class="text-brand-400">print</span>(documentos[i], <span class="text-brand-400">round</span>(scores[i], <span class="text-amber-300">3</span>))</code></pre>
+          <div class="mt-3 flex flex-wrap gap-2 text-[11px]">
+            <span class="px-2 py-1 rounded-lg bg-surface-950 border border-slate-800 text-slate-400 font-mono">gensim · TfidfModel</span>
+            <span class="px-2 py-1 rounded-lg bg-surface-950 border border-slate-800 text-slate-400 font-mono">Elasticsearch · similarity classic</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação Conceitual
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que você acabou de simular.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Um termo aparece em todos os 5 documentos da coleção. Qual é o seu $\mathrm{idf}$ clássico?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O idf clássico nunca é infinito para termo presente; infinito só ocorreria com df = 0 na forma sem suavização.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Infinito — ele está em toda parte.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'ln(5/5) = ln(1) = 0: o termo não discrimina nada e sua contribuição ao score é anulada, independentemente do TF.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Zero — $\ln(N/\mathrm{df}) = \ln(1) = 0$.</button>
+              <button onclick="Guia.answer(this, false, 'O idf independe da contagem total de ocorrências; ele só olha em quantos documentos o termo aparece.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Igual ao número total de ocorrências do termo.</button>
+              <button onclick="Guia.answer(this, false, 'Negativo só acontece na variante probabilística, não na clássica.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Negativo, sempre.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Por que a variante logarítmica do TF ($1 + \ln \mathrm{tf}$) é preferida à contagem bruta?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O custo computacional é praticamente o mesmo; a motivação é estatística, não de desempenho.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Porque é mais rápida de calcular.</button>
+              <button onclick="Guia.answer(this, false, 'Quem mede raridade na coleção é o idf; o TF é sempre local ao documento.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Porque passa a considerar a raridade do termo na coleção.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'Rendimentos decrescentes: a 2ª ocorrência acrescenta muito, a 10ª quase nada — o mesmo princípio que o BM25 formaliza com k₁.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Porque a relevância não cresce linearmente com a repetição do termo.</button>
+              <button onclick="Guia.answer(this, false, 'A ordem das palavras é ignorada por qualquer modelo bag-of-words, com ou sem log.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Porque preserva a ordem das palavras no documento.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Qual limitação do TF-IDF o BM25 corrige diretamente?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button data-correct onclick="Guia.answer(this, true, 'BM25 satura o TF com k₁ e normaliza pelo comprimento relativo com b — exatamente os dois pontos cegos do TF-IDF.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) TF sem saturação e ausência de normalização pelo tamanho do documento.</button>
+              <button onclick="Guia.answer(this, false, 'BM25 também é bag-of-words e sofre do mesmo vocabulary mismatch; quem ataca isso são os modelos densos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) A incapacidade de casar sinônimos como "glicemia" e "açúcar no sangue".</button>
+              <button onclick="Guia.answer(this, false, 'BM25 continua ignorando a ordem: negação e contexto seguem invisíveis.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) A perda da ordem das palavras na representação.</button>
+              <button onclick="Guia.answer(this, false, 'O índice invertido é o mesmo nos dois métodos; a diferença está na função de pontuação.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) A necessidade de um índice invertido.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Próximo tópico -->
+      <a href="../bm25/index.html" class="block rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-emerald-500/30 p-5 sm:p-6 hover:border-emerald-400/60 transition group">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <div class="text-[11px] font-mono text-emerald-400 mb-1">Próximo tópico • 1.1.2</div>
+            <h3 class="text-lg font-bold text-white">BM25: saturação de TF e normalização por comprimento</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">Os dois remendos que transformaram o TF-IDF no padrão de fato da busca léxica — com os mesmos documentos deste simulador.</p>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:translate-x-1 transition">
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </div>
+      </a>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════════ Coleção compartilhada com a página de BM25 ═══════════════ */
+    const CORPUS = [
+      { id: 'D1', titulo: 'Hemograma',       texto: 'hemograma completo sem jejum' },
+      { id: 'D2', titulo: 'Glicemia',        texto: 'glicemia de jejum exige jejum de 8 horas' },
+      { id: 'D3', titulo: 'Colesterol',      texto: 'colesterol total e frações com jejum de 12 horas antes da coleta' },
+      { id: 'D4', titulo: 'Urina',           texto: 'exame de urina primeira urina da manhã' },
+      { id: 'D5', titulo: 'Tabela de jejum', texto: 'tabela de jejum jejum de 8 horas jejum de 12 horas' }
+    ];
+
+    const tokenize = (s) => s.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+    const DOCS = CORPUS.map(d => ({ ...d, toks: tokenize(d.texto) }));
+    const N = DOCS.length;
+
+    const VOCAB = [...new Set(DOCS.flatMap(d => d.toks))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    const tf = (doc, t) => doc.toks.reduce((acc, x) => acc + (x === t ? 1 : 0), 0);
+    const df = (t) => DOCS.reduce((acc, d) => acc + (tf(d, t) > 0 ? 1 : 0), 0);
+    const totalOcc = (t) => DOCS.reduce((acc, d) => acc + tf(d, t), 0);
+
+    function tfWeight(count, variante) {
+      if (count <= 0) return 0;
+      if (variante === 'log') return 1 + Math.log(count);
+      if (variante === 'binario') return 1;
+      return count;
+    }
+
+    function idfWeight(dfv, variante) {
+      if (variante === 'suavizado') return Math.log((1 + N) / (1 + dfv)) + 1;
+      if (variante === 'prob') return dfv === 0 ? Math.log(N + 1) : Math.log(Math.max(1e-9, (N - dfv) / dfv));
+      return dfv === 0 ? 0 : Math.log(N / dfv);
+    }
+
+    const fmt = (n, d = 3) => (Object.is(n, -0) ? 0 : n).toFixed(d).replace('.', ',');
+    const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    const state = {
+      m1Term: 'jejum',
+      m2Term: 'jejum',
+      m2Variant: 'bruto',
+      m3Variant: 'classico',
+      labTf: 'bruto',
+      labIdf: 'classico'
+    };
+
+    /* ═══════════════ Módulo 01 — raio-X do termo ═══════════════ */
+    function renderCorpusTokens() {
+      const box = document.getElementById('m1-corpus');
+      box.innerHTML = DOCS.map(d => `
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs font-mono font-bold text-brand-300">${d.id}</span>
+            <span class="text-[11px] text-slate-500">${esc(d.titulo)}</span>
+            <span class="ml-auto text-[10px] text-slate-600 font-mono">${d.toks.length} tokens</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            ${d.toks.map(t => {
+              const on = t === state.m1Term;
+              return `<button onclick="selectTerm('${esc(t)}')" class="px-2 py-0.5 rounded font-mono text-[11px] transition ${on
+                ? 'bg-brand-600 text-white font-semibold'
+                : 'bg-surface-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600'}">${esc(t)}</button>`;
+            }).join('')}
+          </div>
+        </div>`).join('');
+    }
+
+    function selectTerm(t) {
+      state.m1Term = t;
+      renderCorpusTokens();
+      renderTermXray();
+    }
+
+    function renderTermXray() {
+      const t = state.m1Term;
+      const dfv = df(t);
+      const occ = totalOcc(t);
+      const disc = 1 - dfv / N;
+
+      document.getElementById('m1-n').textContent = N;
+      document.getElementById('m1-term').textContent = t;
+      document.getElementById('m1-total').textContent = occ;
+      document.getElementById('m1-df').textContent = `${dfv} / ${N}`;
+      document.getElementById('m1-disc-val').textContent = `${Math.round(disc * 100)}%`;
+      document.getElementById('m1-disc-bar').style.width = `${Math.max(2, disc * 100)}%`;
+
+      let veredito;
+      if (dfv === N) {
+        veredito = `Aparece em <strong class="text-rose-300">todos</strong> os ${N} documentos: não separa nada. Com idf clássico, sua contribuição ao score é exatamente zero — por mais que se repita.`;
+      } else if (dfv === 1) {
+        veredito = `Aparece em <strong class="text-emerald-300">um único</strong> documento: é o tipo de termo que decide um ranking sozinho, mesmo com apenas ${occ} ocorrência${occ > 1 ? 's' : ''}.`;
+      } else {
+        veredito = `Aparece em <strong class="text-cyan-300">${dfv} de ${N}</strong> documentos com ${occ} ocorrência${occ > 1 ? 's' : ''} no total. Peso intermediário: ajuda, mas não decide sozinho.`;
+      }
+      document.getElementById('m1-verdict').innerHTML = veredito;
+    }
+
+    /* ═══════════════ Módulo 02 — TF e a curva logarítmica ═══════════════ */
+    function initTfLab() {
+      const sel = document.getElementById('m2-term');
+      const candidatos = [...VOCAB].sort((a, b) => totalOcc(b) - totalOcc(a) || a.localeCompare(b, 'pt-BR'));
+      sel.innerHTML = candidatos.map(t =>
+        `<option value="${esc(t)}"${t === state.m2Term ? ' selected' : ''}>${esc(t)} — ${totalOcc(t)} ocorrência(s)</option>`
+      ).join('');
+      setTfVariant(state.m2Variant);
+    }
+
+    function setTfVariant(v) {
+      state.m2Variant = v;
+      document.querySelectorAll('.tf-btn').forEach(b => {
+        b.className = b.dataset.tfv === v
+          ? 'tf-btn px-2.5 py-1 text-xs rounded font-mono transition bg-cyan-600 text-white font-bold'
+          : 'tf-btn px-2.5 py-1 text-xs rounded font-mono transition text-slate-400 hover:text-white';
+      });
+      renderTfLab();
+    }
+
+    function renderTfLab() {
+      state.m2Term = document.getElementById('m2-term').value;
+      const t = state.m2Term;
+      const linhas = DOCS.map(d => {
+        const c = tf(d, t);
+        return { id: d.id, titulo: d.titulo, count: c, w: tfWeight(c, state.m2Variant) };
+      });
+      const maxW = Math.max(...linhas.map(l => l.w), 0.0001);
+
+      document.getElementById('m2-bars').innerHTML = linhas.map(l => `
+        <div class="flex items-center gap-3">
+          <span class="w-8 text-xs font-mono font-bold text-brand-300 shrink-0">${l.id}</span>
+          <div class="flex-1 h-6 rounded-lg bg-surface-950 border border-slate-800 overflow-hidden min-w-0">
+            <div class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 transition-all duration-300" style="width:${(l.w / maxW) * 100}%"></div>
+          </div>
+          <span class="w-24 text-right text-[11px] font-mono shrink-0">
+            <span class="text-slate-500">tf ${l.count}</span>
+            <span class="text-cyan-300 font-bold ml-1.5">${fmt(l.w, 2)}</span>
+          </span>
+        </div>`).join('');
+
+      const comMais = linhas.reduce((a, b) => (b.count > a.count ? b : a), linhas[0]);
+      const comUm = linhas.find(l => l.count === 1);
+      let nota = `Termo "<span class="text-slate-300 font-mono">${esc(t)}</span>": ${comMais.id} lidera com ${comMais.count} ocorrência(s).`;
+      if (comUm && comMais.count > 1) {
+        const razao = tfWeight(comMais.count, state.m2Variant) / tfWeight(1, state.m2Variant);
+        nota += ` Contra um documento de 1 ocorrência (${comUm.id}), ele pesa <strong class="text-cyan-300">${fmt(razao, 2)}×</strong> mais nesta variante`;
+        nota += state.m2Variant === 'bruto'
+          ? ' — exatamente a razão das contagens.'
+          : (state.m2Variant === 'log' ? ' — bem menos que a razão das contagens.' : ' — a contagem foi descartada por completo.');
+      }
+      document.getElementById('m2-note').innerHTML = nota;
+
+      drawTfCurve();
+    }
+
+    function drawTfCurve() {
+      const svg = document.getElementById('m2-curve');
+      const W = 420, H = 240, mx = 44, my = 28;
+      const maxC = 10;
+      const maxY = 10;
+      const px = c => mx + (c / maxC) * (W - mx - 16);
+      const py = w => H - my - (w / maxY) * (H - my - 20);
+
+      const series = [
+        { v: 'bruto', cor: '#64748b', dash: '4,4' },
+        { v: 'log', cor: '#22d3ee', dash: '' },
+        { v: 'binario', cor: '#f59e0b', dash: '2,4' }
+      ].map(s => {
+        let d = '';
+        for (let c = 1; c <= maxC; c += 0.25) {
+          const x = px(c), y = py(tfWeight(c, s.v));
+          d += (d ? ' L ' : 'M ') + x.toFixed(1) + ' ' + y.toFixed(1);
+        }
+        const ativa = s.v === state.m2Variant;
+        return `<path d="${d}" fill="none" stroke="${s.cor}" stroke-width="${ativa ? 2.6 : 1.2}"
+                 stroke-dasharray="${s.dash}" opacity="${ativa ? 1 : 0.35}"></path>`;
+      }).join('');
+
+      const grade = [0, 2, 4, 6, 8, 10].map(w =>
+        `<line x1="${mx}" y1="${py(w)}" x2="${W - 16}" y2="${py(w)}" stroke="#1e293b" stroke-width="1"></line>
+         <text x="${mx - 8}" y="${py(w) + 3}" font-size="9" fill="#64748b" font-family="JetBrains Mono" text-anchor="end">${w}</text>`
+      ).join('');
+
+      const marcas = DOCS.map(d => {
+        const c = tf(d, state.m2Term);
+        if (c <= 0) return '';
+        const x = px(c), y = py(tfWeight(c, state.m2Variant));
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#6366f1" stroke="#090d16" stroke-width="1.5"></circle>
+                <text x="${(x + 7).toFixed(1)}" y="${(y - 6).toFixed(1)}" font-size="9" fill="#a5b4fc" font-family="JetBrains Mono">${d.id}</text>`;
+      }).join('');
+
+      svg.innerHTML = `
+        ${grade}
+        <line x1="${mx}" y1="${H - my}" x2="${W - 16}" y2="${H - my}" stroke="#334155" stroke-width="1"></line>
+        <line x1="${mx}" y1="16" x2="${mx}" y2="${H - my}" stroke="#334155" stroke-width="1"></line>
+        ${series}
+        ${marcas}
+        <text x="${(W + mx) / 2}" y="${H - 6}" font-size="10" fill="#64748b" font-family="JetBrains Mono" text-anchor="middle">contagem tf(t, D)</text>
+        <text x="${mx + 6}" y="14" font-size="10" fill="#64748b" font-family="JetBrains Mono">peso w</text>`;
+    }
+
+    /* ═══════════════ Módulo 03 — IDF ═══════════════ */
+    function setIdfVariant(v) {
+      state.m3Variant = v;
+      document.querySelectorAll('.idf-btn').forEach(b => {
+        b.className = b.dataset.idfv === v
+          ? 'idf-btn px-2.5 py-1 text-xs rounded font-mono transition bg-brand-600 text-white font-bold'
+          : 'idf-btn px-2.5 py-1 text-xs rounded font-mono transition text-slate-400 hover:text-white';
+      });
+      renderIdfLab();
+    }
+
+    function renderIdfLab() {
+      const linhas = VOCAB.map(t => {
+        const dfv = df(t);
+        return { t, dfv, idf: idfWeight(dfv, state.m3Variant) };
+      }).sort((a, b) => b.idf - a.idf || a.t.localeCompare(b.t, 'pt-BR'));
+
+      document.getElementById('m3-table').innerHTML = linhas.map(l => `
+        <tr class="hover:bg-surface-950/60">
+          <td class="px-3 py-1.5 text-slate-300">${esc(l.t)}</td>
+          <td class="px-3 py-1.5 text-right text-slate-500">${l.dfv}</td>
+          <td class="px-3 py-1.5 text-right text-slate-500">${fmt(l.dfv / N, 2)}</td>
+          <td class="px-3 py-1.5 text-right font-bold ${l.idf > 0 ? 'text-brand-300' : 'text-rose-400'}">${fmt(l.idf)}</td>
+        </tr>`).join('');
+
+      drawIdfCurve();
+    }
+
+    function drawIdfCurve() {
+      const svg = document.getElementById('m3-curve');
+      const W = 420, H = 220, mx = 44, my = 30;
+      const valores = [];
+      for (let d = 1; d <= N; d++) valores.push(idfWeight(d, state.m3Variant));
+      const maxY = Math.max(...valores.map(Math.abs), 1) * 1.15;
+      const px = d => mx + ((d - 1) / Math.max(1, N - 1)) * (W - mx - 20);
+      const py = v => (H - my) - ((v + maxY) / (2 * maxY)) * (H - my - 20);
+
+      let d = '';
+      for (let x = 1; x <= N; x += 0.05) {
+        const vx = px(x), vy = py(idfWeight(x, state.m3Variant));
+        d += (d ? ' L ' : 'M ') + vx.toFixed(1) + ' ' + vy.toFixed(1);
+      }
+
+      const pontos = [1, Math.ceil(N / 2), N].filter((v, i, a) => a.indexOf(v) === i).map(dfv => {
+        const x = px(dfv), y = py(idfWeight(dfv, state.m3Variant));
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#818cf8" stroke="#090d16" stroke-width="1.5"></circle>
+                <text x="${(x + 7).toFixed(1)}" y="${(y - 7).toFixed(1)}" font-size="9" fill="#a5b4fc" font-family="JetBrains Mono">${fmt(idfWeight(dfv, state.m3Variant), 2)}</text>`;
+      }).join('');
+
+      const eixoX = [];
+      for (let i = 1; i <= N; i++) {
+        eixoX.push(`<text x="${px(i).toFixed(1)}" y="${H - my + 16}" font-size="9" fill="#64748b" font-family="JetBrains Mono" text-anchor="middle">${i}</text>`);
+      }
+
+      svg.innerHTML = `
+        <line x1="${mx}" y1="${py(0).toFixed(1)}" x2="${W - 20}" y2="${py(0).toFixed(1)}" stroke="#334155" stroke-width="1" stroke-dasharray="3,3"></line>
+        <text x="${mx - 8}" y="${(py(0) + 3).toFixed(1)}" font-size="9" fill="#64748b" font-family="JetBrains Mono" text-anchor="end">0</text>
+        <line x1="${mx}" y1="14" x2="${mx}" y2="${H - my}" stroke="#334155" stroke-width="1"></line>
+        <path d="${d}" fill="none" stroke="#6366f1" stroke-width="2.4"></path>
+        ${pontos}
+        ${eixoX.join('')}
+        <text x="${(W + mx) / 2}" y="${H - 4}" font-size="10" fill="#64748b" font-family="JetBrains Mono" text-anchor="middle">df(t) — documentos que contêm o termo</text>
+        <text x="${mx + 6}" y="12" font-size="10" fill="#64748b" font-family="JetBrains Mono">idf(t)</text>`;
+    }
+
+    /* ═══════════════ Módulo 04 — laboratório de ranking ═══════════════ */
+    function setQuery(q) {
+      document.getElementById('q-input').value = q;
+      renderLab();
+      Guia.toast(`Consulta trocada para "${q}".`, 'fa-magnifying-glass');
+    }
+
+    function setLabTf(v) {
+      state.labTf = v;
+      document.querySelectorAll('.labtf-btn').forEach(b => {
+        b.className = b.dataset.labtf === v
+          ? 'labtf-btn px-2 py-0.5 text-[11px] rounded font-mono transition bg-cyan-600 text-white font-bold'
+          : 'labtf-btn px-2 py-0.5 text-[11px] rounded font-mono transition text-slate-400 hover:text-white';
+      });
+      renderLab();
+    }
+
+    function setLabIdf(v) {
+      state.labIdf = v;
+      document.querySelectorAll('.labidf-btn').forEach(b => {
+        b.className = b.dataset.labidf === v
+          ? 'labidf-btn px-2 py-0.5 text-[11px] rounded font-mono transition bg-brand-600 text-white font-bold'
+          : 'labidf-btn px-2 py-0.5 text-[11px] rounded font-mono transition text-slate-400 hover:text-white';
+      });
+      renderLab();
+    }
+
+    /* Norma L2 do vetor TF-IDF do documento sobre todo o vocabulário. */
+    function docNorm(doc) {
+      let soma = 0;
+      for (const t of new Set(doc.toks)) {
+        const w = tfWeight(tf(doc, t), state.labTf) * idfWeight(df(t), state.labIdf);
+        soma += w * w;
+      }
+      return Math.sqrt(soma) || 1;
+    }
+
+    const TERM_COLORS = ['#6366f1', '#22d3ee', '#10b981', '#f59e0b', '#f43f5e', '#a855f7'];
+
+    function renderLab() {
+      const bruto = document.getElementById('q-input').value;
+      const termos = [...new Set(tokenize(bruto))];
+      const normalizar = document.getElementById('lab-norm').checked;
+      document.getElementById('lab-n').textContent = N;
+
+      const idfs = {};
+      termos.forEach(t => { idfs[t] = idfWeight(df(t), state.labIdf); });
+
+      const linhas = DOCS.map(doc => {
+        const norm = normalizar ? docNorm(doc) : 1;
+        const celulas = termos.map(t => {
+          const c = tf(doc, t);
+          const w = tfWeight(c, state.labTf);
+          const contrib = (w * idfs[t]) / norm;
+          return { t, c, w, idf: idfs[t], contrib };
+        });
+        const score = celulas.reduce((a, c) => a + c.contrib, 0);
+        return { doc, celulas, score, norm };
+      });
+
+      /* chips dos termos da consulta */
+      document.getElementById('q-terms').innerHTML = termos.length === 0
+        ? '<span class="text-slate-500">Digite ao menos um termo para pontuar a coleção.</span>'
+        : termos.map((t, i) => {
+            const dfv = df(t);
+            const cor = TERM_COLORS[i % TERM_COLORS.length];
+            return `<span class="px-2.5 py-1 rounded-lg border font-mono flex items-center gap-2"
+                          style="border-color:${cor}55;background:${cor}14;color:${cor}">
+                      <span class="font-bold">${esc(t)}</span>
+                      <span class="text-slate-400">df ${dfv}/${N}</span>
+                      <span class="text-slate-200">idf ${fmt(idfs[t], 2)}</span>
+                      ${dfv === 0 ? '<span class="text-rose-400">fora do vocabulário</span>' : ''}
+                    </span>`;
+          }).join('');
+
+      /* cabeçalho da matriz */
+      const thead = document.getElementById('lab-thead');
+      if (termos.length === 0) {
+        thead.innerHTML = '';
+        document.getElementById('lab-tbody').innerHTML =
+          '<tr><td class="px-3 py-6 text-center text-slate-500">Sem termos na consulta.</td></tr>';
+        document.getElementById('lab-ranking').innerHTML = '';
+        document.getElementById('lab-insight').textContent = '';
+        return;
+      }
+
+      thead.innerHTML = `
+        <tr>
+          <th rowspan="2" class="text-left px-3 py-2 align-bottom border-r border-slate-800">documento</th>
+          ${termos.map((t, i) => `<th colspan="3" class="text-center px-3 py-1.5 border-r border-slate-800"
+             style="color:${TERM_COLORS[i % TERM_COLORS.length]}">${esc(t)} · idf ${fmt(idfs[t], 2)}</th>`).join('')}
+          <th rowspan="2" class="text-right px-3 py-2 align-bottom">score</th>
+        </tr>
+        <tr>
+          ${termos.map(() => `
+            <th class="text-right px-2 py-1 font-normal normal-case">tf</th>
+            <th class="text-right px-2 py-1 font-normal normal-case">w(tf)</th>
+            <th class="text-right px-2 py-1 font-normal normal-case border-r border-slate-800">tf·idf</th>`).join('')}
+        </tr>`;
+
+      const maxScore = Math.max(...linhas.map(l => l.score), 0);
+
+      document.getElementById('lab-tbody').innerHTML = linhas.map(l => `
+        <tr class="hover:bg-surface-950/60">
+          <td class="px-3 py-2 border-r border-slate-800 whitespace-nowrap">
+            <span class="font-bold text-brand-300">${l.doc.id}</span>
+            <span class="text-slate-600 ml-1.5 text-[10px]">${esc(l.doc.titulo)}</span>
+          </td>
+          ${l.celulas.map(c => `
+            <td class="px-2 py-2 text-right ${c.c > 0 ? 'text-slate-300' : 'text-slate-700'}">${c.c}</td>
+            <td class="px-2 py-2 text-right ${c.w > 0 ? 'text-cyan-300' : 'text-slate-700'}">${fmt(c.w, 2)}</td>
+            <td class="px-2 py-2 text-right border-r border-slate-800 ${c.contrib !== 0 ? 'text-emerald-300 font-bold' : 'text-slate-700'}">${fmt(c.contrib)}</td>`).join('')}
+          <td class="px-3 py-2 text-right font-bold ${l.score > 0 ? 'text-white' : 'text-slate-700'}">
+            ${fmt(l.score)}${l.score > 0 && l.score === maxScore ? ' <i class="fa-solid fa-crown text-amber-400 ml-1"></i>' : ''}
+          </td>
+        </tr>`).join('');
+
+      /* ranking ordenado */
+      const ordenado = [...linhas].sort((a, b) => b.score - a.score || a.doc.id.localeCompare(b.doc.id));
+      const escala = Math.max(maxScore, 1e-6);
+
+      document.getElementById('lab-ranking').innerHTML = ordenado.map((l, pos) => {
+        const dentro = l.score > 0;
+        const segs = l.celulas
+          .filter(c => c.contrib > 0)
+          .map((c, i) => {
+            const idx = termos.indexOf(c.t);
+            const cor = TERM_COLORS[idx % TERM_COLORS.length];
+            return `<div class="h-full flex items-center overflow-hidden transition-all duration-300"
+                         style="width:${(c.contrib / escala) * 100}%;background:${cor}">
+                      <span class="px-1.5 text-[10px] font-mono text-surface-950 font-bold whitespace-nowrap">${esc(c.t)} ${fmt(c.contrib, 2)}</span>
+                    </div>`;
+          }).join('');
+        return `
+          <div class="flex items-center gap-3">
+            <span class="w-6 text-[11px] font-mono ${pos === 0 && dentro ? 'text-amber-400 font-bold' : 'text-slate-500'} shrink-0">${dentro ? (pos + 1) + 'º' : '—'}</span>
+            <span class="w-8 text-xs font-mono font-bold ${dentro ? 'text-brand-300' : 'text-slate-600'} shrink-0">${l.doc.id}</span>
+            <div class="flex-1 h-7 rounded-lg bg-surface-950 border border-slate-800 flex overflow-hidden min-w-0">${segs}</div>
+            <span class="w-16 text-right text-xs font-mono font-bold ${dentro ? 'text-white' : 'text-slate-700'} shrink-0">${fmt(l.score)}</span>
+          </div>`;
+      }).join('');
+
+      /* leitura automática do resultado */
+      const comScore = ordenado.filter(l => l.score > 0);
+      const insight = document.getElementById('lab-insight');
+      if (comScore.length === 0) {
+        insight.innerHTML = 'Nenhum documento contém os termos da consulta: todos os scores são zero. É o <strong class="text-rose-300">vocabulary mismatch</strong> em estado puro — o modelo léxico não tem como adivinhar sinônimos.';
+      } else {
+        const primeiro = comScore[0];
+        const segundo = comScore[1];
+        const fora = ordenado.length - comScore.length;
+        let txt = `<strong class="text-white">${primeiro.doc.id}</strong> lidera com score ${fmt(primeiro.score)}`;
+        if (segundo) {
+          const vantagem = segundo.score > 0 ? ((primeiro.score / segundo.score - 1) * 100) : 100;
+          txt += `, ${fmt(vantagem, 1)}% à frente de ${segundo.doc.id} (${fmt(segundo.score)})`;
+        }
+        txt += '. ';
+        const maior = primeiro.celulas.reduce((a, c) => (c.contrib > a.contrib ? c : a), primeiro.celulas[0]);
+        if (maior && maior.contrib > 0) {
+          txt += `A maior parcela vem de "<span class="font-mono text-slate-300">${esc(maior.t)}</span>" (${fmt(maior.contrib)} = ${fmt(maior.w, 2)} × ${fmt(maior.idf, 2)}). `;
+        }
+        if (fora > 0) txt += `${fora} documento(s) ficaram de fora por não conter nenhum termo da consulta.`;
+        insight.innerHTML = txt;
+      }
+    }
+
+    /* ═══════════════ Inicialização ═══════════════ */
+    Guia.ready(() => {
+      renderCorpusTokens();
+      renderTermXray();
+      initTfLab();
+      setIdfVariant(state.m3Variant);
+      setLabTf(state.labTf);
+      setLabIdf(state.labIdf);
+      renderLab();
+    });
+
+    /* SVGs são redesenhados ao entrar no módulo (garante largura > 0 no layout). */
+    Guia.onSlide(1, drawTfCurve);
+    Guia.onSlide(2, drawIdfCurve);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BM25: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="BM25"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Ranking probabilístico com saturação de TF (Robertson & Walker, 1994)"
+      data-icon="fa-scale-balanced"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 01 — O que o TF-IDF erra ══════════════ -->
+    <section class="slide-section" data-nav="O erro do TF-IDF" data-icon="fa-triangle-exclamation">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Dois Vieses que o TF-IDF <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">Não Corrige</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O TF-IDF soma $tf \cdot idf$ de forma <strong>linear</strong>: repetir um termo dez vezes vale dez vezes mais, e um documento
+          longo acumula ocorrências só por ser longo. O BM25 (Robertson &amp; Walker, 1994; Robertson &amp; Zaragoza, 2009)
+          mantém a mesma intuição e coloca dois freios: <span class="text-cyan-400 font-mono">k₁</span> satura a frequência e
+          <span class="text-emerald-400 font-mono">b</span> normaliza o comprimento.
+        </p>
+      </div>
+
+      <!-- Acervo de exemplo -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-folder-open text-brand-400"></i> O acervo: 5 fichas de exames laboratoriais
+          </h3>
+          <span class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-cyan-300">
+            consulta: <span class="text-white">"jejum glicemia"</span>
+          </span>
+        </div>
+        <div id="corpus-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          Sem <em>stemming</em> e sem remoção de <em>stopwords</em>, de propósito: "de" e "da" entram no vocabulário. Em produção esses
+          passos vêm antes da indexação, e título e corpo costumam ser campos separados (BM25F).
+        </p>
+      </div>
+
+      <!-- Simulador: ataque de repetição -->
+      <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-flask-vial text-amber-400"></i> Experimento: encher D5 de repetições
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-xl">
+              D5 não tem "glicemia" — só repete "jejum". Aumente as repetições e veja qual dos dois rankings se deixa enganar.
+            </p>
+          </div>
+          <div class="w-full sm:w-72">
+            <div class="flex items-center justify-between text-xs font-mono mb-1">
+              <span class="text-slate-400">repetições extras de "jejum" em D5</span>
+              <span id="rep-val" class="text-amber-300 font-bold">+0</span>
+            </div>
+            <input id="rep-range" type="range" min="0" max="12" step="1" value="0"
+                   class="w-full accent-amber-500 cursor-pointer">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="rounded-xl bg-surface-950 border border-rose-500/30 p-4">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono font-semibold text-rose-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-simple"></i> TF-IDF clássico
+              </span>
+              <span class="text-[10px] text-slate-500 font-mono">$\sum tf \cdot \ln(N/n_t)$</span>
+            </div>
+            <div id="tfidf-rank" class="space-y-2"></div>
+          </div>
+          <div class="rounded-xl bg-surface-950 border border-emerald-500/30 p-4">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono font-semibold text-emerald-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-scale-balanced"></i> BM25
+              </span>
+              <span id="bm25-params-m1" class="text-[10px] text-slate-500 font-mono">k₁ = 1,2 · b = 0,75</span>
+            </div>
+            <div id="bm25-rank-m1" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <div id="rep-verdict" class="mt-5 p-3.5 rounded-xl border text-xs leading-relaxed"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 02 — Saturação de TF (k₁) ══════════════ -->
+    <section class="slide-section" data-nav="Saturação (k₁)" data-icon="fa-wave-square">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-wave-square"></i> Módulo 02 • Mecanismo I
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Saturação: Repetir Ajuda, <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">Cada Vez Menos</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A primeira ocorrência de um termo é a informação relevante: o documento fala disso. A décima acrescenta quase nada.
+          O BM25 troca o $tf$ cru por uma hipérbole que cresce rápido e depois encosta num teto de $k_1 + 1$.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-end gap-5 mb-5 pb-5 border-b border-slate-800">
+          <div class="flex-1">
+            <div class="flex items-center justify-between text-xs font-mono mb-1">
+              <span class="text-slate-300"><i class="fa-solid fa-sliders text-cyan-400 mr-1"></i> k₁ — velocidade da saturação</span>
+              <span id="k1-val-a" class="text-cyan-300 font-bold">1,20</span>
+            </div>
+            <input id="k1-range-a" type="range" min="0" max="3" step="0.1" value="1.2"
+                   class="w-full accent-cyan-500 cursor-pointer">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+              <span>0 — termo binário</span><span>1,2 – 2,0 típico</span><span>3 — quase linear</span>
+            </div>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between text-xs font-mono mb-1">
+              <span class="text-slate-300"><i class="fa-solid fa-ruler-horizontal text-emerald-400 mr-1"></i> b — normalização por tamanho</span>
+              <span id="b-val-a" class="text-emerald-300 font-bold">0,75</span>
+            </div>
+            <input id="b-range-a" type="range" min="0" max="1" step="0.05" value="0.75"
+                   class="w-full accent-emerald-500 cursor-pointer">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+              <span>0 — sem normalização</span><span>0,75 típico</span><span>1 — normalização cheia</span>
+            </div>
+          </div>
+          <button onclick="resetParams()" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-slate-300 hover:text-white hover:border-slate-600 transition shrink-0">
+            <i class="fa-solid fa-rotate-left mr-1"></i> Padrão Lucene
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="lg:col-span-2 bg-surface-950 rounded-xl p-3 border border-slate-800">
+            <canvas id="sat-canvas" class="w-full block rounded-lg"></canvas>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-slate-400 mt-2 px-1">
+              <span class="flex items-center gap-1.5"><span class="w-4 h-0.5 bg-cyan-400 inline-block"></span> $|D| = avgdl$</span>
+              <span class="flex items-center gap-1.5"><span class="w-4 h-0.5 bg-slate-500 inline-block"></span> documento curto / longo</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-brand-400 inline-block"></span> documentos do acervo</span>
+              <span class="flex items-center gap-1.5"><span class="w-4 border-t border-dashed border-amber-400 inline-block"></span> teto $k_1 + 1$</span>
+            </div>
+          </div>
+
+          <div class="bg-surface-950 rounded-xl p-4 border border-slate-800">
+            <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-brand-400"></i> Ranking ao vivo
+            </h4>
+            <div id="live-rank" class="space-y-2"></div>
+            <p id="live-rank-note" class="text-[11px] text-slate-500 mt-3 leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-cyan-400"></i> Fator TF de cada documento (termo "jejum")
+          </h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs font-mono min-w-[340px]">
+              <thead>
+                <tr class="text-slate-500 border-b border-slate-800">
+                  <th class="text-left py-1.5 font-medium">doc</th>
+                  <th class="text-right py-1.5 font-medium">|D|</th>
+                  <th class="text-right py-1.5 font-medium">tf</th>
+                  <th class="text-right py-1.5 font-medium">fator TF</th>
+                  <th class="text-right py-1.5 font-medium">% do teto</th>
+                </tr>
+              </thead>
+              <tbody id="tf-rows" class="text-slate-300"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 space-y-3">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-lightbulb text-amber-400"></i> Lendo a curva
+          </h4>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+            $$\text{TF}_{\text{BM25}}(t, D) = \frac{tf \cdot (k_1 + 1)}{tf + k_1 \cdot \text{norma}(D)}$$
+          </div>
+          <ul class="text-xs text-slate-400 space-y-2 leading-relaxed">
+            <li class="flex gap-2"><i class="fa-solid fa-circle-arrow-right text-cyan-400 mt-0.5"></i>
+              <span><strong class="text-slate-200">k₁ = 0</strong>: a fração vira $tf/tf = 1$ para qualquer $tf > 0$. O termo é binário — presente ou ausente. A repetição deixa de existir para o modelo.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle-arrow-right text-cyan-400 mt-0.5"></i>
+              <span><strong class="text-slate-200">k₁ grande</strong>: a curva demora a dobrar e se aproxima do comportamento linear do TF-IDF — o viés de repetição volta.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle-arrow-right text-cyan-400 mt-0.5"></i>
+              <span>O teto $k_1 + 1$ é <em>assintótico</em>: nenhum $tf$ finito o alcança. Por isso "% do teto" nunca chega a 100.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5"></i>
+              <span>Lucene ≥ 8 omite o fator $(k_1 + 1)$ do numerador: os scores mudam de escala, a <em>ordem</em> não.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 03 — Normalização por tamanho (b) ══════════════ -->
+    <section class="slide-section" data-nav="Tamanho (b)" data-icon="fa-ruler-horizontal">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-ruler-horizontal"></i> Módulo 03 • Mecanismo II
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Tamanho <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Não é Mérito</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Um documento longo contém qualquer termo com mais facilidade — não porque fala mais do assunto, mas porque fala mais de tudo.
+          O BM25 compara $|D|$ com o comprimento médio da coleção e infla o denominador dos documentos acima da média.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-end gap-5 mb-5 pb-5 border-b border-slate-800">
+          <div class="flex-1">
+            <div class="flex items-center justify-between text-xs font-mono mb-1">
+              <span class="text-slate-300"><i class="fa-solid fa-ruler-horizontal text-emerald-400 mr-1"></i> b — normalização por tamanho</span>
+              <span id="b-val-b" class="text-emerald-300 font-bold">0,75</span>
+            </div>
+            <input id="b-range-b" type="range" min="0" max="1" step="0.05" value="0.75"
+                   class="w-full accent-emerald-500 cursor-pointer">
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between text-xs font-mono mb-1">
+              <span class="text-slate-300"><i class="fa-solid fa-sliders text-cyan-400 mr-1"></i> k₁ — saturação</span>
+              <span id="k1-val-b" class="text-cyan-300 font-bold">1,20</span>
+            </div>
+            <input id="k1-range-b" type="range" min="0" max="3" step="0.1" value="1.2"
+                   class="w-full accent-cyan-500 cursor-pointer">
+          </div>
+          <div class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-slate-300 shrink-0">
+            avgdl = <span id="avgdl-val" class="text-emerald-300 font-bold">8,4</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 mb-5">
+          $$\text{norma}(D) = 1 - b + b \cdot \frac{|D|}{avgdl}$$
+        </div>
+
+        <div id="len-rows" class="space-y-3"></div>
+
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          A barra colorida marca o comprimento do documento; a linha clara vertical marca <span class="font-mono">avgdl</span>.
+          Tolerância de ±5% conta como neutro. A norma multiplica $k_1$ <strong>no denominador</strong>: ela pesa muito quando $tf$ é baixo e
+          quase nada quando o termo já saturou.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3">
+            <i class="fa-solid fa-equals"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">b = 0 · sem normalização</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">A norma vira 1 para todo mundo. Documentos longos voltam a acumular vantagem — é o comportamento do TF-IDF puro nesse eixo.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 glow-indigo">
+          <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 mb-3">
+            <i class="fa-solid fa-star"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">b = 0,75 · padrão</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Penaliza o excesso de tamanho em 3/4 da proporção. É o valor default do Lucene, Elasticsearch e OpenSearch desde a versão 5.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-3">
+            <i class="fa-solid fa-compress"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">b = 1 · normalização cheia</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Penalidade na proporção exata do excesso. Costuma punir demais documentos legitimamente longos — manuais, contratos, laudos completos.</p>
+        </div>
+      </div>
+
+      <div class="mt-5 p-4 rounded-2xl bg-surface-900 border border-amber-500/30 text-xs text-slate-300 leading-relaxed flex gap-3">
+        <i class="fa-solid fa-circle-info text-amber-400 mt-0.5"></i>
+        <span>
+          <strong class="text-white">Em RAG, b importa menos do que parece.</strong> Quando o corpus é cortado em <em>chunks</em> de tamanho quase
+          uniforme, $|D| \approx avgdl$ e a norma fica perto de 1 para todos. O que ainda espalha $|D|$: tabelas, listas e o último pedaço de
+          cada documento, sempre mais curto.
+        </span>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 04 — Fórmula completa e IDF probabilístico ══════════════ -->
+    <section class="slide-section" data-nav="Fórmula & IDF" data-icon="fa-square-root-variable">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-square-root-variable"></i> Módulo 04 • Formalização Matemática
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A Fórmula Completa e o <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">IDF Probabilístico</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Juntando as duas peças e multiplicando pela raridade do termo, chega-se ao <em>Okapi BM25</em> — batizado com o nome do sistema
+          Okapi, onde foi implementado pela primeira vez, na City University de Londres.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-5 sm:p-8 mb-6">
+        <div class="overflow-x-auto">
+          $$\text{score}(D, Q) = \sum_{t \in Q} \underbrace{\ln\left(1 + \frac{N - n_t + 0{,}5}{n_t + 0{,}5}\right)}_{\text{IDF}(t)} \cdot \frac{tf(t,D) \cdot (k_1 + 1)}{tf(t,D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{avgdl}\right)}$$
+        </div>
+        <p id="formula-params" class="text-center text-xs font-mono text-slate-400 mt-4"></p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <!-- IDF -->
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
+            <i class="fa-solid fa-gem text-cyan-400"></i> IDF: raridade decide o peso
+          </h4>
+          <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+            "jejum" está em 4 dos 5 documentos: acertar nele quase não separa candidatos. "glicemia" está em 1: separa muito.
+            O $+0{,}5$ em cima e embaixo evita divisão por zero, e o $1+$ dentro do $\ln$ (variante do Lucene) mantém o valor
+            positivo mesmo para termo presente em mais da metade do acervo.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs font-mono min-w-[320px]">
+              <thead>
+                <tr class="text-slate-500 border-b border-slate-800">
+                  <th class="text-left py-1.5 font-medium">termo</th>
+                  <th class="text-right py-1.5 font-medium">nₜ</th>
+                  <th class="text-right py-1.5 font-medium">IDF</th>
+                  <th class="text-right py-1.5 font-medium">IDF com N = 10⁶</th>
+                </tr>
+              </thead>
+              <tbody id="idf-rows" class="text-slate-300"></tbody>
+            </table>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+            Mantidas as proporções num acervo de um milhão de documentos, a ordem se repete. Em coleções reais o termo raro aparece
+            em bem menos de 1 em 5 documentos, e a distância abre muito mais.
+          </p>
+        </div>
+
+        <!-- Ranking completo -->
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-trophy text-amber-400"></i> Score decomposto por termo
+            </h4>
+            <div class="flex items-center gap-3 text-[10px] font-mono text-slate-400">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-cyan-400 inline-block"></span> jejum</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-brand-500 inline-block"></span> glicemia</span>
+            </div>
+          </div>
+          <div id="full-rank" class="space-y-2.5"></div>
+          <p id="full-rank-note" class="text-[11px] text-slate-500 mt-3 leading-relaxed"></p>
+        </div>
+      </div>
+
+      <!-- Glossário -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-book text-brand-400"></i> Glossário da fórmula
+        </h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[520px]">
+            <tbody class="align-top">
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2 pr-4 font-mono text-cyan-300 whitespace-nowrap">$N$</td>
+                <td class="py-2 text-slate-400">Número total de documentos na coleção (aqui, 5).</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2 pr-4 font-mono text-cyan-300 whitespace-nowrap">$|D|$</td>
+                <td class="py-2 text-slate-400">Comprimento do documento $D$: quantidade de termos (<em>tokens</em>) que ele contém.</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2 pr-4 font-mono text-cyan-300 whitespace-nowrap">$avgdl$</td>
+                <td class="py-2 text-slate-400">Comprimento médio dos documentos da coleção — a régua contra a qual $|D|$ é comparado.</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2 pr-4 font-mono text-cyan-300 whitespace-nowrap">$tf(t,D)$</td>
+                <td class="py-2 text-slate-400">Quantas vezes o termo $t$ aparece em $D$. Igual ao TF do TF-IDF, mas passa pela curva de saturação antes de virar peso.</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2 pr-4 font-mono text-cyan-300 whitespace-nowrap">$n_t$</td>
+                <td class="py-2 text-slate-400">Em quantos documentos da coleção o termo $t$ aparece pelo menos uma vez (o <em>document frequency</em>).</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2 pr-4 font-mono text-amber-300 whitespace-nowrap">$k_1$</td>
+                <td class="py-2 text-slate-400">Controla a <strong class="text-slate-200">saturação</strong> da frequência. Maior $k_1$ = a repetição segue ajudando por mais tempo; o teto da curva é sempre $k_1 + 1$. $k_1 = 0$ torna o termo binário. Típico: 1,2 a 2,0.</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2 pr-4 font-mono text-amber-300 whitespace-nowrap">$b$</td>
+                <td class="py-2 text-slate-400">Controla o peso do <strong class="text-slate-200">comprimento</strong> através de $1 - b + b\,|D|/avgdl$. $b = 1$ penaliza na proporção exata do excesso; $b = 0$ desliga a normalização. Típico: 0,75.</td>
+              </tr>
+              <tr>
+                <td class="py-2 pr-4 font-mono text-emerald-300 whitespace-nowrap">$\text{score}(D,Q)$</td>
+                <td class="py-2 text-slate-400">Soma das contribuições de cada termo da consulta; usada para ordenar do mais para o menos relevante. Não existe limiar absoluto — o corte é por <em>top-k</em>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Uso prático -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-screwdriver-wrench text-emerald-400"></i> Não implemente na mão
+          </h4>
+          <ul class="text-xs text-slate-400 space-y-2.5 leading-relaxed">
+            <li><span class="font-mono text-emerald-300">rank_bm25</span> — biblioteca pura em Python, ótima para prototipar e para estudar o algoritmo sem infraestrutura.</li>
+            <li><span class="font-mono text-emerald-300">Elasticsearch / OpenSearch</span> — BM25 é a <em>similarity</em> padrão desde a versão 5. Nada a configurar; $k_1$ e $b$ são ajustáveis por índice.</li>
+            <li><span class="font-mono text-emerald-300">Apache Lucene / Solr</span> — o motor por trás do Elasticsearch/OpenSearch; mesma implementação, uso direto via Java.</li>
+            <li><span class="font-mono text-emerald-300">Whoosh</span> — motor <em>full-text</em> puro Python, alternativa leve para projetos menores.</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-brands fa-python text-cyan-400"></i> rank_bm25
+            </h4>
+            <span id="code-params" class="text-[10px] font-mono text-slate-500"></span>
+          </div>
+          <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800 p-4">
+<pre class="text-[11px] font-mono leading-relaxed text-slate-300"><span class="text-purple-400">from</span> rank_bm25 <span class="text-purple-400">import</span> BM25Okapi
+
+corpus = [d.split() <span class="text-purple-400">for</span> d <span class="text-purple-400">in</span> documentos]
+bm25 = BM25Okapi(corpus, k1=<span class="text-amber-300" id="code-k1">1.2</span>, b=<span class="text-amber-300" id="code-b">0.75</span>)
+
+consulta = <span class="text-emerald-300">"jejum glicemia"</span>.split()
+scores = bm25.get_scores(consulta)
+ranking = <span class="text-purple-400">sorted</span>(<span class="text-purple-400">zip</span>(doc_ids, scores), key=<span class="text-purple-400">lambda</span> x: -x[<span class="text-cyan-300">1</span>])</pre>
+          </div>
+          <div class="mt-3 p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] font-mono text-slate-500 mb-1.5">saída com os parâmetros atuais desta página</div>
+            <pre id="code-output" class="text-[11px] font-mono text-slate-300 leading-relaxed"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 05 — Limites e quiz ══════════════ -->
+    <section class="slide-section" data-nav="Limites & Quiz" data-icon="fa-graduation-cap">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Limites &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Onde o BM25 <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">Ainda Erra</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Trinta anos depois, o BM25 continua sendo a linha de base difícil de bater em busca léxica — e continua sem entender
+          uma única palavra. Todos os limites vêm do mesmo lugar: ele casa <em>strings</em>, não significados.
+        </p>
+      </div>
+
+      <!-- Demo: vocabulário descasado -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-lg font-bold text-white mb-1.5 flex items-center gap-2">
+          <i class="fa-solid fa-language text-rose-400"></i> Vocabulário descasado, ao vivo
+        </h3>
+        <p class="text-xs text-slate-400 mb-4 max-w-2xl leading-relaxed">
+          Troque a consulta e observe: sinônimo perfeito, mas sem sobreposição de termos, produz score zero em todo o acervo.
+          Nenhum valor de $k_1$ ou $b$ conserta isso.
+        </p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <button onclick="setQuery(0)" data-q="0" class="qbtn px-3 py-1.5 rounded-lg text-xs font-mono transition">"jejum glicemia"</button>
+          <button onclick="setQuery(1)" data-q="1" class="qbtn px-3 py-1.5 rounded-lg text-xs font-mono transition">"glicemia de jejum"</button>
+          <button onclick="setQuery(2)" data-q="2" class="qbtn px-3 py-1.5 rounded-lg text-xs font-mono transition">"açúcar no sangue"</button>
+          <button onclick="setQuery(3)" data-q="3" class="qbtn px-3 py-1.5 rounded-lg text-xs font-mono transition">"sem jejum"</button>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div id="query-rank" class="space-y-2"></div>
+          <div id="query-verdict" class="p-4 rounded-xl border text-xs leading-relaxed self-start"></div>
+        </div>
+      </div>
+
+      <!-- Limitações -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30 flex flex-col justify-between">
+          <div>
+            <div class="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-2.5">
+              <i class="fa-solid fa-link-slash"></i>
+            </div>
+            <h4 class="font-bold text-white text-sm">Vocabulário descasado</h4>
+            <p class="text-xs text-slate-400 mt-1.5">"febre" e "hipertermia" são dimensões ortogonais. Sem sobreposição literal, score zero.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">Saída: expansão de query, SPLADE, denso.</div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-2.5">
+              <i class="fa-solid fa-shuffle"></i>
+            </div>
+            <h4 class="font-bold text-white text-sm">Saco de palavras</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Ordem e negação não existem: "sem jejum" casa com "jejum" com o mesmo peso.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">Mitigação parcial: <em>phrase queries</em>, bigramas.</div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-2.5">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <h4 class="font-bold text-white text-sm">k₁ e b são globais</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Um par de parâmetros para todo o índice, ajustado empiricamente. Não aprende com cliques nem com o domínio.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">Saída: BM25F por campo, <em>learning to rank</em>.</div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-purple-500/30 flex flex-col justify-between">
+          <div>
+            <div class="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-2.5">
+              <i class="fa-solid fa-scale-unbalanced"></i>
+            </div>
+            <h4 class="font-bold text-white text-sm">Independência de termos</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Cada termo contribui isolado: "ataque cardíaco" vale o mesmo que os dois termos espalhados pelo texto.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-purple-400">Saída: <em>cross-encoder</em> no re-ranking.</div>
+        </div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação Conceitual
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que $k_1$, $b$ e o IDF realmente fazem.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Com $k_1 = 0$, o que acontece com o fator TF do BM25?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) O score de todos os documentos vai a zero.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'A fração vira tf/tf = 1 para qualquer tf maior que zero: só conta a presença do termo, não quantas vezes ele aparece.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) O termo vira binário: importa apenas se está presente.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) O BM25 passa a se comportar exatamente como o TF-IDF linear.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) A normalização por comprimento é aplicada duas vezes.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Um corpus de RAG é cortado em <em>chunks</em> de tamanho praticamente idêntico. Qual o efeito prático do parâmetro $b$?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Aumenta muito: chunks pequenos amplificam a penalidade.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Inverte o sinal: documentos curtos passam a ser punidos.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'Se todo |D| é próximo de avgdl, a razão |D|/avgdl fica perto de 1 e a norma vale cerca de 1 para qualquer b. Só tabelas e o último chunk de cada documento fogem disso.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) É quase nulo: a norma fica perto de 1 para qualquer $b$.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Passa a controlar a saturação no lugar de $k_1$.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              A consulta é "açúcar no sangue" e o documento certo diz "glicemia de jejum". Por que o BM25 falha, e ajustar $k_1$ ou $b$ não resolve?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) O IDF de "açúcar" é negativo e cancela a soma.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) A consulta é longa demais para o índice invertido.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'k1 e b só reponderam termos que já casaram. Sem interseção de vocabulário, todo tf é zero e o score é zero — é o buraco que o SPLADE e os modelos densos preenchem.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Sem termos em comum, todo $tf$ é zero — $k_1$ e $b$ só reponderam o que já casou.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) O $avgdl$ precisa ser recalculado a cada consulta.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fecho -->
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5 justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-white mb-1.5 flex items-center gap-2">
+              <i class="fa-solid fa-forward text-brand-400"></i> Próximo: 1.1.3 — Sparse Encoder (SPLADE)
+            </h3>
+            <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
+              O BM25 é rápido, explicável e funciona em qualquer domínio no dia um — por isso costuma ser o primeiro estágio de um
+              pipeline de RAG, entregando os <em>top-k</em> ao <em>re-ranker</em>. O que ele não faz é ver relação entre palavras diferentes.
+              O SPLADE ataca esse buraco por dentro do mundo esparso: um Transformer aprende os pesos e <strong>adiciona</strong> termos que
+              não estavam no texto, mantendo o índice invertido.
+            </p>
+          </div>
+          <a href="../sparse-encoder/index.html"
+             class="shrink-0 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition flex items-center gap-2">
+            Sparse Encoder <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════ Estado e acervo ═══════════ */
+    const BASE_DOCS = [
+      { id: 'D1', title: 'Hemograma',       toks: ['hemograma', 'completo', 'sem', 'jejum'] },
+      { id: 'D2', title: 'Glicemia',        toks: ['glicemia', 'de', 'jejum', 'exige', 'jejum', 'de', '8', 'horas'] },
+      { id: 'D3', title: 'Colesterol',      toks: ['colesterol', 'total', 'e', 'frações', 'com', 'jejum', 'de', '12', 'horas', 'antes', 'da', 'coleta'] },
+      { id: 'D4', title: 'Urina',           toks: ['exame', 'de', 'urina', 'primeira', 'urina', 'da', 'manhã'] },
+      { id: 'D5', title: 'Tabela de jejum', toks: ['tabela', 'de', 'jejum', 'jejum', 'de', '8', 'horas', 'jejum', 'de', '12', 'horas'] }
+    ];
+
+    const QUERIES = [
+      { q: ['jejum', 'glicemia'],       label: 'jejum glicemia' },
+      { q: ['glicemia', 'de', 'jejum'], label: 'glicemia de jejum' },
+      { q: ['açúcar', 'no', 'sangue'],  label: 'açúcar no sangue' },
+      { q: ['sem', 'jejum'],            label: 'sem jejum' }
+    ];
+
+    const S = { k1: 1.2, b: 0.75, rep: 0, queryIdx: 0 };
+
+    const SEG_COLOR = { jejum: '#22d3ee', glicemia: '#6366f1' };
+    const PALETTE = ['#22d3ee', '#6366f1', '#10b981', '#f59e0b', '#f43f5e'];
+
+    /* ═══════════ Matemática do BM25 — tudo calculado a partir dos inputs ═══════════ */
+    function corpus() {
+      const docs = BASE_DOCS.map(d => ({ id: d.id, title: d.title, toks: d.toks.slice() }));
+      for (let i = 0; i < S.rep; i++) docs[4].toks.push('jejum');
+      return docs;
+    }
+
+    function tf(doc, t) { return doc.toks.reduce((a, x) => a + (x === t ? 1 : 0), 0); }
+    function df(docs, t) { return docs.reduce((a, d) => a + (tf(d, t) > 0 ? 1 : 0), 0); }
+    function idfAt(n, N) { return Math.log(1 + (N - n + 0.5) / (n + 0.5)); }
+    function avgdlOf(docs) { return docs.reduce((a, d) => a + d.toks.length, 0) / docs.length; }
+    function normOf(len, avgdl) { return 1 - S.b + S.b * (len / avgdl); }
+
+    function tfPart(f, len, avgdl) {
+      if (f <= 0) return 0;
+      return (f * (S.k1 + 1)) / (f + S.k1 * normOf(len, avgdl));
+    }
+
+    function uniq(list) {
+      const out = [];
+      list.forEach(t => { if (out.indexOf(t) === -1) out.push(t); });
+      return out;
+    }
+
+    /* Score BM25 de um documento, decomposto por termo da consulta. */
+    function bm25Parts(doc, docs, query, avgdl) {
+      const N = docs.length;
+      return uniq(query).map(t => {
+        const f = tf(doc, t);
+        const idf = idfAt(df(docs, t), N);
+        return { t: t, tf: f, idf: idf, value: f > 0 ? idf * tfPart(f, doc.toks.length, avgdl) : 0 };
+      });
+    }
+
+    function bm25Score(doc, docs, query, avgdl) {
+      return bm25Parts(doc, docs, query, avgdl).reduce((a, p) => a + p.value, 0);
+    }
+
+    /* TF-IDF clássico: soma linear de tf × ln(N/n), sem saturação e sem normalização. */
+    function tfidfScore(doc, docs, query) {
+      const N = docs.length;
+      return uniq(query).reduce((acc, t) => {
+        const n = df(docs, t);
+        return acc + (n > 0 ? tf(doc, t) * Math.log(N / n) : 0);
+      }, 0);
+    }
+
+    function rankBy(docs, scoreFn) {
+      return docs.map(d => ({ doc: d, score: scoreFn(d) }))
+        .sort((a, c) => c.score - a.score || a.doc.id.localeCompare(c.doc.id));
+    }
+
+    /* ═══════════ Formatação ═══════════ */
+    function fmt(n, d) { return n.toFixed(d === undefined ? 2 : d).replace('.', ','); }
+    function pct(x) { return Math.max(0, Math.min(100, x * 100)); }
+
+    function rankBar(entry, max, color, pos) {
+      const w = max > 0 ? pct(entry.score / max) : 0;
+      const dead = entry.score <= 0;
+      return '<div class="flex items-center gap-2.5">' +
+        '<span class="w-8 text-[10px] font-mono ' + (dead ? 'text-slate-600' : 'text-slate-500') + '">' + (dead ? 'fora' : pos + 'º') + '</span>' +
+        '<span class="w-8 text-xs font-mono ' + (dead ? 'text-slate-600' : 'text-slate-200') + '">' + entry.doc.id + '</span>' +
+        '<div class="flex-1 h-5 rounded bg-surface-900 border border-slate-800 overflow-hidden min-w-0">' +
+          '<div class="h-full transition-all duration-300" style="width:' + w.toFixed(1) + '%;background:' + color + '"></div>' +
+        '</div>' +
+        '<span class="w-12 text-right text-xs font-mono ' + (dead ? 'text-slate-600' : 'text-slate-200') + ' tabular-nums">' + fmt(entry.score) + '</span>' +
+      '</div>';
+    }
+
+    function noticeBox(tone, icon, html) {
+      const map = {
+        ok:   'bg-emerald-500/5 border-emerald-500/30 text-emerald-300',
+        warn: 'bg-amber-500/5 border-amber-500/30 text-amber-300',
+        bad:  'bg-rose-500/5 border-rose-500/30 text-rose-300'
+      };
+      return { cls: map[tone], html: '<i class="fa-solid ' + icon + ' mr-1.5"></i>' + html };
+    }
+
+    /* ═══════════ Módulo 1 — acervo e comparação TF-IDF × BM25 ═══════════ */
+    function renderCorpus() {
+      const docs = corpus();
+      const query = QUERIES[0].q;
+      document.getElementById('corpus-cards').innerHTML = docs.map(d => {
+        const toks = d.toks.map(t => {
+          const hit = query.indexOf(t) !== -1;
+          return '<span class="px-1.5 py-0.5 rounded text-[10px] font-mono ' +
+            (hit ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-surface-950 text-slate-500 border border-slate-800') +
+            '">' + t + '</span>';
+        }).join('');
+        return '<div class="rounded-xl bg-surface-950 border border-slate-800 p-3">' +
+          '<div class="flex items-center justify-between mb-2 gap-2">' +
+            '<span class="text-xs font-mono text-brand-300 font-bold">' + d.id + ' <span class="text-slate-500 font-normal">' + d.title + '</span></span>' +
+            '<span class="text-[10px] font-mono text-slate-500 shrink-0">|D| = ' + d.toks.length + '</span>' +
+          '</div>' +
+          '<div class="flex flex-wrap gap-1">' + toks + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderComparison() {
+      const docs = corpus();
+      const query = QUERIES[0].q;
+      const avgdl = avgdlOf(docs);
+
+      const tfidf = rankBy(docs, d => tfidfScore(d, docs, query));
+      const bm25 = rankBy(docs, d => bm25Score(d, docs, query, avgdl));
+
+      const maxT = Math.max(tfidf[0].score, 0.0001);
+      const maxB = Math.max(bm25[0].score, 0.0001);
+
+      document.getElementById('tfidf-rank').innerHTML = tfidf.map((e, i) => rankBar(e, maxT, '#f43f5e', i + 1)).join('');
+      document.getElementById('bm25-rank-m1').innerHTML = bm25.map((e, i) => rankBar(e, maxB, '#10b981', i + 1)).join('');
+      document.getElementById('rep-val').textContent = '+' + S.rep;
+      document.getElementById('bm25-params-m1').textContent = 'k₁ = ' + fmt(S.k1, 1) + ' · b = ' + fmt(S.b);
+
+      const tfidfTop = tfidf[0].doc.id;
+      const bm25Top = bm25[0].doc.id;
+      const d5tfidf = tfidf.findIndex(e => e.doc.id === 'D5') + 1;
+      const d5bm25 = bm25.findIndex(e => e.doc.id === 'D5') + 1;
+      const jejumD5 = tf(docs[4], 'jejum');
+
+      let box;
+      if (tfidfTop === 'D5' && bm25Top !== 'D5') {
+        box = noticeBox('bad', 'fa-circle-exclamation',
+          '<strong>Com +' + S.rep + ' repetições o TF-IDF virou.</strong> D5 não contém "glicemia" — o termo raro da consulta — e mesmo assim lidera, ' +
+          'só por repetir "jejum" ' + jejumD5 + ' vezes. O BM25 manteve <span class="font-mono">' + bm25Top + '</span> em 1º e deixou D5 em ' + d5bm25 + 'º: ' +
+          'com k₁ = ' + fmt(S.k1, 1) + ' a enésima ocorrência já vale quase nada, e o documento inchado ainda paga a penalidade de comprimento.');
+      } else if (tfidfTop === 'D5' && bm25Top === 'D5') {
+        box = noticeBox('warn', 'fa-triangle-exclamation',
+          '<strong>Os dois cederam.</strong> Com k₁ = ' + fmt(S.k1, 1) + ' e b = ' + fmt(S.b) + ' a saturação está frouxa demais e o BM25 se aproxima do TF-IDF linear. ' +
+          'Devolva k₁ à faixa 1,2–2,0 (módulo 2) e veja D5 cair.');
+      } else {
+        box = noticeBox('ok', 'fa-circle-check',
+          '<strong>Mesmo líder nos dois: ' + tfidfTop + '.</strong> Com poucas repetições o TF-IDF acerta. Suba o slider: em torno de +7 o peso linear de "jejum" ' +
+          'ultrapassa o peso do termo raro "glicemia" e o TF-IDF coroa D5 (hoje em ' + d5tfidf + 'º), enquanto o BM25 segura a ordem.');
+      }
+      const verdict = document.getElementById('rep-verdict');
+      verdict.className = 'mt-5 p-3.5 rounded-xl border text-xs leading-relaxed ' + box.cls;
+      verdict.innerHTML = box.html;
+    }
+
+    /* ═══════════ Módulo 2 — curva de saturação no canvas ═══════════ */
+    let satCanvas = null;
+
+    function drawSaturation() {
+      if (!satCanvas) return;
+      const parent = satCanvas.parentElement;
+      const cssW = Math.max(parent.clientWidth - 24, 240);
+      const cssH = cssW < 420 ? 230 : 300;
+      const dpr = window.devicePixelRatio || 1;
+      satCanvas.width = Math.round(cssW * dpr);
+      satCanvas.height = Math.round(cssH * dpr);
+      satCanvas.style.width = cssW + 'px';
+      satCanvas.style.height = cssH + 'px';
+
+      const ctx = satCanvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      const docs = corpus();
+      const avgdl = avgdlOf(docs);
+      const lens = docs.map(d => d.toks.length);
+      const shortLen = Math.min.apply(null, lens);
+      const longLen = Math.max.apply(null, lens);
+
+      const maxTf = 10;
+      const ceiling = S.k1 + 1;
+      const yMax = Math.max(ceiling, 1) * 1.18;
+
+      const ml = 40, mr = 14, mt = 16, mb = 34;
+      const pw = cssW - ml - mr, ph = cssH - mt - mb;
+      const X = f => ml + (f / maxTf) * pw;
+      const Y = v => mt + ph - (v / yMax) * ph;
+
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let f = 0; f <= maxTf; f += 2) {
+        ctx.beginPath(); ctx.moveTo(X(f), mt); ctx.lineTo(X(f), mt + ph); ctx.stroke();
+      }
+      const yStep = yMax > 2.5 ? 1 : 0.5;
+      ctx.font = '10px JetBrains Mono, monospace';
+      for (let v = 0; v <= yMax; v += yStep) {
+        ctx.beginPath(); ctx.moveTo(ml, Y(v)); ctx.lineTo(ml + pw, Y(v)); ctx.stroke();
+        ctx.fillStyle = '#475569';
+        ctx.textAlign = 'right';
+        ctx.fillText(fmt(v, 1), ml - 6, Y(v) + 3);
+      }
+
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(ml, mt); ctx.lineTo(ml, mt + ph); ctx.lineTo(ml + pw, mt + ph);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748b';
+      ctx.textAlign = 'center';
+      for (let f = 0; f <= maxTf; f += 2) ctx.fillText(String(f), X(f), mt + ph + 15);
+      ctx.fillText('tf — ocorrências do termo no documento', ml + pw / 2, mt + ph + 29);
+
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(ml, Y(ceiling)); ctx.lineTo(ml + pw, Y(ceiling)); ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = '#f59e0b';
+      ctx.textAlign = 'right';
+      ctx.fillText('k₁ + 1 = ' + fmt(ceiling, 2), ml + pw - 4, Y(ceiling) - 5);
+
+      function curve(len, color, width) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        let first = true;
+        for (let f = 0; f <= maxTf + 0.0001; f += 0.05) {
+          const y = Y(tfPart(f, len, avgdl));
+          if (first) { ctx.moveTo(X(f), y); first = false; } else { ctx.lineTo(X(f), y); }
+        }
+        ctx.stroke();
+      }
+      if (S.b > 0 && S.k1 > 0) {
+        curve(shortLen, '#64748b', 1.2);
+        curve(longLen, '#64748b', 1.2);
+      }
+      curve(avgdl, '#22d3ee', 2.2);
+
+      ctx.textAlign = 'left';
+      docs.forEach(d => {
+        const f = tf(d, 'jejum');
+        if (f <= 0 || f > maxTf) return;
+        const x = X(f), y = Y(tfPart(f, d.toks.length, avgdl));
+        ctx.beginPath();
+        ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#818cf8';
+        ctx.fill();
+        ctx.strokeStyle = '#090d16';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#c7d2fe';
+        ctx.fillText(d.id, x + 7, y - 5);
+      });
+    }
+
+    function renderSaturationTable() {
+      const docs = corpus();
+      const avgdl = avgdlOf(docs);
+      const ceiling = S.k1 + 1;
+
+      document.getElementById('tf-rows').innerHTML = docs.map(d => {
+        const f = tf(d, 'jejum');
+        const v = tfPart(f, d.toks.length, avgdl);
+        const share = ceiling > 0 ? (v / ceiling) * 100 : 0;
+        const off = f === 0;
+        return '<tr class="border-b border-slate-800/60 ' + (off ? 'text-slate-600' : '') + '">' +
+          '<td class="py-1.5 ' + (off ? '' : 'text-brand-300') + '">' + d.id + '</td>' +
+          '<td class="py-1.5 text-right tabular-nums">' + d.toks.length + '</td>' +
+          '<td class="py-1.5 text-right tabular-nums">' + f + '</td>' +
+          '<td class="py-1.5 text-right tabular-nums ' + (off ? '' : 'text-cyan-300') + '">' + fmt(v) + '</td>' +
+          '<td class="py-1.5 text-right tabular-nums text-slate-500">' + (off ? '—' : fmt(share, 0) + '%') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function renderLiveRank() {
+      const docs = corpus();
+      const avgdl = avgdlOf(docs);
+      const query = QUERIES[0].q;
+      const rank = rankBy(docs, d => bm25Score(d, docs, query, avgdl));
+      const max = Math.max(rank[0].score, 0.0001);
+      document.getElementById('live-rank').innerHTML = rank.map((e, i) => rankBar(e, max, PALETTE[i % PALETTE.length], i + 1)).join('');
+      document.getElementById('live-rank-note').textContent =
+        'k₁ = ' + fmt(S.k1, 1) + ' · b = ' + fmt(S.b) + ' · avgdl = ' + fmt(avgdl, 1) +
+        '. Mexa nos sliders: a curva e o ranking recalculam juntos, sobre o mesmo acervo.';
+    }
+
+    /* ═══════════ Módulo 3 — normalização por comprimento ═══════════ */
+    function renderLengthPanel() {
+      const docs = corpus();
+      const avgdl = avgdlOf(docs);
+      const maxLen = Math.max.apply(null, docs.map(d => d.toks.length));
+      const query = QUERIES[0].q;
+      document.getElementById('avgdl-val').textContent = fmt(avgdl, 1);
+
+      document.getElementById('len-rows').innerHTML = docs.map(d => {
+        const len = d.toks.length;
+        const norm = normOf(len, avgdl);
+        const hasQ = query.some(t => tf(d, t) > 0);
+        let tone, word, bar;
+        if (!hasQ) { tone = 'text-slate-600'; word = 'sem termo em comum'; bar = '#334155'; }
+        else if (S.b === 0) { tone = 'text-slate-400'; word = 'sem efeito (b = 0)'; bar = '#64748b'; }
+        else if (norm > 1.05) { tone = 'text-rose-400'; word = 'penalidade'; bar = '#f43f5e'; }
+        else if (norm < 0.95) { tone = 'text-emerald-400'; word = 'bônus'; bar = '#10b981'; }
+        else { tone = 'text-slate-400'; word = 'neutro'; bar = '#64748b'; }
+        return '<div class="flex items-center gap-2 sm:gap-3">' +
+          '<span class="w-8 text-xs font-mono text-brand-300 shrink-0">' + d.id + '</span>' +
+          '<div class="relative flex-1 h-7 rounded-lg bg-surface-950 border border-slate-800 overflow-hidden min-w-0">' +
+            '<div class="h-full transition-all duration-300" style="width:' + pct(len / maxLen).toFixed(1) + '%;background:' + bar + '55"></div>' +
+            '<div class="absolute inset-y-0 w-0.5 bg-slate-300" style="left:' + pct(avgdl / maxLen).toFixed(1) + '%"></div>' +
+            '<span class="absolute inset-y-0 left-2.5 flex items-center text-[10px] font-mono text-slate-200">|D| = ' + len + '</span>' +
+          '</div>' +
+          '<span class="w-32 sm:w-44 text-right text-[10px] sm:text-[11px] font-mono ' + tone + ' tabular-nums shrink-0">norma ' + fmt(norm) + ' · ' + word + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    /* ═══════════ Módulo 4 — fórmula, IDF, ranking decomposto ═══════════ */
+    function renderFormulaPanel() {
+      const docs = corpus();
+      const avgdl = avgdlOf(docs);
+      const N = docs.length;
+      const query = QUERIES[0].q;
+
+      document.getElementById('formula-params').textContent =
+        'N = ' + N + ' · avgdl = ' + fmt(avgdl, 1) + ' · k₁ = ' + fmt(S.k1, 1) + ' · b = ' + fmt(S.b) + ' · consulta: jejum, glicemia';
+
+      const BIG = 1000000;
+      document.getElementById('idf-rows').innerHTML = query.map(t => {
+        const n = df(docs, t);
+        const big = idfAt(Math.max(1, Math.round(BIG * n / N)), BIG);
+        return '<tr class="border-b border-slate-800/60">' +
+          '<td class="py-1.5 text-cyan-300">' + t + '</td>' +
+          '<td class="py-1.5 text-right tabular-nums">' + n + ' / ' + N + '</td>' +
+          '<td class="py-1.5 text-right tabular-nums text-white font-semibold">' + fmt(idfAt(n, N)) + '</td>' +
+          '<td class="py-1.5 text-right tabular-nums text-slate-500">' + fmt(big) + '</td>' +
+        '</tr>';
+      }).join('');
+
+      const rows = docs.map(d => {
+        const parts = bm25Parts(d, docs, query, avgdl);
+        return { doc: d, parts: parts, score: parts.reduce((a, p) => a + p.value, 0) };
+      }).sort((a, c) => c.score - a.score || a.doc.id.localeCompare(c.doc.id));
+      const max = Math.max(rows[0].score, 0.0001);
+
+      document.getElementById('full-rank').innerHTML = rows.map((r, i) => {
+        const dead = r.score <= 0;
+        const segs = r.parts.filter(p => p.value > 0).map(p => {
+          const w = pct(p.value / max);
+          const show = w >= 18;
+          return '<div class="h-6 relative shrink-0 transition-all duration-300" style="width:' + w.toFixed(1) + '%;background:' + (SEG_COLOR[p.t] || '#64748b') + '">' +
+            (show ? '<span class="absolute inset-y-0 left-1.5 flex items-center text-[10px] font-mono text-surface-950 font-semibold">' + p.t + ' ' + fmt(p.value) + '</span>' : '') +
+          '</div>';
+        }).join('');
+        return '<div class="flex items-center gap-2.5">' +
+          '<span class="w-8 text-[10px] font-mono ' + (dead ? 'text-slate-600' : 'text-slate-500') + '">' + (dead ? 'fora' : (i + 1) + 'º') + '</span>' +
+          '<span class="w-8 text-xs font-mono ' + (dead ? 'text-slate-600' : 'text-slate-200') + '">' + r.doc.id + '</span>' +
+          '<div class="flex-1 h-6 rounded bg-surface-950 border border-slate-800 overflow-hidden flex min-w-0">' + segs + '</div>' +
+          '<span class="w-12 text-right text-xs font-mono ' + (dead ? 'text-slate-600' : 'text-white') + ' tabular-nums">' + fmt(r.score) + '</span>' +
+        '</div>';
+      }).join('');
+
+      const top = rows[0];
+      const bothTerms = top.parts.every(p => p.value > 0);
+      const d5pos = rows.findIndex(r => r.doc.id === 'D5') + 1;
+      document.getElementById('full-rank-note').innerHTML =
+        '<strong class="text-slate-300">' + top.doc.id + '</strong> lidera' +
+        (bothTerms ? ', com os dois termos da consulta — e um deles é raro. ' : '. ') +
+        'D5 repete "jejum" ' + tf(docs[4], 'jejum') + ' vezes e fica em ' + d5pos + 'º. ' +
+        'D4 não compartilha nenhum termo: score zero, fora do ranking. Semântica OR — o BM25 não lê a negação de D1 ("sem jejum").';
+
+      document.getElementById('code-k1').textContent = S.k1.toFixed(1);
+      document.getElementById('code-b').textContent = S.b.toFixed(2);
+      document.getElementById('code-params').textContent = 'k1=' + fmt(S.k1, 1) + ' · b=' + fmt(S.b);
+      document.getElementById('code-output').textContent = rows.map(r => r.doc.id + '  ' + r.score.toFixed(2)).join('\n');
+    }
+
+    /* ═══════════ Módulo 5 — consulta descasada ═══════════ */
+    function renderQueryDemo() {
+      const docs = corpus();
+      const avgdl = avgdlOf(docs);
+      const query = QUERIES[S.queryIdx].q;
+      const rank = rankBy(docs, d => bm25Score(d, docs, query, avgdl));
+      const max = Math.max(rank[0].score, 0.0001);
+      const zeros = rank.filter(e => e.score <= 0).length;
+
+      document.getElementById('query-rank').innerHTML =
+        rank.map((e, i) => rankBar(e, max, e.score > 0 ? '#a855f7' : '#334155', i + 1)).join('');
+
+      document.querySelectorAll('.qbtn').forEach(btn => {
+        const on = Number(btn.getAttribute('data-q')) === S.queryIdx;
+        btn.className = 'qbtn px-3 py-1.5 rounded-lg text-xs font-mono transition ' +
+          (on ? 'bg-rose-500 text-white font-bold' : 'bg-surface-950 border border-slate-800 text-slate-300 hover:text-white');
+      });
+
+      let box;
+      if (zeros === docs.length) {
+        box = noticeBox('bad', 'fa-ban',
+          '<strong>Score zero em todo o acervo.</strong> "açúcar no sangue" descreve exatamente o que D2 mede, mas nenhuma palavra coincide. ' +
+          'Para o BM25 os dois textos são ortogonais — e mudar k₁ ou b não altera nada, porque não existe termo casado para reponderar. ' +
+          'É esse buraco que o SPLADE e os modelos densos preenchem.');
+      } else if (S.queryIdx === 3) {
+        box = noticeBox('warn', 'fa-triangle-exclamation',
+          '<strong>A negação não existe.</strong> D1 diz literalmente "sem jejum" e por isso casa com <em>os dois</em> termos da consulta, ' +
+          'indo ao topo. O BM25 é um saco de palavras: ordem, sintaxe e negação não entram na conta.');
+      } else if (S.queryIdx === 1) {
+        box = noticeBox('warn', 'fa-circle-info',
+          '<strong>Stopword cobra caro.</strong> Acrescentar "de" à consulta soma um termo presente em quase todos os documentos: IDF baixo, ' +
+          'mas não nulo, e ele ainda empurra documentos irrelevantes para cima. Por isso a remoção de <em>stopwords</em> vem antes do índice.');
+      } else {
+        box = noticeBox('ok', 'fa-circle-check',
+          '<strong>Caso ideal.</strong> A consulta usa exatamente o vocabulário do acervo, e o termo raro "glicemia" decide o topo. ' +
+          'É quando o BM25 brilha: termo exato, código de peça, CID, nome próprio, jargão interno.');
+      }
+      const v = document.getElementById('query-verdict');
+      v.className = 'p-4 rounded-xl border text-xs leading-relaxed self-start ' + box.cls;
+      v.innerHTML = box.html;
+    }
+
+    /* ═══════════ Orquestração ═══════════ */
+    function syncControls() {
+      document.getElementById('k1-val-a').textContent = fmt(S.k1, 2);
+      document.getElementById('k1-val-b').textContent = fmt(S.k1, 2);
+      document.getElementById('b-val-a').textContent = fmt(S.b, 2);
+      document.getElementById('b-val-b').textContent = fmt(S.b, 2);
+      document.getElementById('k1-range-a').value = S.k1;
+      document.getElementById('k1-range-b').value = S.k1;
+      document.getElementById('b-range-a').value = S.b;
+      document.getElementById('b-range-b').value = S.b;
+      document.getElementById('rep-range').value = S.rep;
+    }
+
+    function recompute() {
+      renderCorpus();
+      renderComparison();
+      renderSaturationTable();
+      renderLiveRank();
+      renderLengthPanel();
+      renderFormulaPanel();
+      renderQueryDemo();
+      drawSaturation();
+      syncControls();
+    }
+
+    function setQuery(i) {
+      S.queryIdx = i;
+      renderQueryDemo();
+      if (i === 2) Guia.toast('Sinônimo perfeito, zero sobreposição léxica: score zero.', 'fa-link-slash');
+    }
+
+    function resetParams() {
+      S.k1 = 1.2;
+      S.b = 0.75;
+      recompute();
+      Guia.toast('Parâmetros de volta ao padrão do Lucene: k₁ = 1,2 e b = 0,75.', 'fa-rotate-left');
+    }
+
+    Guia.ready(() => {
+      satCanvas = document.getElementById('sat-canvas');
+
+      ['k1-range-a', 'k1-range-b'].forEach(id => {
+        document.getElementById(id).addEventListener('input', e => { S.k1 = Number(e.target.value); recompute(); });
+      });
+      ['b-range-a', 'b-range-b'].forEach(id => {
+        document.getElementById(id).addEventListener('input', e => { S.b = Number(e.target.value); recompute(); });
+      });
+      document.getElementById('rep-range').addEventListener('input', e => { S.rep = Number(e.target.value); recompute(); });
+      window.addEventListener('resize', drawSaturation);
+
+      recompute();
+    });
+
+    /* Canvas precisa de largura > 0: redesenha sempre que o módulo 2 (índice 1) aparece. */
+    Guia.onSlide(1, drawSaturation);
+  </script>
+</body>
+</html>

@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grounding e citação: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Grounding e citação"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Da resposta ao trecho que a sustenta — atribuição, abstenção e verificabilidade"
+      data-icon="fa-anchor"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 ══════════════ -->
+    <section class="slide-section" data-nav="Grounding" data-icon="fa-anchor">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-anchor"></i> Módulo 01 • Grounding em uma frase
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Toda afirmação sai de um trecho — <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">e dá para apontar qual</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O capítulo 1 terminou com o trecho certo dentro do contexto. Isso é condição necessária e não
+          suficiente: o modelo continua livre para escrever qualquer coisa. Grounding é a exigência que
+          fecha essa brecha — e, mais importante, a exigência que o leitor consegue <em>auditar sozinho</em>.
+        </p>
+      </div>
+
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-emerald-500/30 p-6 sm:p-8 mb-8">
+        <div class="absolute -right-6 -bottom-8 text-slate-800/40 text-9xl pointer-events-none"><i class="fa-solid fa-anchor"></i></div>
+        <div class="relative z-10 flex flex-col sm:flex-row items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl shrink-0">
+            <i class="fa-solid fa-quote-left"></i>
+          </div>
+          <div>
+            <p class="text-lg sm:text-xl font-medium text-slate-100 leading-snug">
+              Uma resposta sem âncora verificável é <span class="text-emerald-300">indistinguível</span> de um palpite bem escrito.
+            </p>
+            <p class="text-slate-400 text-sm mt-3 leading-relaxed max-w-3xl">
+              Repare que o problema não é o palpite estar errado — é ninguém conseguir saber se está. Fluência
+              não carrega sinal de confiabilidade: o texto inventado e o texto correto saem com a mesma
+              gramática, o mesmo tom institucional e a mesma segurança. Grounding não deixa o modelo mais
+              certo; deixa o erro <strong class="text-slate-200">localizável</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-lg bg-rose-500/10 text-rose-400 text-xs font-mono font-semibold border border-rose-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-ghost"></i> Sem âncora
+            </span>
+            <span class="text-[10px] text-slate-500 font-mono">auditável: não</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-2 font-mono">Colaborador: "o exame periódico desconta do meu ponto?"</p>
+          <div class="rounded-xl bg-rose-950/20 border border-rose-500/30 p-4 text-sm text-rose-100 leading-relaxed">
+            Não desconta. A ausência para exame periódico é abonada e o resultado costuma sair em até 24 horas
+            no portal do colaborador.
+          </div>
+          <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+            A primeira frase está certa, a segunda é invenção. Nada no texto distingue as duas. O leitor que
+            confiar na primeira tem todo motivo para confiar na segunda — é exatamente assim que o erro passa.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6 glow-emerald">
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold border border-emerald-500/30 flex items-center gap-1.5">
+              <i class="fa-solid fa-anchor"></i> Com âncora por afirmação
+            </span>
+            <span class="text-[10px] text-slate-500 font-mono">auditável: sim</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-2 font-mono">Mesma pergunta, mesma base.</p>
+          <div class="rounded-xl bg-emerald-950/20 border border-emerald-500/30 p-4 text-sm text-emerald-100 leading-relaxed space-y-2">
+            <p>Não desconta: a ausência é abonada mediante comprovante de comparecimento
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 align-middle">Norma de ponto, item 7</span>
+            </p>
+            <p class="text-amber-200">Sobre o prazo do resultado, não encontrei nada na base.
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 align-middle">sem fonte → não afirmo</span>
+            </p>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+            A segunda frase sumiu — não porque o modelo "soube" que era falsa, mas porque a regra era
+            <strong class="text-slate-200">afirmar só o que tem trecho</strong>. A lacuna virou informação.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-2">Nível 0</p>
+          <h4 class="font-bold text-white text-sm mb-1.5"><i class="fa-solid fa-xmark text-rose-400 mr-1.5"></i>Nenhuma fonte</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">O texto sai sozinho. Auditar custa reler a base inteira à mão — ou seja, ninguém audita.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-5">
+          <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-2">Nível 1</p>
+          <h4 class="font-bold text-white text-sm mb-1.5"><i class="fa-solid fa-file-lines text-amber-400 mr-1.5"></i>Fontes no rodapé</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Lista os documentos consultados. Verdadeira e quase inútil: não diz <em>qual frase</em> veio de onde, e serve de álibi para a afirmação sem respaldo no meio do parágrafo.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5">
+          <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-2">Nível 2</p>
+          <h4 class="font-bold text-white text-sm mb-1.5"><i class="fa-solid fa-link text-emerald-400 mr-1.5"></i>Citação por afirmação</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Cada frase carrega o trecho que a sustenta. Auditar custa uma leitura de 10 segundos — e é o único nível em que dá para calcular fidelidade.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6 mb-8">
+        <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2"><i class="fa-solid fa-square-root-variable text-emerald-400"></i> A notação que o resto da página usa</h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-3">
+          Sejam $C$ o conjunto de afirmações (<em>claims</em>) extraídas da resposta e $R$ o conjunto de
+          trechos recuperados. Escrevemos $t \models c$ para "o trecho $t$ sustenta a afirmação $c$" —
+          emprestado da relação de <em>entailment</em>: lendo só $t$, uma pessoa razoável concluiria $c$.
+        </p>
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-4 overflow-x-auto">
+          $$\text{fidelidade}(C, R) \;=\; \frac{\bigl|\{\, c \in C \;:\; \exists\, t \in R,\; t \models c \,\}\bigr|}{|C|}$$
+        </div>
+        <p class="text-[11px] text-slate-500 leading-relaxed mt-3">
+          Note o que a fórmula <strong class="text-slate-300">não</strong> mede: se $c$ é verdadeira no mundo.
+          Uma base errada produz fidelidade 100% com conteúdo errado. Fidelidade é lealdade à fonte, não
+          verdade — e é justamente por isso que ela é computável sem um oráculo.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+        <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i class="fa-solid fa-diagram-project text-cyan-400"></i> De onde vem o trecho citável</h3>
+        <p class="text-xs text-slate-400 mb-4 leading-relaxed">Grounding só funciona se a citação apontar para algo pequeno e específico. Isso é trabalho do capítulo 1.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <a href="../../esparsos/bm25/index.html" class="rounded-xl bg-surface-950 border border-slate-800 hover:border-cyan-500/40 p-3.5 transition block">
+            <span class="font-semibold text-cyan-300">BM25 <span class="font-mono text-[10px] text-slate-600">1.1.2</span></span>
+            <p class="text-slate-400 mt-1 leading-relaxed">O número da norma, o código do exame, a sigla ASO. Citar exige acertar o literal.</p>
+          </a>
+          <a href="../../esparsos/sparse-encoder/index.html" class="rounded-xl bg-surface-950 border border-slate-800 hover:border-cyan-500/40 p-3.5 transition block">
+            <span class="font-semibold text-cyan-300">SPLADE <span class="font-mono text-[10px] text-slate-600">1.1.3</span></span>
+            <p class="text-slate-400 mt-1 leading-relaxed">Expande o termo sem perder o índice invertido: a fonte continua inspecionável termo a termo.</p>
+          </a>
+          <a href="../../densos/embeddings/index.html" class="rounded-xl bg-surface-950 border border-slate-800 hover:border-emerald-500/40 p-3.5 transition block">
+            <span class="font-semibold text-emerald-300">Embeddings <span class="font-mono text-[10px] text-slate-600">1.2.1</span></span>
+            <p class="text-slate-400 mt-1 leading-relaxed">O usuário pergunta com outras palavras. Sem isso, o contexto chega vazio — e contexto vazio é convite à invenção.</p>
+          </a>
+          <a href="../../densos/multi-vector/index.html" class="rounded-xl bg-surface-950 border border-slate-800 hover:border-emerald-500/40 p-3.5 transition block">
+            <span class="font-semibold text-emerald-300">ColBERT <span class="font-mono text-[10px] text-slate-600">1.2.6</span></span>
+            <p class="text-slate-400 mt-1 leading-relaxed">Casamento token a token acha a <em>passagem</em>. Citar "o documento inteiro" não é citar.</p>
+          </a>
+          <a href="../../densos/cross-encoder/index.html" class="rounded-xl bg-surface-950 border border-slate-800 hover:border-emerald-500/40 p-3.5 transition block">
+            <span class="font-semibold text-emerald-300">Cross-Encoder <span class="font-mono text-[10px] text-slate-600">1.2.5</span></span>
+            <p class="text-slate-400 mt-1 leading-relaxed">Menos trechos e mais densos em sinal: menos chance de costurar duas fontes numa afirmação que nenhuma das duas sustenta.</p>
+          </a>
+          <a href="../../rrf/index.html" class="rounded-xl bg-surface-950 border border-slate-800 hover:border-purple-500/40 p-3.5 transition block">
+            <span class="font-semibold text-purple-300">RRF <span class="font-mono text-[10px] text-slate-600">1.3</span></span>
+            <p class="text-slate-400 mt-1 leading-relaxed">Se o trecho não entra no top-$k$, nenhuma regra de citação o resgata. Recall é pré-requisito de grounding.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 ══════════════ -->
+    <section class="slide-section" data-nav="Atribuição" data-icon="fa-link">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-link"></i> Módulo 02 • Atribuição por afirmação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A resposta não é a unidade. <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">A afirmação é.</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Uma resposta correta e uma resposta 75% correta parecem iguais. O caso perigoso não é a resposta
+          toda inventada — essa costuma destoar. É a resposta com quatro afirmações em que três têm respaldo
+          e a quarta pegou carona na credibilidade das outras.
+        </p>
+      </div>
+
+      <!-- SIMULADOR -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass-chart text-emerald-400"></i> Verificador de atribuição
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed max-w-2xl">
+              Agente de RH/saúde ocupacional. Pergunta: <span class="text-slate-300 font-medium">"Vou fazer o exame periódico — preciso de jejum, quem paga e perco o dia de trabalho?"</span>
+              Clique numa afirmação para ver o trecho que a sustenta. Remova trechos da base e veja o que desaba.
+            </p>
+          </div>
+          <div class="shrink-0 rounded-xl bg-surface-950 border border-slate-800 p-3 min-w-[170px]">
+            <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Fidelidade</p>
+            <p id="fid-valor" class="text-3xl font-extrabold font-mono text-emerald-400 leading-none">—</p>
+            <div class="h-1.5 rounded-full bg-surface-800 mt-2 overflow-hidden">
+              <div id="fid-barra" class="h-full rounded-full bg-emerald-500 transition-all duration-500" style="width:0%"></div>
+            </div>
+            <p id="fid-legenda" class="text-[10px] text-slate-500 font-mono mt-1.5">—</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div>
+            <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Resposta do agente, quebrada em afirmações</p>
+            <div id="claims-lista" class="space-y-2.5"></div>
+            <div id="claims-dica" class="mt-3 text-[11px] text-slate-500 leading-relaxed"></div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-2 gap-2">
+              <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Trechos recuperados</p>
+              <button onclick="restaurarBase()" class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-700 hover:border-slate-600 text-[10px] font-mono text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-left"></i> Restaurar base
+              </button>
+            </div>
+            <div id="trechos-lista" class="space-y-2.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6">
+          <h4 class="font-bold text-white text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Por que a citação por resposta esconde o problema</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Um rodapé com "Fontes: Política de Saúde Ocupacional, Norma de ponto" é literalmente verdadeiro
+            na resposta acima — aqueles documentos <em>foram</em> usados. E ainda assim a afirmação sobre o
+            prazo de resultado continua sem respaldo, agora com aparência de conferida.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Citação agregada mede <strong class="text-slate-200">consulta</strong>; citação por afirmação mede
+            <strong class="text-slate-200">suporte</strong>. São coisas diferentes, e só a segunda vira número.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-scissors text-cyan-400"></i> Quebrar a resposta em afirmações</h4>
+          <ul class="text-xs text-slate-400 space-y-2.5 leading-relaxed">
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] mt-1.5 text-cyan-400 shrink-0"></i><span>Uma afirmação = um fato isolado, verificável sozinho. "8 horas de jejum, água liberada" são <em>duas</em>: a base pode sustentar uma e não a outra.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] mt-1.5 text-cyan-400 shrink-0"></i><span>Conectivos causais são afirmações: "porque a norma mudou em 2026" precisa de trecho próprio.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] mt-1.5 text-cyan-400 shrink-0"></i><span>Quem quebra é outro modelo, ou o próprio gerador com formato estruturado. Não é de graça: a decomposição erra, e granularidade fina infla o denominador.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] mt-1.5 text-rose-400 shrink-0"></i><span>Por isso fidelidade só se compara dentro do mesmo esquema de decomposição. Entre dois sistemas com granularidades distintas, o número não é comparável.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 ══════════════ -->
+    <section class="slide-section" data-nav="Citar ou abster" data-icon="fa-circle-question">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-circle-question"></i> Módulo 03 • Citar ou se abster
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          "Não encontrei na base" <span class="bg-gradient-to-r from-amber-400 to-emerald-400 bg-clip-text text-transparent">é uma resposta correta</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O comportamento padrão de um LLM diante de uma lacuna é preencher, não sinalizar. Abstenção não é
+          o agente falhando: é o agente preservando a única informação que ele realmente tem — a de que a
+          base não cobre aquilo.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-8">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-gauge-high text-amber-400"></i> Política de abstenção
+        </h3>
+        <p class="text-xs text-slate-400 mb-5 leading-relaxed">
+          Escolha o limiar mínimo de fidelidade para o agente entregar a resposta. A fidelidade usada é a
+          do verificador do módulo anterior — mexa nos trechos lá e volte aqui.
+        </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+          <div class="lg:col-span-2 space-y-4">
+            <div>
+              <div class="flex items-center justify-between text-xs mb-2">
+                <label for="limiar-abst" class="text-slate-300 font-medium">Limiar de fidelidade para responder</label>
+                <span id="limiar-val" class="font-mono text-amber-300 font-bold">75%</span>
+              </div>
+              <input id="limiar-abst" type="range" min="0" max="100" step="5" value="75" class="w-full">
+              <div class="flex justify-between text-[10px] font-mono text-slate-600 mt-1">
+                <span>0% — responde sempre</span><span>100% — só resposta integralmente ancorada</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+                <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Fidelidade atual</p>
+                <p id="abst-fid" class="text-xl font-mono font-bold text-emerald-300">—</p>
+              </div>
+              <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+                <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Sem respaldo</p>
+                <p id="abst-orfas" class="text-xl font-mono font-bold text-rose-300">—</p>
+              </div>
+              <div class="rounded-xl bg-surface-950 border border-slate-800 p-3 col-span-2 sm:col-span-1">
+                <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Margem</p>
+                <p id="abst-margem" class="text-xl font-mono font-bold text-slate-300">—</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="abst-veredito" class="rounded-xl border p-4 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-code-branch text-emerald-400"></i> Três saídas, não duas</h4>
+          <div class="space-y-3 text-xs">
+            <div class="rounded-xl bg-emerald-950/20 border border-emerald-500/30 p-3">
+              <p class="font-semibold text-emerald-300 mb-1"><i class="fa-solid fa-check mr-1.5"></i>Responder com citação</p>
+              <p class="text-slate-400 leading-relaxed">Todas as afirmações têm trecho. O leitor confere o que quiser.</p>
+            </div>
+            <div class="rounded-xl bg-amber-950/20 border border-amber-500/30 p-3">
+              <p class="font-semibold text-amber-300 mb-1"><i class="fa-solid fa-scissors mr-1.5"></i>Responder o que tem respaldo e marcar a lacuna</p>
+              <p class="text-slate-400 leading-relaxed">Quase sempre a melhor saída. Entrega valor parcial sem esconder o buraco: "sobre o prazo do resultado, a base não diz".</p>
+            </div>
+            <div class="rounded-xl bg-rose-950/20 border border-rose-500/30 p-3">
+              <p class="font-semibold text-rose-300 mb-1"><i class="fa-solid fa-hand mr-1.5"></i>Abster e encaminhar</p>
+              <p class="text-slate-400 leading-relaxed">Nada de relevante foi recuperado. Abster <em>sem</em> dizer o que fazer a seguir só empurra o usuário para o palpite — aponte a área responsável.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-6">
+          <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-scale-unbalanced text-amber-400"></i> O custo dos dois extremos</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            <strong class="text-rose-300">Limiar baixo demais</strong> treina o usuário a confiar cegamente. Se
+            o agente acerta 30 vezes seguidas, ninguém confere a 31ª — e a 31ª é a que vira orientação clínica
+            errada, cálculo de verba errado, prazo processual perdido. A confiança acumulada é exatamente o que
+            transforma um erro raro em erro caro.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            <strong class="text-amber-300">Limiar alto demais</strong> produz um agente que se abstém de tudo.
+            O usuário volta ao Google interno, ao colega do lado, ao PDF desatualizado na pasta compartilhada —
+            fontes com grounding pior que o do agente que você desligou.
+          </p>
+          <p class="text-[11px] text-slate-500 leading-relaxed border-t border-slate-800 pt-3">
+            Não existe limiar ótimo universal: ele é função do custo assimétrico do erro no seu domínio. Triagem
+            clínica e cálculo de rescisão toleram muito menos que "resumir a ata da reunião". Calibre por
+            domínio, com dados seus — o módulo <a href="../avaliacao/index.html" class="text-brand-400 hover:underline">1.4.4</a> mostra como.
+          </p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+        <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> A armadilha da abstenção</h4>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Abstenção é uma resposta, e como toda resposta pode estar errada. Abster quando o trecho <em>estava</em>
+          no contexto é um falso negativo caro: o usuário conclui que a base não cobre o assunto — e essa conclusão
+          é falsa. Medir só "taxa de alucinação" premia o agente que se cala; por isso a avaliação precisa contar
+          as duas colunas, invenção e silêncio indevido.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 ══════════════ -->
+    <section class="slide-section" data-nav="Na prática" data-icon="fa-screwdriver-wrench">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-screwdriver-wrench"></i> Módulo 04 • Como se exige isso na prática
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Pedir por instrução, <span class="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">conferir por verificação</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Instrução de sistema é barata e falha em silêncio: o modelo cita o trecho errado com a mesma
+          convicção. Verificação pós-geração custa uma chamada a mais e transforma a exigência em número.
+          Na prática usa-se os dois — um para induzir o formato, outro para auditar o resultado.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-terminal text-cyan-400"></i> 1. Instrução de sistema</h4>
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-4 font-mono text-[11px] text-slate-300 leading-relaxed overflow-x-auto whitespace-pre">Responda usando <span class="text-emerald-300">somente</span> os trechos entre &lt;contexto&gt;.
+
+Cada frase da resposta deve terminar com o id do
+trecho que a sustenta, no formato [T2].
+Uma frase pode citar mais de um trecho: [T1][T3].
+
+Se nenhum trecho sustentar uma afirmação,
+<span class="text-amber-300">não escreva a afirmação</span>. Diga explicitamente
+que a base não cobre aquele ponto.
+
+Não complete lacunas com conhecimento geral,
+mesmo que você tenha certeza.</div>
+          <ul class="text-[11px] text-slate-400 mt-3 space-y-1.5 leading-relaxed">
+            <li><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i>Id curto e estável por trecho facilita o parse e a auditoria.</li>
+            <li><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i>"Não escreva a afirmação" funciona melhor que "avise que não sabe": remove a frase em vez de pedir uma ressalva que o modelo tende a diluir.</li>
+            <li><i class="fa-solid fa-xmark text-rose-400 mr-1.5"></i>Nada disso é garantia. A citação pode apontar para o trecho errado — e o formato bem-comportado dá aparência de rigor.</li>
+          </ul>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-emerald-400"></i> 2. Verificação pós-geração</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Para cada par (afirmação $c$, trecho citado $t$), um segundo julgador decide se $t \models c$.
+            Duas famílias, com o mesmo formato de saída e custos bem diferentes:
+          </p>
+          <div class="space-y-3 text-xs">
+            <div class="rounded-xl bg-surface-950 border border-slate-800 p-3.5">
+              <p class="font-semibold text-emerald-300 mb-1">Modelo de NLI / entailment</p>
+              <p class="text-slate-400 leading-relaxed">Um classificador treinado em inferência textual devolve $P(\text{entailment})$ para o par. Rápido, barato, roda local. Sofre com trechos longos, com raciocínio numérico e com afirmações que dependem de duas frases distantes.</p>
+            </div>
+            <div class="rounded-xl bg-surface-950 border border-slate-800 p-3.5">
+              <p class="font-semibold text-purple-300 mb-1">LLM-as-judge</p>
+              <p class="text-slate-400 leading-relaxed">Um LLM recebe afirmação + trecho e responde sustentada / parcialmente / não sustentada. Lida melhor com paráfrase e agregação, custa uma chamada por afirmação e herda vieses conhecidos (tende a concordar com texto fluente e com a própria família de modelos).</p>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-relaxed mt-3 border-t border-slate-800 pt-3">
+            <i class="fa-solid fa-circle-info mr-1"></i> Honestidade sobre o estado da arte: a formalização usual
+            de atribuição é o critério AIS (<em>Attributable to Identified Sources</em>, Rashkin et al., 2021), e
+            há benchmarks de geração com citação como o ALCE (Gao et al., 2023). Não cito números aqui de
+            propósito — a concordância entre juiz automático e julgamento humano varia bastante por domínio e
+            por esquema de decomposição, e um número de paper não transfere para a sua base.
+          </p>
+        </div>
+      </div>
+
+      <!-- Trade-off cobertura x precisão -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-sliders text-amber-400"></i> O trade-off do limiar $\tau$</h3>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed max-w-2xl">
+              O verificador devolve um score $s(c) \in [0,1]$ por afirmação. Só sobrevive na resposta final quem
+              tem $s(c) \ge \tau$. Arraste e veja as duas métricas andarem em direções opostas — os scores abaixo
+              são os da mesma resposta do módulo 2.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div class="lg:col-span-2 space-y-4">
+            <div>
+              <div class="flex items-center justify-between text-xs mb-2">
+                <label for="tau-range" class="text-slate-300 font-medium">Limiar $\tau$</label>
+                <span id="tau-val" class="font-mono text-amber-300 font-bold">0.50</span>
+              </div>
+              <input id="tau-range" type="range" min="0" max="100" step="1" value="50" class="w-full">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+                <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Cobertura</p>
+                <p id="tau-cob" class="text-2xl font-mono font-bold text-cyan-300">—</p>
+                <p class="text-[10px] text-slate-500 leading-snug mt-1">afirmações que sobrevivem</p>
+              </div>
+              <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+                <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Precisão</p>
+                <p id="tau-prec" class="text-2xl font-mono font-bold text-emerald-300">—</p>
+                <p class="text-[10px] text-slate-500 leading-snug mt-1">das que sobrevivem, quantas têm respaldo real</p>
+              </div>
+            </div>
+            <div class="rounded-xl bg-surface-950 border border-slate-800 p-3.5 overflow-x-auto">
+              $$\text{cob}(\tau)=\frac{|\{c: s(c)\ge\tau\}|}{|C|} \quad\;\; \text{prec}(\tau)=\frac{|\{c: s(c)\ge\tau \wedge \exists t,\, t \models c\}|}{|\{c: s(c)\ge\tau\}|}$$
+            </div>
+            <p id="tau-nota" class="text-[11px] leading-relaxed"></p>
+          </div>
+
+          <div class="lg:col-span-3">
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs min-w-[460px]">
+                <thead>
+                  <tr class="bg-surface-950/60 text-left">
+                    <th class="px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Afirmação</th>
+                    <th class="px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">$s(c)$</th>
+                    <th class="px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Decisão</th>
+                    <th class="px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Respaldo real</th>
+                  </tr>
+                </thead>
+                <tbody id="tau-tabela" class="divide-y divide-slate-800"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+        <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-gears text-slate-400"></i> Onde isso encaixa no pipeline</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[620px]">
+            <thead>
+              <tr class="bg-surface-950/60 text-left">
+                <th class="px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-slate-500">Etapa</th>
+                <th class="px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-slate-500">O que faz pelo grounding</th>
+                <th class="px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-slate-500">Custo</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <tr><td class="px-4 py-2.5 text-cyan-300 font-semibold">Chunking</td><td class="px-4 py-2.5 text-slate-400">Define o tamanho da menor coisa citável. Chunk de 2 páginas não é citação.</td><td class="px-4 py-2.5 text-slate-500">indexação</td></tr>
+              <tr><td class="px-4 py-2.5 text-cyan-300 font-semibold">Recuperação + <a href="../../rrf/index.html" class="hover:underline">RRF</a></td><td class="px-4 py-2.5 text-slate-400">Garante que o trecho citável esteja no contexto. Sem recall, citar é impossível.</td><td class="px-4 py-2.5 text-slate-500">ms</td></tr>
+              <tr><td class="px-4 py-2.5 text-cyan-300 font-semibold"><a href="../../densos/cross-encoder/index.html" class="hover:underline">Re-ranking</a></td><td class="px-4 py-2.5 text-slate-400">Corta distratores que o gerador citaria por proximidade temática.</td><td class="px-4 py-2.5 text-slate-500">dezenas de ms</td></tr>
+              <tr><td class="px-4 py-2.5 text-emerald-300 font-semibold">Instrução + ids</td><td class="px-4 py-2.5 text-slate-400">Induz o formato de citação por frase.</td><td class="px-4 py-2.5 text-slate-500">tokens de prompt</td></tr>
+              <tr><td class="px-4 py-2.5 text-emerald-300 font-semibold">Verificação</td><td class="px-4 py-2.5 text-slate-400">Transforma "pedi citação" em fidelidade medida; permite podar ou reescrever.</td><td class="px-4 py-2.5 text-amber-300">+1 chamada por afirmação</td></tr>
+              <tr><td class="px-4 py-2.5 text-purple-300 font-semibold">Nova busca</td><td class="px-4 py-2.5 text-slate-400">Afirmação sem respaldo vira nova query em vez de virar texto. É o <a href="../laco/index.html" class="text-brand-400 hover:underline">laço do agente</a>.</td><td class="px-4 py-2.5 text-amber-300">latência</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 ══════════════ -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-flag-checkered">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-flag-checkered"></i> Módulo 05 • Síntese, limites e quiz
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que grounding resolve — <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">e o que ele não resolve</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Citação por afirmação é a diferença entre um agente que você usa e um agente que você audita.
+          Mas é uma garantia estreita, e conhecer a borda dela importa mais que o entusiasmo.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/30">
+          <h4 class="font-bold text-white text-sm mb-2"><i class="fa-solid fa-anchor text-emerald-400 mr-1.5"></i>Fidelidade ≠ verdade</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Fidelidade mede lealdade ao trecho. Base desatualizada com fidelidade 100% entrega o erro com selo de conferido. O grounding move o problema do modelo para a curadoria da base — o que é um enorme progresso, porque base se corrige editando um arquivo.</p>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/30">
+          <h4 class="font-bold text-white text-sm mb-2"><i class="fa-solid fa-link text-emerald-400 mr-1.5"></i>A unidade é a afirmação</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Citação por resposta é quase decorativa: o caso perigoso é a resposta majoritariamente ancorada com uma frase órfã pegando carona. Só a decomposição expõe isso.</p>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-amber-500/30">
+          <h4 class="font-bold text-white text-sm mb-2"><i class="fa-solid fa-hand text-amber-400 mr-1.5"></i>Abster é entregar</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">"A base não cobre isso, fale com Saúde Ocupacional" é informação acionável. O limiar sai do custo do erro no seu domínio, não de um default.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6 mb-8">
+        <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Limitações do que foi ensinado aqui</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-3 text-xs text-slate-400">
+          <p><strong class="text-rose-300">Citar não é usar.</strong> O modelo pode anexar [T2] a uma frase que ele escreveu de memória e que por acaso combina com T2. A citação fica plausível e a cadeia causal é falsa.</p>
+          <p><strong class="text-rose-300">O verificador também erra.</strong> Um juiz automático com 90% de acerto erra 1 em 10 afirmações; num relatório de 40 afirmações isso é bastante. Fidelidade medida é estimativa, não certificado.</p>
+          <p><strong class="text-rose-300">Agregação quebra a atribuição.</strong> "Três das cinco unidades exigem jejum" não sai de nenhum trecho isolado — sai de contar cinco. NLI por par lida mal com isso.</p>
+          <p><strong class="text-rose-300">Nada disso resolve recuperação ruim.</strong> Se o trecho certo não entrou no top-$k$, a resposta honesta é abstenção — correta e inútil. O remédio está no capítulo 1 e na próxima busca.</p>
+          <p><strong class="text-rose-300">A decomposição é um parâmetro escondido.</strong> Mudar a granularidade muda a fidelidade sem mudar o sistema. Cuidado com comparações entre times.</p>
+          <p><strong class="text-rose-300">Custo real.</strong> Verificar por afirmação multiplica chamadas e latência. Em volume, isso vira decisão de arquitetura, não detalhe.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-cyan-500/30 p-6 mb-8">
+        <div class="flex flex-col sm:flex-row items-start gap-5">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg shrink-0"><i class="fa-solid fa-rotate"></i></div>
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1">Próximo tópico</p>
+            <h4 class="text-lg font-bold text-white mb-1.5"><a href="../laco/index.html" class="hover:text-cyan-300 transition">1.4.3 — O laço do agente <i class="fa-solid fa-arrow-right text-xs ml-1"></i></a></h4>
+            <p class="text-xs text-slate-400 leading-relaxed max-w-3xl">
+              Aqui a afirmação sem respaldo foi apagada. Mas apagar é o desfecho mais pobre: se falta trecho, o
+              certo é <em>buscar de novo</em> — reformular a query, decompor a pergunta, saber quando parar.
+              Fidelidade baixa deixa de ser um placar e vira o gatilho de uma nova recuperação. É o próximo tópico.
+              Depois vêm <a href="../avaliacao/index.html" class="text-brand-400 hover:underline">1.4.4 — medir</a> e
+              <a href="../ganhos/index.html" class="text-brand-400 hover:underline">1.4.5 — os outros ganhos</a>;
+              se você chegou aqui sem o <a href="../alucinacao/index.html" class="text-brand-400 hover:underline">1.4.1</a>,
+              ele explica de onde a invenção vem.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUIZ -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre atribuição, abstenção e o limiar de verificação.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-start gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0 mt-0.5">1</span>
+              Uma resposta tem três afirmações; duas saem dos trechos recuperados e a terceira é invenção. No rodapé, o agente lista corretamente os dois documentos consultados. O que a atribuição por afirmação mostra que a citação por resposta esconde?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O rodapé é verdadeiro — os documentos foram mesmo consultados. O problema é outro.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Que o rodapé cita documentos que nunca foram recuperados.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'A fidelidade cai para 2/3 e a afirmação órfã fica visível. O rodapé, sendo verdadeiro, empresta credibilidade justamente à frase sem respaldo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Que uma das três afirmações não tem trecho que a sustente — e que o rodapé correto serve de álibi para ela.</button>
+              <button onclick="Guia.answer(this, false, 'Fidelidade mede lealdade à fonte, não verdade no mundo. Isso exigiria um oráculo externo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Que as duas afirmações ancoradas são factualmente verdadeiras no mundo real.</button>
+              <button onclick="Guia.answer(this, false, 'Ordenação dos trechos é problema de ranking (capítulo 1), não de atribuição.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Que os trechos foram recuperados na ordem errada pelo re-ranker.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-start gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0 mt-0.5">2</span>
+              Por que "não encontrei isso na base" pode ser considerada uma resposta correta, e não uma falha do agente?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Economizar tokens é efeito colateral, não a razão. Abster tem custo próprio: o falso negativo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Porque economiza tokens de geração e reduz o custo da chamada.</button>
+              <button onclick="Guia.answer(this, false, 'O contrário: um agente que se abstém de tudo empurra o usuário para fontes piores.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Porque quanto mais o agente se abstém, mais confiável ele é.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'Responder por dedução converte ausência de evidência em afirmação — e apaga o sinal de que a base tem um buraco a ser corrigido.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Porque preserva a informação de que a base não cobre o assunto, em vez de transformar a lacuna numa afirmação plausível.</button>
+              <button onclick="Guia.answer(this, false, 'Abstenção também erra: abster com o trecho presente no contexto é um falso negativo, e o usuário conclui algo falso sobre a base.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Porque a abstenção, diferentemente da resposta, nunca pode estar errada.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-start gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0 mt-0.5">3</span>
+              Na verificação pós-geração, você sobe o limiar $\tau$ de 0,3 para 0,8. O que acontece com cobertura e precisão da citação?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'As duas andam em direções opostas — é justamente esse o trade-off do simulador do módulo 4.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) As duas sobem, porque o verificador fica mais rigoroso.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'Menos afirmações passam pelo corte (cobertura cai), mas as que passam têm suporte mais forte (precisão sobe). Levado ao extremo, sobra uma resposta impecável e quase vazia.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) A cobertura cai e a precisão tende a subir: sobram menos afirmações, e as que sobram têm suporte mais forte.</button>
+              <button onclick="Guia.answer(this, false, 'O limiar muda o corte, e o corte muda o conjunto de afirmações que sobrevive.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Nada muda: $\tau$ só afeta a ordem dos trechos recuperados.</button>
+              <button onclick="Guia.answer(this, false, 'É o oposto: limiar alto poda afirmações fracas, não as fortes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) A cobertura sobe e a precisão cai, porque mais afirmações passam no corte.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ───────── Dados do exemplo (agente de RH / saúde ocupacional) ───────── */
+
+    const TRECHOS = [
+      { id: 'T1', fonte: 'Política de Saúde Ocupacional 2026', loc: '§4 — Custeio',
+        txt: 'Os exames ocupacionais (admissional, periódico, de retorno e demissional) são custeados integralmente pela empresa, sem qualquer reembolso ao colaborador.' },
+      { id: 'T2', fonte: 'Manual de coleta laboratorial', loc: 'Seção 3 — Preparo do paciente',
+        txt: 'Glicemia de jejum requer 8 horas sem alimentação. A ingestão de água permanece permitida durante o jejum.' },
+      { id: 'T3', fonte: 'Norma de ponto e ausências', loc: 'Item 7 — Ausências abonadas',
+        txt: 'A ausência para realização de exame ocupacional é abonada no dia, mediante apresentação do comprovante de comparecimento à clínica.' },
+      { id: 'T4', fonte: 'Portal do colaborador — FAQ', loc: 'Acesso e login',
+        txt: 'O acesso ao portal do colaborador usa a matrícula e um segundo fator enviado por SMS ao celular cadastrado.' },
+      { id: 'T5', fonte: 'Política de reembolso de despesas', loc: '§2 — Prazos',
+        txt: 'Solicitações de reembolso devem ser enviadas em até 30 dias corridos após a data da despesa.' },
+    ];
+
+    /* apoio = trecho que sustenta a afirmação (null = nenhum).
+       proximo = trecho mais parecido tematicamente, que o gerador citaria por engano.
+       nli = score devolvido pelo verificador de entailment para o melhor par. */
+    const AFIRMACOES = [
+      { id: 'A1', txt: 'O jejum para a glicemia é de 8 horas, e você pode beber água nesse período.', apoio: 'T2', proximo: 'T2', nli: 0.94 },
+      { id: 'A2', txt: 'O exame periódico é custeado integralmente pela empresa — você não paga nada nem pede reembolso.', apoio: 'T1', proximo: 'T1', nli: 0.88 },
+      { id: 'A3', txt: 'O dia do exame é abonado, então não há desconto no seu ponto, desde que você apresente o comprovante.', apoio: 'T3', proximo: 'T3', nli: 0.71 },
+      { id: 'A4', txt: 'O resultado fica disponível em até 24 horas no portal do colaborador.', apoio: null, proximo: 'T4', nli: 0.31 },
+    ];
+
+    const removidos = new Set();
+    let selecionada = null;
+
+    const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const apoiada = a => a.apoio !== null && !removidos.has(a.apoio);
+    const trecho = id => TRECHOS.find(t => t.id === id);
+
+    /* ───────── Módulo 2: verificador de atribuição ───────── */
+
+    function fidelidade() {
+      return AFIRMACOES.filter(apoiada).length / AFIRMACOES.length;
+    }
+
+    function renderClaims() {
+      document.getElementById('claims-lista').innerHTML = AFIRMACOES.map((a, i) => {
+        const ok = apoiada(a);
+        const sel = selecionada === a.id;
+        const perdeu = a.apoio !== null && removidos.has(a.apoio);
+        const borda = sel
+          ? (ok ? 'border-emerald-400 ring-1 ring-emerald-400/50' : 'border-rose-400 ring-1 ring-rose-400/50')
+          : (ok ? 'border-emerald-500/30' : 'border-rose-500/40');
+        const selo = ok
+          ? `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 shrink-0">sustentada · ${a.apoio}</span>`
+          : `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 shrink-0">${perdeu ? 'perdeu o apoio' : 'sem respaldo'}</span>`;
+        return `
+          <button onclick="selecionarClaim('${a.id}')" class="w-full text-left rounded-xl p-3 border transition-all duration-300 ${borda} ${ok ? 'bg-emerald-950/20' : 'bg-rose-950/20'} hover:brightness-125">
+            <div class="flex items-start justify-between gap-2 mb-1.5">
+              <span class="font-mono text-[10px] ${ok ? 'text-emerald-400' : 'text-rose-400'}">Afirmação ${i + 1} · ${a.id}</span>
+              ${selo}
+            </div>
+            <p class="text-xs ${ok ? 'text-slate-200' : 'text-slate-300'} leading-relaxed">${esc(a.txt)}</p>
+          </button>`;
+      }).join('');
+
+      const a = AFIRMACOES.find(x => x.id === selecionada);
+      const dica = document.getElementById('claims-dica');
+      if (!a) {
+        dica.innerHTML = '<i class="fa-solid fa-hand-pointer mr-1.5 text-slate-600"></i>Clique numa afirmação para acender o trecho que a sustenta.';
+      } else if (apoiada(a)) {
+        const t = trecho(a.apoio);
+        dica.innerHTML = `<i class="fa-solid fa-link mr-1.5 text-emerald-400"></i>${a.id} sai de <span class="font-mono text-emerald-300">${t.id}</span> — ${esc(t.fonte)}, ${esc(t.loc)}. Dá para conferir palavra por palavra.`;
+      } else {
+        const p = trecho(a.proximo);
+        dica.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-400"></i>Nada acendeu: nenhum trecho da base sustenta ${a.id}. O mais parecido é <span class="font-mono text-slate-300">${p.id}</span> (${esc(p.fonte)}), que fala do mesmo assunto sem dizer nada sobre o que ${a.id} afirma — a armadilha clássica de citar por proximidade temática.`;
+      }
+    }
+
+    function renderTrechos() {
+      const a = AFIRMACOES.find(x => x.id === selecionada);
+      const aceso = a && apoiada(a) ? a.apoio : null;
+      const quaseAceso = a && !apoiada(a) ? a.proximo : null;
+
+      document.getElementById('trechos-lista').innerHTML = TRECHOS.map(t => {
+        const fora = removidos.has(t.id);
+        let cls = 'bg-surface-950 border-slate-800';
+        if (fora) cls = 'bg-surface-950 border-slate-800 opacity-40';
+        else if (t.id === aceso) cls = 'bg-emerald-950/40 border-emerald-500/60 glow-emerald';
+        else if (t.id === quaseAceso) cls = 'bg-amber-950/20 border-amber-500/40';
+        else if (a) cls = 'bg-surface-950 border-slate-800 opacity-50';
+        return `
+          <div class="rounded-xl border p-3 transition-all duration-300 ${cls}">
+            <div class="flex items-start justify-between gap-2 mb-1.5">
+              <div class="min-w-0">
+                <span class="font-mono text-[10px] ${t.id === aceso ? 'text-emerald-400' : 'text-slate-500'}">${t.id} · ${esc(t.fonte)}</span>
+                <p class="font-mono text-[9px] text-slate-600">${esc(t.loc)}</p>
+              </div>
+              <button onclick="alternarTrecho('${t.id}')" title="${fora ? 'Devolver à base' : 'Remover da base'}"
+                class="shrink-0 w-6 h-6 rounded-lg border text-[10px] transition flex items-center justify-center ${fora ? 'border-slate-700 text-slate-400 hover:text-white hover:border-slate-500' : 'border-rose-500/40 text-rose-400 hover:bg-rose-500/20'}">
+                <i class="fa-solid ${fora ? 'fa-rotate-left' : 'fa-xmark'}"></i>
+              </button>
+            </div>
+            <p class="text-[11px] ${t.id === aceso ? 'text-emerald-100' : 'text-slate-400'} leading-snug ${fora ? 'line-through' : ''}">${esc(t.txt)}</p>
+            ${t.id === aceso ? '<p class="mt-2 pt-2 border-t border-emerald-500/20 text-[10px] font-mono text-emerald-400">↑ sustenta a afirmação selecionada</p>' : ''}
+            ${t.id === quaseAceso ? '<p class="mt-2 pt-2 border-t border-amber-500/20 text-[10px] font-mono text-amber-400">parecido, mas não sustenta</p>' : ''}
+          </div>`;
+      }).join('');
+    }
+
+    function renderPlacar() {
+      const f = fidelidade();
+      const pct = Math.round(f * 100);
+      const sustentadas = AFIRMACOES.filter(apoiada).length;
+      const cor = pct === 100 ? 'emerald' : pct >= 50 ? 'amber' : 'rose';
+
+      const valor = document.getElementById('fid-valor');
+      valor.textContent = pct + '%';
+      valor.className = `text-3xl font-extrabold font-mono leading-none text-${cor}-400`;
+
+      const barra = document.getElementById('fid-barra');
+      barra.style.width = pct + '%';
+      barra.className = `h-full rounded-full transition-all duration-500 bg-${cor}-500`;
+
+      document.getElementById('fid-legenda').textContent = `${sustentadas} de ${AFIRMACOES.length} afirmações`;
+    }
+
+    function renderVerificador() {
+      renderClaims();
+      renderTrechos();
+      renderPlacar();
+      renderAbstencao();
+    }
+
+    function selecionarClaim(id) {
+      selecionada = selecionada === id ? null : id;
+      renderVerificador();
+    }
+
+    function alternarTrecho(id) {
+      const antes = AFIRMACOES.filter(apoiada).length;
+      if (removidos.has(id)) removidos.delete(id); else removidos.add(id);
+      const depois = AFIRMACOES.filter(apoiada).length;
+      const delta = antes - depois;
+
+      if (delta > 0) {
+        Guia.toast(`${id} fora da base: ${delta} ${delta > 1 ? 'afirmações ficaram' : 'afirmação ficou'} sem respaldo.`, 'fa-link-slash');
+      } else if (delta < 0) {
+        Guia.toast(`${id} de volta: ${-delta} ${-delta > 1 ? 'afirmações recuperaram' : 'afirmação recuperou'} o apoio.`, 'fa-link');
+      } else {
+        Guia.toast(`${id} não sustentava nenhuma afirmação — a fidelidade não mudou.`, 'fa-circle-info');
+      }
+      renderVerificador();
+    }
+
+    function restaurarBase() {
+      removidos.clear();
+      renderVerificador();
+      Guia.toast('Base restaurada com os 5 trechos.', 'fa-rotate-left');
+    }
+
+    /* ───────── Módulo 3: política de abstenção ───────── */
+
+    function renderAbstencao() {
+      const slider = document.getElementById('limiar-abst');
+      if (!slider) return;
+      const limiar = Number(slider.value);
+      const pct = Math.round(fidelidade() * 100);
+      const orfas = AFIRMACOES.filter(a => !apoiada(a)).length;
+      const margem = pct - limiar;
+
+      document.getElementById('limiar-val').textContent = limiar + '%';
+      document.getElementById('abst-fid').textContent = pct + '%';
+      document.getElementById('abst-orfas').textContent = `${orfas} / ${AFIRMACOES.length}`;
+      const elMargem = document.getElementById('abst-margem');
+      elMargem.textContent = (margem >= 0 ? '+' : '') + margem + ' p.p.';
+      elMargem.className = 'text-xl font-mono font-bold ' + (margem >= 0 ? 'text-emerald-300' : 'text-rose-300');
+
+      let cor, ico, titulo, texto;
+      if (pct >= limiar && orfas === 0) {
+        cor = 'emerald'; ico = 'fa-circle-check'; titulo = 'Responder com citação';
+        texto = 'Toda afirmação tem trecho. A resposta sai inteira, cada frase com o id da fonte.';
+      } else if (pct >= limiar) {
+        cor = 'amber'; ico = 'fa-scissors'; titulo = 'Responder parcialmente';
+        texto = `Passa do limiar, mas ${orfas} ${orfas > 1 ? 'afirmações ficam' : 'afirmação fica'} de fora da resposta. O agente entrega o que tem respaldo e declara a lacuna em vez de completá-la.`;
+      } else if (pct > 0) {
+        cor = 'rose'; ico = 'fa-hand'; titulo = 'Abster (abaixo do limiar)';
+        texto = `Com ${pct}% de fidelidade contra um limiar de ${limiar}%, o agente não entrega. Saída correta: dizer o que a base cobre, o que não cobre, e encaminhar para Saúde Ocupacional.`;
+      } else {
+        cor = 'rose'; ico = 'fa-ban'; titulo = 'Abster e encaminhar';
+        texto = 'Nenhuma afirmação tem respaldo — a base ficou sem os trechos relevantes. Responder aqui seria invenção pura.';
+      }
+
+      const box = document.getElementById('abst-veredito');
+      box.className = `rounded-xl border p-4 transition-all duration-300 bg-${cor}-950/25 border-${cor}-500/40`;
+      box.innerHTML = `
+        <p class="text-[9px] font-mono uppercase tracking-widest text-slate-500 mb-2">Decisão do agente</p>
+        <p class="text-sm font-bold text-${cor}-300 flex items-center gap-2 mb-2"><i class="fa-solid ${ico}"></i> ${titulo}</p>
+        <p class="text-[11px] text-slate-400 leading-relaxed">${texto}</p>`;
+    }
+
+    /* ───────── Módulo 4: trade-off cobertura × precisão ───────── */
+
+    function renderTau() {
+      const tau = Number(document.getElementById('tau-range').value) / 100;
+      const passam = AFIRMACOES.filter(a => a.nli >= tau);
+      const corretas = passam.filter(a => a.apoio !== null);
+
+      const cob = passam.length / AFIRMACOES.length;
+      const prec = passam.length ? corretas.length / passam.length : null;
+
+      document.getElementById('tau-val').textContent = tau.toFixed(2);
+      document.getElementById('tau-cob').textContent = Math.round(cob * 100) + '%';
+      document.getElementById('tau-prec').textContent = prec === null ? '—' : Math.round(prec * 100) + '%';
+
+      document.getElementById('tau-tabela').innerHTML = AFIRMACOES.map((a, i) => {
+        const passa = a.nli >= tau;
+        const real = a.apoio !== null;
+        const erro = passa && !real;
+        return `
+          <tr class="${erro ? 'bg-rose-950/20' : ''}">
+            <td class="px-3 py-2.5 align-top">
+              <span class="font-mono text-[10px] text-slate-500">${a.id}</span>
+              <p class="text-slate-300 leading-snug mt-0.5 max-w-[22rem]">${esc(a.txt)}</p>
+            </td>
+            <td class="px-3 py-2.5 align-top font-mono ${a.nli >= tau ? 'text-emerald-300' : 'text-slate-600'}">${a.nli.toFixed(2)}</td>
+            <td class="px-3 py-2.5 align-top">
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded ${passa ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700/40 text-slate-400'}">${passa ? 'citada' : 'podada'}</span>
+            </td>
+            <td class="px-3 py-2.5 align-top">
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded ${real ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${real ? a.apoio : 'nenhum'}</span>
+            </td>
+          </tr>`;
+      }).join('');
+
+      const nota = document.getElementById('tau-nota');
+      const falsos = passam.filter(a => a.apoio === null).length;
+      const podadasBoas = AFIRMACOES.filter(a => a.nli < tau && a.apoio !== null).length;
+      if (falsos > 0 && podadasBoas === 0) {
+        nota.className = 'text-[11px] leading-relaxed text-rose-300';
+        nota.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${falsos} ${falsos > 1 ? 'afirmações sem respaldo real ainda passam' : 'afirmação sem respaldo real ainda passa'} no corte. Limiar frouxo: cobertura máxima, citação que não resiste a conferência.`;
+      } else if (falsos === 0 && podadasBoas === 0) {
+        nota.className = 'text-[11px] leading-relaxed text-emerald-300';
+        nota.innerHTML = '<i class="fa-solid fa-circle-check mr-1.5"></i>Ponto de operação limpo neste exemplo: toda afirmação com respaldo passa e a inventada é podada. Numa base real, esse ponto muda a cada consulta — por isso ele se calibra com dados, não com intuição.';
+      } else if (falsos === 0) {
+        nota.className = 'text-[11px] leading-relaxed text-amber-300';
+        nota.innerHTML = `<i class="fa-solid fa-scissors mr-1.5"></i>Nenhuma invenção passa, mas ${podadasBoas} ${podadasBoas > 1 ? 'afirmações legítimas foram podadas' : 'afirmação legítima foi podada'} junto. Precisão comprada com cobertura: a resposta fica correta e mais pobre.`;
+      } else {
+        nota.className = 'text-[11px] leading-relaxed text-slate-400';
+        nota.innerHTML = `<i class="fa-solid fa-circle-info mr-1.5"></i>${falsos} ${falsos > 1 ? 'inventadas passando' : 'inventada passando'} e ${podadasBoas} ${podadasBoas > 1 ? 'legítimas podadas' : 'legítima podada'} — o pior dos dois mundos, sinal de que o verificador (e não o limiar) é o gargalo.`;
+      }
+      Guia.renderMath(nota);
+    }
+
+    /* ───────── Boot ───────── */
+
+    Guia.ready(() => {
+      renderVerificador();
+      document.getElementById('limiar-abst').addEventListener('input', renderAbstencao);
+      document.getElementById('tau-range').addEventListener('input', renderTau);
+      renderTau();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word2Vec: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Word2Vec"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Representações Vetoriais Distribuídas (Mikolov et al., 2013)"
+      data-icon="fa-brain"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <section class="slide-section" data-nav="Intuição" data-icon="fa-lightbulb">
+      <!-- Section Header -->
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A Revolução Semântica: <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">Do Símbolo ao Vetor</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Antes de 2013, palavras eram símbolos atômicos desprovidos de afinidade matemática. O Word2Vec operacionalizou a célebre máxima linguística de John Rupert Firth (1957).
+        </p>
+      </div>
+
+      <!-- Quote Banner -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-6 sm:p-8 mb-8">
+        <div class="absolute -right-6 -bottom-6 text-slate-800/40 text-9xl pointer-events-none font-serif">“</div>
+        <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center shrink-0 text-brand-400 text-2xl">
+            <i class="fa-solid fa-quote-left"></i>
+          </div>
+          <div>
+            <blockquote class="text-lg sm:text-xl font-medium text-slate-100 italic">
+              "You shall know a word by the company it keeps."
+            </blockquote>
+            <p class="text-xs text-brand-400 font-mono mt-2">— J. R. Firth (1957) • Hipótese Distribucional da Linguística</p>
+            <p class="text-slate-400 text-xs mt-1">Palavras que ocorrem em contextos similares compartilham significados semelhantes.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Interactive Comparison: One-Hot vs Dense Embeddings -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Card 1: One-Hot Encoding -->
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3 py-1 rounded-lg bg-rose-500/10 text-rose-400 text-xs font-mono font-semibold border border-rose-500/20 flex items-center gap-1.5">
+                <i class="fa-solid fa-triangle-exclamation"></i> Abordagem Tradicional
+              </span>
+              <span class="text-xs text-slate-500 font-mono">Esparsa: $\mathbb{R}^{|V|}$</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">One-Hot Encoding (Sacos de Palavras)</h3>
+            <p class="text-slate-400 text-xs leading-relaxed mb-4">
+              Cada termo é representado por um vetor ortogonal de tamanho do vocabulário $|V|$, com um único $1$ e milhões de zeros.
+            </p>
+
+            <!-- One-hot visualizer simulator -->
+            <div class="bg-surface-950 rounded-xl p-4 border border-slate-800 font-mono text-xs space-y-2 mb-4">
+              <div class="flex justify-between items-center text-slate-400 border-b border-slate-800 pb-2">
+                <span>Vocabulário ($|V| = 5$)</span>
+                <span>Vetor One-Hot</span>
+              </div>
+              <div class="flex justify-between items-center text-rose-300">
+                <span>1. Rei</span>
+                <span class="bg-surface-900 px-2 py-0.5 rounded border border-rose-500/30">[ 1, 0, 0, 0, 0 ]</span>
+              </div>
+              <div class="flex justify-between items-center text-amber-300">
+                <span>2. Rainha</span>
+                <span class="bg-surface-900 px-2 py-0.5 rounded border border-amber-500/30">[ 0, 1, 0, 0, 0 ]</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-400">
+                <span>3. Maçã</span>
+                <span class="bg-surface-900 px-2 py-0.5 rounded border border-slate-700">[ 0, 0, 1, 0, 0 ]</span>
+              </div>
+            </div>
+
+            <!-- Orthogonality proof -->
+            <div class="p-3.5 rounded-xl bg-surface-950/60 border border-slate-800 text-xs text-slate-300 space-y-1">
+              <div class="flex items-center gap-2 text-rose-400 font-medium">
+                <i class="fa-solid fa-ban"></i> Falha Geométrica Fundamental:
+              </div>
+              <p class="font-mono text-slate-400 text-[11px]">
+                $\vec{v}(\text{Rei}) \cdot \vec{v}(\text{Rainha}) = 1\cdot 0 + 0\cdot 1 + \dots = \mathbf{0}$
+              </p>
+              <p class="text-[11px] text-slate-400">
+                A similaridade cosseno é nula! Para a máquina, "Rei" é tão distante de "Rainha" quanto de "Trator".
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+            <span>Dimensões típicas: $10^5 \sim 10^7$</span>
+            <span class="text-rose-400 font-mono"><i class="fa-solid fa-xmark mr-1"></i>Zero Semântica</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Dense Embeddings (Word2Vec) -->
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6 flex flex-col justify-between relative overflow-hidden glow-indigo">
+          <div class="absolute -top-12 -right-12 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold border border-emerald-500/30 flex items-center gap-1.5">
+                <i class="fa-solid fa-check-double"></i> Paradigma Word2Vec
+              </span>
+              <span class="text-xs text-brand-400 font-mono">Densa: $\mathbb{R}^d$ ($d \approx 300$)</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Embeddings Vetoriais Densos</h3>
+            <p class="text-slate-400 text-xs leading-relaxed mb-4">
+              Cada palavra torna-se um vetor contínuo de baixa dimensão em que dimensões latentes capturam propriedades sintáticas e conceituais.
+            </p>
+
+            <!-- Dense vector visualizer simulator -->
+            <div class="bg-surface-950 rounded-xl p-4 border border-brand-500/20 font-mono text-xs space-y-2 mb-4">
+              <div class="flex justify-between items-center text-slate-400 border-b border-slate-800 pb-2">
+                <span>Conceito ($d=4$)</span>
+                <span>Projeção Latente Contínua</span>
+              </div>
+              <div class="flex justify-between items-center text-cyan-300">
+                <span>Rei</span>
+                <span class="bg-surface-900 px-2 py-0.5 rounded border border-cyan-500/30">[ +0.82, -0.45, +0.91, +0.12 ]</span>
+              </div>
+              <div class="flex justify-between items-center text-emerald-300">
+                <span>Rainha</span>
+                <span class="bg-surface-900 px-2 py-0.5 rounded border border-emerald-500/30">[ +0.79, +0.51, +0.88, +0.15 ]</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-500">
+                <span>Maçã</span>
+                <span class="bg-surface-900 px-2 py-0.5 rounded border border-slate-800">[ -0.15, +0.02, -0.63, +0.81 ]</span>
+              </div>
+            </div>
+
+            <!-- Live Similarity Metric -->
+            <div class="p-3.5 rounded-xl bg-brand-950/40 border border-brand-500/30 text-xs text-slate-300 space-y-1">
+              <div class="flex items-center justify-between text-brand-300 font-medium">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-compass"></i> Similaridade de Cosseno:</span>
+                <span class="font-mono font-bold text-emerald-400">$\cos(\theta) \approx 0.92$</span>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                $\cos(u, v) = \frac{u \cdot v}{\|u\| \|v\|}$. Ângulo agudo entre vetores codifica alta correlação de significado no subespaço latente.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+            <span>Dimensões típicas: $100 \sim 300$</span>
+            <span class="text-emerald-400 font-mono"><i class="fa-solid fa-check mr-1"></i>Geometria Semântica</span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Slide 2: A Janela Deslizante & Geração de Dados de Treino -->
+    <section class="slide-section" data-nav="Janela Deslizante" data-icon="fa-sliders">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sliders"></i> Módulo 02 • Pré-processamento & Supervisão
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A Janela Deslizante: <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">Aprendizado Auto-supervisionado</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O Word2Vec não exige rotulação manual. Ele transforma texto puro em pares supervisionados deslizando uma janela de tamanho fixo $c$ sobre a sequência de palavras.
+        </p>
+      </div>
+
+      <!-- Interactive Playground Container -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <!-- Controls Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
+          <!-- Preset selector -->
+          <div class="flex items-center gap-3">
+            <label class="text-xs text-slate-400 font-medium">Frase de Exemplo:</label>
+            <select id="sentence-select" onchange="loadSentencePreset()" class="bg-surface-950 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none">
+              <option value="0">"o sábio rei governa o reino com justiça e prudência"</option>
+              <option value="1">"o cachorro late para o carteiro na rua movimentada"</option>
+              <option value="2">"modelos de inteligência artificial aprendem padrões a partir de dados"</option>
+            </select>
+          </div>
+
+          <!-- Window Size Slider -->
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Raio da Janela ($c$):</span>
+            <div class="flex items-center gap-2 bg-surface-950 px-3 py-1.5 rounded-lg border border-slate-800">
+              <button onclick="setWindowRadius(1)" class="window-btn px-2 py-0.5 text-xs rounded font-mono transition" data-c="1">1</button>
+              <button onclick="setWindowRadius(2)" class="window-btn px-2 py-0.5 text-xs rounded font-mono transition active bg-brand-500 text-white" data-c="2">2</button>
+              <button onclick="setWindowRadius(3)" class="window-btn px-2 py-0.5 text-xs rounded font-mono transition" data-c="3">3</button>
+            </div>
+          </div>
+
+          <!-- Stepper buttons -->
+          <div class="flex items-center gap-2">
+            <button onclick="stepWindow(-1)" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-arrow-left"></i> Anterior
+            </button>
+            <button id="play-pause-btn" onclick="toggleAutoWindow()" class="px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs flex items-center gap-1.5 transition font-semibold">
+              <i class="fa-solid fa-play" id="play-icon"></i> <span id="play-text">Animar</span>
+            </button>
+            <button onclick="stepWindow(1)" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs flex items-center gap-1.5 transition">
+              Próximo <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+        <!-- Interactive Sentence Token Stream -->
+        <div class="py-8">
+          <div class="text-xs text-slate-400 mb-3 flex items-center justify-between">
+            <span>Fluxo de Tokens Tokenizado:</span>
+            <span class="font-mono text-[11px] text-cyan-400">Posição Atual do Alvo: $t = <span id="current-target-idx">2</span>$</span>
+          </div>
+
+          <!-- Token visual sequence -->
+          <div id="tokens-container" class="flex flex-wrap items-center gap-2 py-3 px-4 rounded-xl bg-surface-950 border border-slate-800/80 min-h-[72px]">
+            <!-- Dynamic tokens injected via JavaScript -->
+          </div>
+
+          <!-- Color Legend -->
+          <div class="flex flex-wrap items-center gap-6 mt-4 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-3.5 h-3.5 rounded bg-brand-500 shadow-sm shadow-brand-500/50"></span>
+              <span class="text-slate-300 font-medium">Palavra-Alvo Central ($w_t$)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3.5 h-3.5 rounded bg-cyan-500/20 border border-cyan-400/80"></span>
+              <span class="text-slate-300 font-medium">Janela de Contexto ($w_{t \pm j}$)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3.5 h-3.5 rounded bg-slate-800 border border-slate-700"></span>
+              <span class="text-slate-500">Tokens Externos</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generated Training Pairs Table Live Feed -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+          <!-- CBOW Data Formation -->
+          <div class="bg-surface-950 rounded-xl p-4 border border-slate-800/80">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-bold text-cyan-300 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group"></i> Pares Gerados para CBOW
+              </h4>
+              <span class="text-[11px] font-mono text-slate-500">Contexto $\to$ Alvo</span>
+            </div>
+            <div class="bg-surface-900 rounded-lg p-3 border border-slate-800 text-xs font-mono space-y-2">
+              <div class="text-slate-400 flex justify-between">
+                <span>Entrada (Média do Contexto):</span>
+                <span class="text-cyan-400 font-semibold" id="cbow-input-display">[ "o", "sábio", "governa", "o" ]</span>
+              </div>
+              <div class="text-slate-400 flex justify-between pt-1 border-t border-slate-800">
+                <span>Saída Desejada (Target):</span>
+                <span class="text-brand-400 font-bold" id="cbow-target-display">"rei"</span>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">
+              O modelo tenta adivinhar o centro somando/mediando as pistas ao redor.
+            </p>
+          </div>
+
+          <!-- Skip-Gram Data Formation -->
+          <div class="bg-surface-950 rounded-xl p-4 border border-slate-800/80">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-bold text-brand-300 flex items-center gap-2">
+                <i class="fa-solid fa-arrows-split-up-and-left"></i> Pares Gerados para Skip-Gram
+              </h4>
+              <span class="text-[11px] font-mono text-slate-500">Alvo $\to$ Cada Palavra de Contexto</span>
+            </div>
+            <div id="skipgram-pairs-container" class="bg-surface-900 rounded-lg p-3 border border-slate-800 text-xs font-mono max-h-28 overflow-y-auto space-y-1.5">
+              <!-- Dynamically populated pairs -->
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">
+              O modelo multiplica as instâncias de treino: 1 alvo gera $2c$ tarefas de predição.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Slide 3: As Duas Arquiteturas Centrais (CBOW vs Skip-Gram) -->
+    <section class="slide-section" data-nav="CBOW vs Skip-Gram" data-icon="fa-network-wired">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-network-wired"></i> Módulo 03 • Redes Neurais Rasas
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          CBOW vs. Skip-Gram: <span class="bg-gradient-to-r from-brand-400 via-indigo-300 to-cyan-400 bg-clip-text text-transparent">Fluxos Computacionais</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Ambos utilizam uma rede neural simples de duas camadas sem funções de ativação não-lineares na camada oculta. As matrizes de pesos $W$ e $W'$ constituem os próprios embeddings finais!
+        </p>
+      </div>
+
+      <!-- Architecture Switcher Tabs -->
+      <div class="flex items-center gap-3 mb-6">
+        <button id="arch-cbow-btn" onclick="selectArchitecture('cbow')" class="px-5 py-2.5 rounded-xl font-semibold text-sm transition flex items-center gap-2 bg-cyan-600 text-white shadow-lg shadow-cyan-600/30">
+          <i class="fa-solid fa-funnel-dollar"></i> Arquitetura CBOW (Continuous Bag-of-Words)
+        </button>
+        <button id="arch-sg-btn" onclick="selectArchitecture('skipgram')" class="px-5 py-2.5 rounded-xl font-semibold text-sm transition flex items-center gap-2 bg-surface-900 border border-slate-700 text-slate-300 hover:text-white">
+          <i class="fa-solid fa-share-nodes"></i> Arquitetura Skip-Gram
+        </button>
+      </div>
+
+      <!-- Interactive Network Diagram Card -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+          
+          <!-- Interactive Diagram Canvas / Schematic -->
+          <div class="w-full lg:w-3/5 bg-surface-950 rounded-xl p-6 border border-slate-800 flex flex-col items-center">
+            <div id="arch-schematic-title" class="text-xs font-mono text-cyan-400 mb-4 tracking-wide uppercase font-bold">
+              Fluxo CBOW: Previsão do Centro a partir do Contexto
+            </div>
+
+            <!-- SVG Visualizer Container -->
+            <div class="w-full overflow-x-auto py-2">
+              <svg id="arch-svg" viewBox="0 0 650 280" class="w-full h-auto min-w-[500px]">
+                <!-- Rendered dynamically by updateArchitectureView() -->
+              </svg>
+            </div>
+
+            <!-- Mathematical Formulation Callout -->
+            <div id="arch-math-box" class="w-full mt-4 p-3 rounded-lg bg-surface-900 border border-slate-800 text-xs font-mono text-slate-300">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+          <!-- Architectural Characteristics Comparison Grid -->
+          <div class="w-full lg:w-2/5 space-y-4">
+            <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="flex items-center gap-2 text-white font-bold text-sm mb-2">
+                <i class="fa-solid fa-gauge-high text-brand-400"></i> Velocidade de Treinamento
+              </div>
+              <p id="arch-speed-desc" class="text-xs text-slate-400 leading-relaxed">
+                Muito mais veloz. Trata o contexto inteiro como uma representação agregada em uma única etapa de feedforward.
+              </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="flex items-center gap-2 text-white font-bold text-sm mb-2">
+                <i class="fa-solid fa-chart-simple text-cyan-400"></i> Eficácia com Palavras Raras
+              </div>
+              <p id="arch-rare-desc" class="text-xs text-slate-400 leading-relaxed">
+                A média aritmética do contexto dilui termos pouco frequentes. Palavras frequentes dominam a função de perda.
+              </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="flex items-center gap-2 text-white font-bold text-sm mb-2">
+                <i class="fa-solid fa-bullseye text-emerald-400"></i> Melhor Cenário de Uso
+              </div>
+              <p id="arch-usecase-desc" class="text-xs text-slate-400 leading-relaxed">
+                Grandes corpora de texto onde o tempo de treino é crítico e a tarefa prioriza precisão gramatical/sintática comum.
+              </p>
+            </div>
+
+            <!-- Quick Toggle Mini Comparison -->
+            <div class="p-3 bg-brand-950/30 rounded-xl border border-brand-500/20 text-xs">
+              <div class="text-brand-300 font-semibold mb-1">Regra Prática de Engenharia:</div>
+              <p class="text-slate-400 text-[11px]">
+                Precisa de treinamento rápido em bilhões de palavras? Escolha <strong>CBOW</strong>.<br>
+                Quer embeddings de máxima qualidade semântica para vocabulários complexos? Escolha <strong>Skip-Gram</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Slide 4: O Gargalo Computacional & Negative Sampling -->
+    <section class="slide-section" data-nav="Negative Sampling" data-icon="fa-bolt-lightning">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-bolt-lightning"></i> Módulo 04 • Otimização Numérica
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O Gargalo da Softmax & <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">Negative Sampling</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A Softmax ingênua exige calcular a soma exponencial para todo o vocabulário a cada palavra: inviável para milhões de tokens. A sacada genial de Mikolov foi converter a tarefa em regressão logística binária.
+        </p>
+      </div>
+
+      <!-- Problem vs Solution Infographic Panels -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- The Softmax Bottleneck -->
+        <div class="bg-surface-900 border border-rose-500/30 rounded-2xl p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-md border border-rose-500/20 font-bold">
+              <i class="fa-solid fa-bomb mr-1"></i> Gargalo Intratável
+            </span>
+            <span class="text-xs font-mono text-slate-500">Complexidade: $\mathcal{O}(|V|)$</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Softmax Completa Tradicional</h3>
+          <div class="p-3 bg-surface-950 rounded-xl border border-slate-800 text-xs font-mono mb-3 text-rose-200">
+            $$P(w_O \mid w_I) = \frac{\exp({v'_{w_O}}^\top v_{w_I})}{\sum_{w=1}^{|V|} \exp({v'_w}^\top v_{w_I})}$$
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Se $|V| = 1.000.000$, cada atualização de gradiente necessita de 1 milhão de produtos escalares e exponenciais. A taxa de treinamento colapsa para poucos tokens por segundo.
+          </p>
+        </div>
+
+        <!-- Negative Sampling Solution -->
+        <div class="bg-surface-900 border border-emerald-500/30 rounded-2xl p-6 relative overflow-hidden glow-emerald">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 font-bold">
+              <i class="fa-solid fa-microchip mr-1"></i> Solução SGNS
+            </span>
+            <span class="text-xs font-mono text-slate-500">Complexidade: $\mathcal{O}(k)$ ($k \ll |V|$)</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Negative Sampling (SGNS)</h3>
+          <div class="p-3 bg-surface-950 rounded-xl border border-slate-800 text-xs font-mono mb-3 text-emerald-200">
+            $$\mathcal{L}_{\text{NEG}} = \log \sigma({v'_{w_O}}^\top v_{w_I}) + \sum_{i=1}^{k} \mathbb{E}_{w_i \sim P_n} [\log \sigma(-{v'_{w_i}}^\top v_{w_I})]$$
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Atualiza apenas o vetor do par real positivo e uma pequena amostra de $k \in [5, 20]$ palavras aleatórias de "ruído" (negativas) via função sigmoide $\sigma(z) = \frac{1}{1 + e^{-z}}$.
+          </p>
+        </div>
+      </div>
+      <!-- Interactive Negative Sampling Simulator -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h4 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-flask text-amber-400"></i> Simulador Interativo de Negative Sampling
+            </h4>
+            <p class="text-xs text-slate-400">Observe como a rede aprende a classificar $1$ para o par real e $0$ para os ruídos sorteados.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400">Número de Negativos ($k$):</span>
+            <span id="k-val-display" class="px-2.5 py-1 bg-surface-950 rounded text-amber-400 font-mono text-xs font-bold border border-slate-800">k = 4</span>
+            <button onclick="regenerateNegativeSamples()" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-dice"></i> Sortear Novo Ruído ($P_n$)
+            </button>
+          </div>
+        </div>
+
+        <!-- Simulator Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <!-- Positive Pair Card -->
+          <div class="md:col-span-2 bg-surface-950 rounded-xl p-4 border-2 border-emerald-500/40 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">EXEMPLO POSITIVO (y = 1)</span>
+                <i class="fa-solid fa-circle-check text-emerald-400"></i>
+              </div>
+              <div class="font-mono text-xs my-2">
+                <div class="text-slate-400">Palavra Entrada ($w_I$): <strong class="text-white">"rei"</strong></div>
+                <div class="text-slate-400">Contexto Real ($w_O$): <strong class="text-emerald-400">"coroa"</strong></div>
+              </div>
+              <div class="mt-3 space-y-1">
+                <div class="flex justify-between text-xs text-slate-400">
+                  <span>Score $s = {v'}^\top v$:</span>
+                  <span id="pos-score" class="font-mono text-emerald-400 font-bold">+2.84</span>
+                </div>
+                <div class="flex justify-between text-xs text-slate-400">
+                  <span>Probabilidade $\sigma(s)$:</span>
+                  <span id="pos-prob" class="font-mono text-emerald-400 font-bold">94.5%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+                  <div id="pos-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 94.5%;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-800 text-[11px] text-emerald-400/80">
+              Objetivo: Maximizar $\log \sigma(s_{pos}) \to 0$
+            </div>
+          </div>
+
+          <!-- Negative Noise Samples Cards -->
+          <div class="md:col-span-3 bg-surface-950 rounded-xl p-4 border border-slate-800">
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 text-[10px] font-mono font-bold">AMOSTRAS DE RUÍDO NEGATIVAS (y = 0)</span>
+              <span class="text-[10px] text-slate-400 font-mono">Sorteio: $P_n(w) \propto f(w)^{3/4}$</span>
+            </div>
+            <div id="negative-samples-container" class="space-y-2 mt-2">
+              <!-- Injected by JS -->
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
+              <span>Objetivo: Maximizar $\log \sigma(-s_{neg})$ (rebaixar scores espúrios)</span>
+              <span id="loss-preview" class="font-mono text-amber-400 font-bold">Perda $\mathcal{L} \approx 0.38$</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3/4 Exponent Unigram Explanation -->
+        <div class="mt-4 p-3 rounded-lg bg-surface-950 border border-slate-800 flex items-start gap-3">
+          <i class="fa-solid fa-circle-info text-amber-400 text-sm mt-0.5"></i>
+          <div class="text-xs text-slate-400 leading-relaxed">
+            <strong class="text-slate-200">Por que o expoente 3/4 ($P_n(w) = \frac{f(w)^{0.75}}{\sum f(w')^{0.75}}$)?</strong> 
+            Se usasse a distribuição empírica crua, palavras onipresentes (*"de"*, *"o"*) seriam sempre sorteadas. O expoente $0.75$ inflaciona a probabilidade de palavras raras serem sorteadas como contraste sem descartar termos frequentes.
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Slide 5: Espaço Vetorial 2D & Álgebra de Analogias -->
+    <section class="slide-section" data-nav="Espaço 2D" data-icon="fa-compass-drafting">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-compass-drafting"></i> Módulo 05 • Geometria Emergente
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Espaço Vetorial & <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Álgebra Linear de Analogias</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A propriedade mais emblemática do Word2Vec: translações vetoriais constantes codificam relações conceituais. Explore o subespaço 2D e teste a equação célebre.
+        </p>
+      </div>
+
+      <!-- Analogy Control Bar & Canvas Container -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <!-- Preset Formula Buttons -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-800">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-slate-400 font-semibold">Testar Analogia:</span>
+            <button onclick="applyAnalogyPreset('king_queen')" class="analogy-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-brand-500 text-white font-bold" data-analogy="king_queen">
+              Rei - Homem + Mulher = Rainha
+            </button>
+            <button onclick="applyAnalogyPreset('capitals')" class="analogy-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-surface-950 border border-slate-800 text-slate-300 hover:text-white" data-analogy="capitals">
+              Paris - França + Itália = Roma
+            </button>
+            <button onclick="applyAnalogyPreset('animals')" class="analogy-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-surface-950 border border-slate-800 text-slate-300 hover:text-white" data-analogy="animals">
+              Cachorro - Filhote + Bebê = Humano
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+            <span class="w-3 h-3 rounded-full bg-cyan-400 inline-block"></span> Vetor $a - b$
+            <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block ml-2"></span> Resultado Esperado
+          </div>
+        </div>
+
+        <!-- Canvas and Inspector -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <!-- Interactive 2D Cartesian Canvas -->
+          <div class="lg:col-span-3 bg-surface-950 rounded-xl p-3 border border-slate-800 relative">
+            <div class="absolute top-5 left-5 z-10 bg-surface-900/90 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-700 text-xs font-mono text-slate-300 flex items-center gap-2 shadow">
+              <i class="fa-solid fa-hand-pointer text-brand-400"></i>
+              <span>Passe o mouse sobre as palavras para inspecionar coordenadas</span>
+            </div>
+            
+            <canvas id="vector-canvas" class="w-full h-[380px] rounded-lg cursor-crosshair block"></canvas>
+          </div>
+
+          <!-- Analogy Inspector Math Card -->
+          <div class="bg-surface-950 rounded-xl p-5 border border-slate-800 flex flex-col justify-between">
+            <div>
+              <h4 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-calculator text-cyan-400"></i> Equação Vetorial
+              </h4>
+              
+              <div id="analogy-formula-display" class="p-3 bg-surface-900 rounded-lg border border-slate-800 text-xs font-mono space-y-2 mb-4">
+                <!-- Dynamically updated -->
+              </div>
+
+              <div class="space-y-3 text-xs">
+                <div>
+                  <div class="text-slate-400 text-[11px] mb-1">Similaridade Cosseno com o Alvo:</div>
+                  <div class="flex items-center justify-between font-mono">
+                    <span id="target-word-match" class="text-emerald-400 font-bold">Rainha</span>
+                    <span id="target-cos-score" class="text-emerald-400 font-bold">0.962</span>
+                  </div>
+                  <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+                    <div id="target-cos-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 96.2%;"></div>
+                  </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800">
+                  <div class="text-slate-400 text-[11px] mb-1">Segundo Mais Próximo:</div>
+                  <div class="flex items-center justify-between font-mono text-slate-400">
+                    <span id="runnerup-word-match">Princesa</span>
+                    <span id="runnerup-cos-score">0.814</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/20 text-[11px] text-slate-400">
+              <i class="fa-solid fa-check text-emerald-400 mr-1"></i> A direção do vetor $(\vec{v}_{\text{homem}} \to \vec{v}_{\text{mulher}})$ codifica o conceito puro de <strong>feminino</strong>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Slide 6: Síntese, Evolução no NLP & Desafio Interativo -->
+    <section class="slide-section" data-nav="Síntese & Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 06 • Visão Geral & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Da Representação Estática aos <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">Transformers</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Embora revolucionário, o Word2Vec atribui um vetor estático a cada palavra. Conheça as limitações históricas e teste sua compreensão com o quiz interativo.
+        </p>
+      </div>
+
+      <!-- Evolution Timeline Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <!-- 2013 Word2Vec -->
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/40 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-brand-400 font-mono font-bold text-xs">2013</span>
+              <span class="px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 text-[10px]">Mikolov et al.</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Word2Vec</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Janelas locais auto-supervisionadas. Primeiro vetor denso escalável em larga escala.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">
+            <span class="text-rose-400">Limitação:</span> 1 vetor por palavra (sem polissemia).
+          </div>
+        </div>
+
+        <!-- 2014 GloVe -->
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-cyan-400 font-mono font-bold text-xs">2014</span>
+              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px]">Stanford</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">GloVe</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Fatoração matricial global de co-ocorrência em vez de apenas amostragem local.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">
+            Combina contagens globais com log-bilinear.
+          </div>
+        </div>
+
+        <!-- 2016 FastText -->
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-emerald-400 font-mono font-bold text-xs">2016</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Meta AI</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">FastText</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Quebra palavras em n-gramas de caracteres. Resolve o problema de Out-Of-Vocabulary (OOV).</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">
+            Capaz de inferir vetores de palavras desconhecidas.
+          </div>
+        </div>
+
+        <!-- 2018+ Transformers -->
+        <div class="p-4 rounded-xl bg-surface-900 border border-purple-500/30 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-purple-400 font-mono font-bold text-xs">2018+</span>
+              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px]">BERT / GPT</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Transformers</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Mecanismos de Atenção profunda. Representações 100% dinâmicas e contextuais.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-purple-400">
+            "Banco" (dinheiro) $\neq$ "Banco" (assento).
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Knowledge Challenge -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação Conceitual
+            </h3>
+            <p class="text-xs text-slate-400">Responda para validar sua compreensão dos princípios matemáticos do Word2Vec.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">
+              Pontuação: 0 / 3
+            </span>
+          </div>
+        </div>
+
+        <!-- Quiz questions -->
+        <div class="space-y-6">
+          <!-- Question 1 -->
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que a Softmax tradicional é inviável em vocabulários reais de 1 milhão de palavras?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque vetores densos não aceitam multiplicações com float32.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o denominador exige somar exponenciais sobre todo o vocabulário $\mathcal{O}(|V|)$ a cada passo.
+              </button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque a regressão logística gera matrizes assimétricas.
+              </button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque o tamanho da janela deslizante precisaria ser infinito.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <!-- Question 2 -->
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Qual das alternativas descreve corretamente a diferença entre CBOW e Skip-Gram?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) O CBOW utiliza ativação ReLU profunda, enquanto o Skip-Gram não possui neurônios.
+              </button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O CBOW só funciona com stopwords e o Skip-Gram só funciona com substantivos.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) O CBOW prevê a palavra central com a média do contexto; o Skip-Gram prevê os contextos a partir da palavra central.
+              </button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) O Skip-Gram gera apenas representações One-Hot ortogonais.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <!-- Question 3 -->
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Qual a principal limitação conceitual do Word2Vec superada por modelos como BERT?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button data-correct onclick="Guia.answer(this, true)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Incapacidade de tratar polissemia: cada palavra possui um único vetor estático independente do contexto da oração.
+              </button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Impossibilidade de rodar em placas de vídeo GPU modernas.
+              </button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Incapacidade de calcular produto escalar entre tensores.
+              </button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) O Word2Vec só funciona em língua inglesa devido à hipótese distribucional.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const state = {
+      // Slide 2: Window state
+      sentenceIndex: 0,
+      windowRadius: 2,
+      targetTokenIndex: 2,
+      isWindowPlaying: false,
+      windowIntervalId: null,
+      sentences: [
+        ["o", "sábio", "rei", "governa", "o", "reino", "com", "justiça", "e", "prudência"],
+        ["o", "cachorro", "late", "para", "o", "carteiro", "na", "rua", "movimentada"],
+        ["modelos", "de", "inteligência", "artificial", "aprendem", "padrões", "a", "partir", "de", "dados"]
+      ],
+      // Slide 3: Architecture state
+      activeArchitecture: 'cbow', // 'cbow' | 'skipgram'
+      // Slide 4: Negative sampling state
+      kSamples: 4,
+      vocabularyNoise: ["maçã", "carro", "nuvem", "computador", "oceano", "livro", "árvore", "sapato", "música", "galáxia", "janela", "futebol"],
+      currentNegatives: [],
+      // Slide 5: Vector space state
+      activeAnalogy: 'king_queen',
+      words2D: {
+        "Rei": { x: 0.25, y: 0.70, color: "#6366f1" },
+        "Rainha": { x: 0.70, y: 0.75, color: "#10b981" },
+        "Homem": { x: 0.20, y: 0.25, color: "#38bdf8" },
+        "Mulher": { x: 0.65, y: 0.30, color: "#f43f5e" },
+        "Príncipe": { x: 0.35, y: 0.55, color: "#a855f7" },
+        "Princesa": { x: 0.75, y: 0.60, color: "#ec4899" },
+        
+        "Paris": { x: -0.65, y: 0.60, color: "#6366f1" },
+        "França": { x: -0.70, y: 0.20, color: "#38bdf8" },
+        "Roma": { x: -0.20, y: 0.65, color: "#10b981" },
+        "Itália": { x: -0.25, y: 0.25, color: "#f43f5e" },
+        "Berlim": { x: -0.45, y: 0.80, color: "#eab308" },
+        "Alemanha": { x: -0.50, y: 0.40, color: "#f97316" },
+
+        "Cachorro": { x: 0.30, y: -0.30, color: "#6366f1" },
+        "Filhote": { x: 0.15, y: -0.70, color: "#38bdf8" },
+        "Humano": { x: 0.75, y: -0.25, color: "#10b981" },
+        "Bebê": { x: 0.60, y: -0.65, color: "#f43f5e" },
+        "Gato": { x: -0.25, y: -0.35, color: "#a855f7" },
+        "Gatinho": { x: -0.40, y: -0.75, color: "#ec4899" }
+      }
+    };
+
+    Guia.ready(() => {
+      initSlidingWindowSimulator();
+      updateArchitectureView();
+      regenerateNegativeSamples();
+      initVectorCanvas();
+    });
+    Guia.onSlide(4, resizeAndDrawVectorCanvas);
+
+    // Module 2: Sliding Window Interactive Logic
+    function loadSentencePreset() {
+      const select = document.getElementById('sentence-select');
+      state.sentenceIndex = parseInt(select.value);
+      state.targetTokenIndex = state.windowRadius;
+      renderTokens();
+    }
+
+    function setWindowRadius(r) {
+      state.windowRadius = r;
+      document.querySelectorAll('.window-btn').forEach(btn => {
+        if (parseInt(btn.getAttribute('data-c')) === r) {
+          btn.className = 'window-btn px-2 py-0.5 text-xs rounded font-mono transition active bg-brand-500 text-white font-bold';
+        } else {
+          btn.className = 'window-btn px-2 py-0.5 text-xs rounded font-mono transition text-slate-400 hover:text-white';
+        }
+      });
+      // Clamp target token
+      const tokens = state.sentences[state.sentenceIndex];
+      if (state.targetTokenIndex < r) state.targetTokenIndex = r;
+      if (state.targetTokenIndex > tokens.length - 1 - r) state.targetTokenIndex = tokens.length - 1 - r;
+      renderTokens();
+    }
+
+    function stepWindow(dir) {
+      const tokens = state.sentences[state.sentenceIndex];
+      const minTarget = state.windowRadius;
+      const maxTarget = tokens.length - 1 - state.windowRadius;
+
+      let next = state.targetTokenIndex + dir;
+      if (next < minTarget) next = maxTarget;
+      if (next > maxTarget) next = minTarget;
+
+      state.targetTokenIndex = next;
+      renderTokens();
+    }
+
+    function toggleAutoWindow() {
+      const btnIcon = document.getElementById('play-icon');
+      const btnText = document.getElementById('play-text');
+      if (state.isWindowPlaying) {
+        clearInterval(state.windowIntervalId);
+        state.isWindowPlaying = false;
+        btnIcon.className = 'fa-solid fa-play';
+        btnText.textContent = 'Animar';
+      } else {
+        state.isWindowPlaying = true;
+        btnIcon.className = 'fa-solid fa-pause';
+        btnText.textContent = 'Pausar';
+        state.windowIntervalId = setInterval(() => {
+          stepWindow(1);
+        }, 1400);
+      }
+    }
+
+    function renderTokens() {
+      const tokens = state.sentences[state.sentenceIndex];
+      const container = document.getElementById('tokens-container');
+      const targetIdxEl = document.getElementById('current-target-idx');
+      targetIdxEl.textContent = state.targetTokenIndex;
+
+      container.innerHTML = '';
+
+      const c = state.windowRadius;
+      const target = state.targetTokenIndex;
+      const minWindow = target - c;
+      const maxWindow = target + c;
+
+      tokens.forEach((token, idx) => {
+        const tokenBadge = document.createElement('div');
+        tokenBadge.className = 'transition-all duration-200 cursor-pointer px-3 py-1.5 rounded-lg font-mono text-xs flex items-center gap-1 ';
+
+        if (idx === target) {
+          // Central Target Word
+          tokenBadge.className += 'bg-brand-600 text-white font-bold shadow-lg shadow-brand-500/40 border-2 border-brand-400 scale-105';
+          tokenBadge.innerHTML = `<i class="fa-solid fa-crosshairs text-[10px]"></i> <span>"${token}"</span>`;
+        } else if (idx >= minWindow && idx <= maxWindow) {
+          // Context Word in Window
+          tokenBadge.className += 'bg-cyan-950/60 border border-cyan-400/60 text-cyan-300 font-semibold';
+          tokenBadge.innerHTML = `<span class="text-[9px] text-cyan-500 font-mono">${idx < target ? idx - target : '+' + (idx - target)}</span> <span>"${token}"</span>`;
+        } else {
+          // Outside Window
+          tokenBadge.className += 'bg-surface-900 border border-slate-800 text-slate-500 hover:text-slate-300';
+          tokenBadge.innerHTML = `<span>"${token}"</span>`;
+        }
+
+        // Allow click to jump target
+        tokenBadge.onclick = () => {
+          if (idx >= c && idx <= tokens.length - 1 - c) {
+            state.targetTokenIndex = idx;
+            renderTokens();
+          } else {
+            Guia.toast(`Palavra de borda: precisa de ao menos raio c = ${c} em ambos os lados.`, 'fa-circle-exclamation');
+          }
+        };
+
+        container.appendChild(tokenBadge);
+      });
+
+      updatePairsDisplays(tokens, target, c);
+    }
+
+    function updatePairsDisplays(tokens, target, c) {
+      const targetWord = tokens[target];
+      const contextWords = [];
+      for (let i = target - c; i <= target + c; i++) {
+        if (i !== target && i >= 0 && i < tokens.length) {
+          contextWords.push(tokens[i]);
+        }
+      }
+
+      // CBOW View
+      document.getElementById('cbow-input-display').textContent = `[ ${contextWords.map(w => `"${w}"`).join(', ')} ]`;
+      document.getElementById('cbow-target-display').textContent = `"${targetWord}"`;
+
+      // Skip-Gram View
+      const sgContainer = document.getElementById('skipgram-pairs-container');
+      sgContainer.innerHTML = '';
+      contextWords.forEach((ctx, i) => {
+        const item = document.createElement('div');
+        item.className = 'flex justify-between items-center text-slate-300 py-0.5 border-b border-slate-800/60 last:border-0';
+        item.innerHTML = `
+          <span>Instância #${i + 1}: ("${targetWord}")</span>
+          <span class="text-brand-400 font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-arrow-right text-[10px]"></i> "${ctx}"
+          </span>
+        `;
+        sgContainer.appendChild(item);
+      });
+    }
+
+    function initSlidingWindowSimulator() {
+      renderTokens();
+    }
+    // Module 3: Neural Network Architectures View
+    function selectArchitecture(type) {
+      state.activeArchitecture = type;
+      const cbowBtn = document.getElementById('arch-cbow-btn');
+      const sgBtn = document.getElementById('arch-sg-btn');
+
+      if (type === 'cbow') {
+        cbowBtn.className = 'px-5 py-2.5 rounded-xl font-semibold text-sm transition flex items-center gap-2 bg-cyan-600 text-white shadow-lg shadow-cyan-600/30';
+        sgBtn.className = 'px-5 py-2.5 rounded-xl font-semibold text-sm transition flex items-center gap-2 bg-surface-900 border border-slate-700 text-slate-300 hover:text-white';
+        
+        document.getElementById('arch-speed-desc').textContent = 'Muito mais veloz. Trata o contexto inteiro como uma representação agregada em uma única etapa de feedforward.';
+        document.getElementById('arch-rare-desc').textContent = 'A média aritmética do contexto dilui termos pouco frequentes. Palavras frequentes dominam a função de perda.';
+        document.getElementById('arch-usecase-desc').textContent = 'Grandes corpora de texto onde o tempo de treino é crítico e a tarefa prioriza precisão gramatical e sintática padrão.';
+      } else {
+        sgBtn.className = 'px-5 py-2.5 rounded-xl font-semibold text-sm transition flex items-center gap-2 bg-brand-600 text-white shadow-lg shadow-brand-600/30';
+        cbowBtn.className = 'px-5 py-2.5 rounded-xl font-semibold text-sm transition flex items-center gap-2 bg-surface-900 border border-slate-700 text-slate-300 hover:text-white';
+        
+        document.getElementById('arch-speed-desc').textContent = 'Mais lento de treinar (cerca de 3x a 5x mais operações por época), pois cada palavra-alvo gera múltiplas predições individuais.';
+        document.getElementById('arch-rare-desc').textContent = 'Excelente para palavras raras. Como cada par é previsto isoladamente, termos raros não são sobrecarregados por termos vizinhos frequentes.';
+        document.getElementById('arch-usecase-desc').textContent = 'Corpora menores a médios com grande diversidade léxica ou quando o objetivo é capturar nuances semânticas refinadas.';
+      }
+
+      updateArchitectureView();
+    }
+
+    function updateArchitectureView() {
+      const svg = document.getElementById('arch-svg');
+      const title = document.getElementById('arch-schematic-title');
+      const mathBox = document.getElementById('arch-math-box');
+
+      if (state.activeArchitecture === 'cbow') {
+        title.textContent = 'Fluxo CBOW: Previsão do Centro a partir do Contexto';
+        title.className = 'text-xs font-mono text-cyan-400 mb-4 tracking-wide uppercase font-bold';
+        
+        svg.innerHTML = `
+          <!-- Context Inputs -->
+          <g>
+            <rect x="20" y="30" width="110" height="34" rx="8" fill="#0f172a" stroke="#06b6d4" stroke-width="1.5"/>
+            <text x="75" y="52" fill="#06b6d4" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">x(w_{t-2})</text>
+
+            <rect x="20" y="80" width="110" height="34" rx="8" fill="#0f172a" stroke="#06b6d4" stroke-width="1.5"/>
+            <text x="75" y="102" fill="#06b6d4" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">x(w_{t-1})</text>
+
+            <rect x="20" y="150" width="110" height="34" rx="8" fill="#0f172a" stroke="#06b6d4" stroke-width="1.5"/>
+            <text x="75" y="172" fill="#06b6d4" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">x(w_{t+1})</text>
+
+            <rect x="20" y="200" width="110" height="34" rx="8" fill="#0f172a" stroke="#06b6d4" stroke-width="1.5"/>
+            <text x="75" y="222" fill="#06b6d4" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">x(w_{t+2})</text>
+          </g>
+
+          <!-- Input Matrix W -->
+          <line x1="130" y1="47" x2="250" y2="135" stroke="#334155" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <line x1="130" y1="97" x2="250" y2="135" stroke="#334155" stroke-width="1.5"/>
+          <line x1="130" y1="167" x2="250" y2="135" stroke="#334155" stroke-width="1.5"/>
+          <line x1="130" y1="217" x2="250" y2="135" stroke="#334155" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+          <!-- Projection Layer -->
+          <g>
+            <circle cx="270" cy="135" r="42" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+            <text x="270" y="132" fill="#e0e7ff" font-size="12" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle">Camada h</text>
+            <text x="270" y="148" fill="#818cf8" font-size="9" font-family="JetBrains Mono" text-anchor="middle">Média Σ / 2c</text>
+          </g>
+
+          <!-- Output Matrix W' -->
+          <line x1="312" y1="135" x2="440" y2="135" stroke="#6366f1" stroke-width="2"/>
+          <text x="375" y="125" fill="#a5b4fc" font-size="10" font-family="JetBrains Mono" text-anchor="middle">Matriz W'</text>
+
+          <!-- Target Output -->
+          <g>
+            <rect x="440" y="115" width="160" height="42" rx="10" fill="#090d16" stroke="#10b981" stroke-width="2"/>
+            <text x="520" y="135" fill="#10b981" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">Previsão: y(w_t)</text>
+            <text x="520" y="150" fill="#6ee7b7" font-size="9" font-family="Inter" text-anchor="middle">Palavra Central Alvo</text>
+          </g>
+        `;
+
+        mathBox.innerHTML = `
+          <div class="text-cyan-400 font-bold mb-1">Cálculo da Ativação Oculta (CBOW):</div>
+          <div>$$h = \\frac{1}{2c} \\sum_{-c \\le j \\le c, j \\neq 0} v_{w_{t+j}} \\quad \\in \\mathbb{R}^d$$</div>
+        `;
+      } else {
+        title.textContent = 'Fluxo Skip-Gram: Previsão de Múltiplos Contextos pelo Centro';
+        title.className = 'text-xs font-mono text-brand-400 mb-4 tracking-wide uppercase font-bold';
+
+        svg.innerHTML = `
+          <!-- Single Target Input -->
+          <g>
+            <rect x="20" y="115" width="130" height="42" rx="10" fill="#090d16" stroke="#6366f1" stroke-width="2"/>
+            <text x="85" y="136" fill="#818cf8" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">Entrada: x(w_t)</text>
+            <text x="85" y="150" fill="#c7d2fe" font-size="9" font-family="Inter" text-anchor="middle">Palavra Alvo Central</text>
+          </g>
+
+          <!-- Projection Matrix W -->
+          <line x1="150" y1="135" x2="250" y2="135" stroke="#6366f1" stroke-width="2"/>
+          <text x="200" y="125" fill="#818cf8" font-size="10" font-family="JetBrains Mono" text-anchor="middle">Matriz W</text>
+
+          <!-- Hidden Vector -->
+          <g>
+            <circle cx="280" cy="135" r="38" fill="#1e1b4b" stroke="#818cf8" stroke-width="2"/>
+            <text x="280" y="132" fill="#e0e7ff" font-size="12" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle">Vetor h</text>
+            <text x="280" y="148" fill="#818cf8" font-size="9" font-family="JetBrains Mono" text-anchor="middle">v(w_t)</text>
+          </g>
+
+          <!-- Projections to multiple context words -->
+          <line x1="318" y1="135" x2="450" y2="47" stroke="#334155" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <line x1="318" y1="135" x2="450" y2="97" stroke="#334155" stroke-width="1.5"/>
+          <line x1="318" y1="135" x2="450" y2="167" stroke="#334155" stroke-width="1.5"/>
+          <line x1="318" y1="135" x2="450" y2="217" stroke="#334155" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+          <!-- Context Outputs -->
+          <g>
+            <rect x="450" y="30" width="130" height="34" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="515" y="52" fill="#38bdf8" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">P(w_{t-2} | w_t)</text>
+
+            <rect x="450" y="80" width="130" height="34" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="515" y="102" fill="#38bdf8" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">P(w_{t-1} | w_t)</text>
+
+            <rect x="450" y="150" width="130" height="34" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="515" y="172" fill="#38bdf8" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">P(w_{t+1} | w_t)</text>
+
+            <rect x="450" y="200" width="130" height="34" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="515" y="222" fill="#38bdf8" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">P(w_{t+2} | w_t)</text>
+          </g>
+        `;
+
+        mathBox.innerHTML = `
+          <div class="text-brand-400 font-bold mb-1">Cálculo de Projeção (Skip-Gram):</div>
+          <div>$$h = W^\\top x_t = v_{w_t}, \\quad P(w_{t+j} \\mid w_t) = \\frac{\\exp({v'_{w_{t+j}}}^\\top v_{w_t})}{\\sum_{w} \\exp({v'_w}^\\top v_{w_t})}$$</div>
+        `;
+      }
+
+      // Re-render KaTeX in mathBox
+      Guia.renderMath(mathBox);
+    }
+    // Module 4: Negative Sampling Interactive Simulator
+    function sigmoid(z) {
+      return 1 / (1 + Math.exp(-z));
+    }
+
+    function regenerateNegativeSamples() {
+      // Pick random k noise words
+      const shuffled = [...state.vocabularyNoise].sort(() => 0.5 - Math.random());
+      state.currentNegatives = shuffled.slice(0, state.kSamples).map(word => {
+        // Random negative dot product between -1.8 and -0.2
+        const dotProduct = -(Math.random() * 1.8 + 0.3).toFixed(2);
+        const prob = (sigmoid(parseFloat(dotProduct)) * 100).toFixed(1);
+        return { word, dotProduct, prob };
+      });
+
+      renderNegativeSamples();
+    }
+
+    function renderNegativeSamples() {
+      const container = document.getElementById('negative-samples-container');
+      container.innerHTML = '';
+
+      let totalLossNeg = 0;
+      // Pos loss with score +2.84
+      const posScore = 2.84;
+      const posLoss = -Math.log(sigmoid(posScore));
+
+      state.currentNegatives.forEach((sample, idx) => {
+        const item = document.createElement('div');
+        item.className = 'p-2 rounded-lg bg-surface-900 border border-slate-800 flex items-center justify-between text-xs';
+        
+        // Single sample loss: -log(sigmoid(-score))
+        const scoreVal = parseFloat(sample.dotProduct);
+        const lossContribution = -Math.log(sigmoid(-scoreVal));
+        totalLossNeg += lossContribution;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded bg-rose-500/20 text-rose-300 flex items-center justify-center font-mono text-[10px]">#${idx + 1}</span>
+            <span class="text-slate-300 font-mono font-medium">"${sample.word}"</span>
+          </div>
+          <div class="flex items-center gap-4 font-mono text-[11px]">
+            <span class="text-slate-400">s: <span class="text-rose-400">${sample.dotProduct}</span></span>
+            <span class="text-slate-400">P(ruído): <span class="text-rose-400 font-bold">${sample.prob}%</span></span>
+            <div class="w-16 bg-slate-800 h-1.5 rounded-full overflow-hidden hidden sm:block">
+              <div class="bg-rose-500 h-full rounded-full" style="width: ${sample.prob}%;"></div>
+            </div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+
+      const totalLoss = (posLoss + totalLossNeg).toFixed(2);
+      document.getElementById('loss-preview').textContent = `Perda Total L ≈ ${totalLoss}`;
+    }
+    // Module 5: Interactive 2D Vector Space Explorer
+    let canvas, ctx;
+    let hoveredWord = null;
+
+    function initVectorCanvas() {
+      canvas = document.getElementById('vector-canvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+
+      window.addEventListener('resize', resizeAndDrawVectorCanvas);
+      
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        // O canvas é desenhado em pixels CSS (o buffer é dpr vezes maior),
+        // e mouseX/mouseY vêm de getBoundingClientRect, que também é CSS.
+        // Usar canvas.width aqui desalinharia o hit-test em telas HiDPI.
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.width / dpr;
+        const height = canvas.height / dpr;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const scale = Math.min(width, height) * 0.42;
+
+        // Pega o ponto mais próximo dentro do raio, não o primeiro encontrado:
+        // em regiões densas (Rei/Príncipe) o primeiro da lista não é o mais perto.
+        let found = null;
+        let bestDist = 18;
+        for (const [word, pos] of Object.entries(state.words2D)) {
+          const ptX = centerX + pos.x * scale;
+          const ptY = centerY - pos.y * scale;
+          const dist = Math.hypot(mouseX - ptX, mouseY - ptY);
+          if (dist < bestDist) {
+            bestDist = dist;
+            found = { word, ...pos, screenX: ptX, screenY: ptY };
+          }
+        }
+
+        const changed = (hoveredWord && hoveredWord.word) !== (found && found.word);
+        hoveredWord = found;
+        if (changed) drawVectorCanvas();
+        canvas.style.cursor = found ? 'pointer' : 'crosshair';
+      });
+
+      canvas.addEventListener('mouseleave', () => {
+        hoveredWord = null;
+        drawVectorCanvas();
+      });
+
+      applyAnalogyPreset('king_queen');
+    }
+
+    function resizeAndDrawVectorCanvas() {
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = 380 * dpr;
+      ctx.scale(dpr, dpr);
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `380px`;
+      drawVectorCanvas();
+    }
+
+    function drawVectorCanvas() {
+      if (!canvas || !ctx) return;
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const scale = Math.min(width, height) * 0.42;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw Grid Background
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      const step = 40;
+      for (let x = 0; x < width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Draw Axes
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(width, centerY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, 0);
+      ctx.lineTo(centerX, height);
+      ctx.stroke();
+
+      // Axis labels
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillText('Dimensão Latente d₁', width - 120, centerY - 8);
+      ctx.fillText('Dimensão Latente d₂', centerX + 8, 16);
+
+      // Draw Active Analogy Vectors & Parallelogram
+      drawAnalogyGeometry(centerX, centerY, scale);
+
+      // Draw Words Points
+      for (const [word, pos] of Object.entries(state.words2D)) {
+        const ptX = centerX + pos.x * scale;
+        const ptY = centerY - pos.y * scale;
+
+        const isHovered = hoveredWord && hoveredWord.word === word;
+
+        // Outer glow
+        if (isHovered) {
+          ctx.beginPath();
+          ctx.arc(ptX, ptY, 12, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+          ctx.fill();
+        }
+
+        // Dot
+        ctx.beginPath();
+        ctx.arc(ptX, ptY, isHovered ? 6 : 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = pos.color;
+        ctx.fill();
+        ctx.strokeStyle = '#090d16';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = isHovered ? '#ffffff' : '#cbd5e1';
+        ctx.font = isHovered ? 'bold 12px Inter' : '11px Inter';
+        ctx.fillText(word, ptX + 8, ptY - 6);
+      }
+
+      // Hover tooltip
+      if (hoveredWord) {
+        const { word, x, y, screenX, screenY } = hoveredWord;
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 1;
+        const boxW = 120;
+        const boxH = 34;
+        const boxX = Math.min(width - boxW - 10, screenX + 12);
+        const boxY = Math.max(10, screenY - 40);
+
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px JetBrains Mono';
+        ctx.fillText(word, boxX + 8, boxY + 14);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '9px JetBrains Mono';
+        ctx.fillText(`[${x.toFixed(2)}, ${y.toFixed(2)}]`, boxX + 8, boxY + 26);
+      }
+    }
+
+    function drawArrow(fromX, fromY, toX, toY, color, isDashed = false) {
+      const headlen = 8;
+      const angle = Math.atan2(toY - fromY, toX - fromX);
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2;
+      if (isDashed) ctx.setLineDash([4, 4]);
+
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawAnalogyGeometry(centerX, centerY, scale) {
+      let a, b, c, target;
+      if (state.activeAnalogy === 'king_queen') {
+        a = state.words2D["Rei"];
+        b = state.words2D["Homem"];
+        c = state.words2D["Mulher"];
+        target = state.words2D["Rainha"];
+      } else if (state.activeAnalogy === 'capitals') {
+        a = state.words2D["Paris"];
+        b = state.words2D["França"];
+        c = state.words2D["Itália"];
+        target = state.words2D["Roma"];
+      } else {
+        a = state.words2D["Cachorro"];
+        b = state.words2D["Filhote"];
+        c = state.words2D["Bebê"];
+        target = state.words2D["Humano"];
+      }
+
+      if (!a || !b || !c || !target) return;
+
+      const pA = { x: centerX + a.x * scale, y: centerY - a.y * scale };
+      const pB = { x: centerX + b.x * scale, y: centerY - b.y * scale };
+      const pC = { x: centerX + c.x * scale, y: centerY - c.y * scale };
+      const pT = { x: centerX + target.x * scale, y: centerY - target.y * scale };
+
+      // Displacement vector from B to A (e.g. Homem -> Rei: Royalty offset)
+      drawArrow(pB.x, pB.y, pA.x, pA.y, '#38bdf8');
+      
+      // Parallel vector applied to C (Mulher -> Rainha)
+      drawArrow(pC.x, pC.y, pT.x, pT.y, '#10b981');
+
+      // Parallelogram dashed connector
+      ctx.save();
+      ctx.strokeStyle = '#475569';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(pB.x, pB.y);
+      ctx.lineTo(pC.x, pC.y);
+      ctx.moveTo(pA.x, pA.y);
+      ctx.lineTo(pT.x, pT.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function applyAnalogyPreset(preset) {
+      state.activeAnalogy = preset;
+
+      document.querySelectorAll('.analogy-btn').forEach(btn => {
+        if (btn.getAttribute('data-analogy') === preset) {
+          btn.className = 'analogy-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-brand-500 text-white font-bold';
+        } else {
+          btn.className = 'analogy-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-surface-950 border border-slate-800 text-slate-300 hover:text-white';
+        }
+      });
+
+      const formulaDisplay = document.getElementById('analogy-formula-display');
+      const targetWord = document.getElementById('target-word-match');
+      const targetScore = document.getElementById('target-cos-score');
+      const targetBar = document.getElementById('target-cos-bar');
+      const runnerWord = document.getElementById('runnerup-word-match');
+      const runnerScore = document.getElementById('runnerup-cos-score');
+
+      if (preset === 'king_queen') {
+        formulaDisplay.innerHTML = `
+          <div class="text-slate-400">$$\\vec{v}_{\\text{Rei}} - \\vec{v}_{\\text{Homem}} + \\vec{v}_{\\text{Mulher}} \\approx \\vec{v}^*$$</div>
+          <div class="text-[11px] text-brand-300 font-mono">[0.25, 0.70] - [0.20, 0.25] + [0.65, 0.30] = [0.70, 0.75]</div>
+        `;
+        targetWord.textContent = "Rainha";
+        targetScore.textContent = "0.962";
+        targetBar.style.width = "96.2%";
+        runnerWord.textContent = "Princesa";
+        runnerScore.textContent = "0.814";
+      } else if (preset === 'capitals') {
+        formulaDisplay.innerHTML = `
+          <div class="text-slate-400">$$\\vec{v}_{\\text{Paris}} - \\vec{v}_{\\text{França}} + \\vec{v}_{\\text{Itália}} \\approx \\vec{v}^*$$</div>
+          <div class="text-[11px] text-brand-300 font-mono">[-0.65, 0.60] - [-0.70, 0.20] + [-0.25, 0.25] = [-0.20, 0.65]</div>
+        `;
+        targetWord.textContent = "Roma";
+        targetScore.textContent = "0.954";
+        targetBar.style.width = "95.4%";
+        runnerWord.textContent = "Berlim";
+        runnerScore.textContent = "0.781";
+      } else {
+        formulaDisplay.innerHTML = `
+          <div class="text-slate-400">$$\\vec{v}_{\\text{Cachorro}} - \\vec{v}_{\\text{Filhote}} + \\vec{v}_{\\text{Bebê}} \\approx \\vec{v}^*$$</div>
+          <div class="text-[11px] text-brand-300 font-mono">[0.30, -0.30] - [0.15, -0.70] + [0.60, -0.65] = [0.75, -0.25]</div>
+        `;
+        targetWord.textContent = "Humano (Adulto)";
+        targetScore.textContent = "0.941";
+        targetBar.style.width = "94.1%";
+        runnerWord.textContent = "Gato";
+        runnerScore.textContent = "0.712";
+      }
+
+      Guia.renderMath(formulaDisplay);
+
+      drawVectorCanvas();
+    }
+  </script>
+</body>
+</html>

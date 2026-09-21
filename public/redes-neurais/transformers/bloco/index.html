@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bloco Transformer: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Bloco Transformer"
+      data-badge="Infográfico Interativo"
+      data-subtitle="A unidade que se repete n vezes: sublayer, residual e normalização"
+      data-icon="fa-cube"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — A UNIDADE DE REPETIÇÃO ══════════════ -->
+    <section class="slide-section" data-nav="Unidade" data-icon="fa-cube">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-cube"></i> Módulo 01 • A Unidade de Repetição
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O Transformer é <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">um bloco só, repetido</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O diagrama de <em>Attention Is All You Need</em> (Vaswani et al., 2017) parece complicado porque
+          mostra a pilha inteira. Na verdade há <strong class="text-slate-200">uma</strong> peça de verdade:
+          o bloco. Tudo acima do embedding é essa peça clonada $n$ vezes, com pesos próprios em cada cópia.
+          Entender um bloco é entender a arquitetura.
+        </p>
+      </div>
+
+      <!-- Encoder x Decoder -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6 glow-indigo">
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-lg bg-brand-500/10 text-brand-300 text-xs font-mono font-semibold border border-brand-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-layer-group"></i> Bloco do encoder
+            </span>
+            <span class="text-xs text-slate-500 font-mono">2 sublayers</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-3">Atenção + FFN</h3>
+          <ol class="space-y-2 text-xs">
+            <li class="flex items-start gap-3 p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <span class="w-5 h-5 shrink-0 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              <div>
+                <span class="font-semibold text-slate-100">Multi-head self-attention</span>
+                <p class="text-slate-400 mt-0.5">Cada posição olha para todas as outras — inclusive as que vêm depois. É o único lugar do bloco onde posições trocam informação.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3 p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <span class="w-5 h-5 shrink-0 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              <div>
+                <span class="font-semibold text-slate-100">Feed-forward position-wise</span>
+                <p class="text-slate-400 mt-0.5">Duas camadas densas aplicadas a cada posição isoladamente, com a mesma matriz para todas. Nenhuma mistura entre tokens.</p>
+              </div>
+            </li>
+          </ol>
+          <p class="text-[11px] text-slate-500 mt-4 pt-3 border-t border-slate-800 leading-relaxed">
+            Cada um dos dois sublayers vem embrulhado no mesmo invólucro: residual + normalização.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-purple-500/30 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-lg bg-purple-500/10 text-purple-300 text-xs font-mono font-semibold border border-purple-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-layer-group"></i> Bloco do decoder
+            </span>
+            <span class="text-xs text-slate-500 font-mono">3 sublayers</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-3">Atenção mascarada + cross + FFN</h3>
+          <ol class="space-y-2 text-xs">
+            <li class="flex items-start gap-3 p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <span class="w-5 h-5 shrink-0 rounded-full bg-rose-500/20 text-rose-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              <div>
+                <span class="font-semibold text-slate-100">Masked self-attention</span>
+                <p class="text-slate-400 mt-0.5">Igual à do encoder, com uma máscara que zera o futuro: a posição $t$ só enxerga $\le t$. Detalhe em <a href="../decoder/masked-attention/index.html" class="text-rose-300 hover:underline">2.1.4.1</a>.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3 p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <span class="w-5 h-5 shrink-0 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              <div>
+                <span class="font-semibold text-slate-100">Cross-attention</span>
+                <p class="text-slate-400 mt-0.5">$Q$ vem do decoder, $K$ e $V$ vêm da saída do encoder. É a única ponte entre os dois lados — ver <a href="../encoder/cross-attention/index.html" class="text-purple-300 hover:underline">2.1.3.1</a>.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3 p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <span class="w-5 h-5 shrink-0 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              <div>
+                <span class="font-semibold text-slate-100">Feed-forward position-wise</span>
+                <p class="text-slate-400 mt-0.5">Idêntico ao do encoder, com pesos próprios.</p>
+              </div>
+            </li>
+          </ol>
+          <p class="text-[11px] text-slate-500 mt-4 pt-3 border-t border-slate-800 leading-relaxed">
+            Três sublayers, três invólucros residual + norm. Nada muda na receita — só o número de vezes que ela é aplicada.
+          </p>
+        </div>
+      </div>
+
+      <!-- O esqueleto vs o recheio -->
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-slate-800 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-screwdriver-wrench text-brand-400"></i> O esqueleto quase não mudou desde 2017 — o recheio mudou muito
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[520px]">
+            <thead>
+              <tr class="text-left text-slate-500 border-b border-slate-800">
+                <th class="py-2 pr-4 font-medium">Peça do bloco</th>
+                <th class="py-2 pr-4 font-medium">2017</th>
+                <th class="py-2 font-medium">Variações comuns depois</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-4 font-mono text-brand-300">mistura entre posições</td>
+                <td class="py-2.5 pr-4 text-slate-400">multi-head attention densa</td>
+                <td class="py-2.5 text-slate-400">atenção esparsa, janelada, multi-query, agrupada por chave/valor</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-4 font-mono text-cyan-300">transformação por posição</td>
+                <td class="py-2.5 pr-4 text-slate-400">FFN com ReLU</td>
+                <td class="py-2.5 text-slate-400">GELU, variantes com porta (gated), mistura de especialistas</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-4 font-mono text-amber-300">normalização</td>
+                <td class="py-2.5 pr-4 text-slate-400">LayerNorm depois da soma</td>
+                <td class="py-2.5 text-slate-400">LayerNorm antes do sublayer, RMSNorm</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-4 font-mono text-emerald-300">conexão residual</td>
+                <td class="py-2.5 pr-4 text-slate-400">soma da entrada com a saída</td>
+                <td class="py-2.5 text-emerald-300/80">praticamente intocada</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          Repare na coluna da direita: as substituições acontecem <em>dentro</em> das caixas. A ordem
+          "sublayer → soma com a entrada → normaliza" sobreviveu a tudo. É a razão de existir desta página.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-xl bg-brand-500/5 border border-brand-500/25 text-xs text-slate-300 leading-relaxed">
+        <i class="fa-solid fa-circle-info text-brand-400 mr-1"></i>
+        Esta página olha o bloco <strong class="text-slate-200">de dentro</strong>: o invólucro, a matemática dele
+        e o custo de empilhar. A visão <em>de fora</em> — como uma frase vira vetores contextuais para busca — está em
+        <a href="../../../ir/densos/transformer/index.html" class="text-brand-400 hover:underline">1.2.4 Arquitetura Transformer</a>.
+        O que acontece dentro de cada caixa tem página própria:
+        <a href="multi-head-attention/index.html" class="text-brand-400 hover:underline">2.1.2.1 Multi-head attention</a>,
+        <a href="add-norm/index.html" class="text-brand-400 hover:underline">2.1.2.2 Add &amp; Norm</a> e
+        <a href="ffn/index.html" class="text-brand-400 hover:underline">2.1.2.3 FFN</a>.
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — O ESQUELETO DO SUBLAYER ══════════════ -->
+    <section class="slide-section" data-nav="Esqueleto" data-icon="fa-code-branch">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-code-branch"></i> Módulo 02 • O Invólucro
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Uma linha define <span class="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">todo sublayer</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Não importa se o sublayer é atenção ou FFN. Ele é sempre embrulhado da mesma forma, e é esse
+          embrulho — não o conteúdo — que faz a pilha profunda ser treinável.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-6 sm:p-8 mb-6">
+        <p class="text-center my-2">
+          $$\mathrm{LayerNorm}\big(x + \mathrm{Sublayer}(x)\big)$$
+        </p>
+        <p class="text-xs text-slate-400 text-center max-w-2xl mx-auto leading-relaxed mt-4">
+          Essa é a forma do paper de 2017 (pós-norma). Duas ideias independentes moram aqui, e vale
+          separá-las antes de discutir onde a norma entra.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Residual -->
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6">
+          <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-turn-up text-emerald-400"></i> 1. O caminho residual: $x + \dots$
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            O sublayer não <em>substitui</em> a representação — ele escreve uma correção em cima dela.
+            Se $\mathrm{Sublayer}(x)$ fosse zero, o bloco seria a identidade e o sinal atravessaria intacto.
+            Aprender a não fazer nada é fácil; aprender a reconstruir a entrada do zero, em cada uma de
+            dezenas de camadas, não é.
+          </p>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-2">
+            <div class="text-emerald-300 font-medium flex items-center gap-2">
+              <i class="fa-solid fa-bolt"></i> O que isso faz com o gradiente
+            </div>
+            <p class="text-slate-400 leading-relaxed">
+              Derivando $y = x + F(x)$ em relação a $x$:
+            </p>
+            <p class="text-center py-1">
+              $\dfrac{\partial y}{\partial x} = I + \dfrac{\partial F}{\partial x}$
+            </p>
+            <p class="text-slate-400 leading-relaxed">
+              O termo $I$ é um atalho: mesmo que $\partial F / \partial x$ encolha, o gradiente não é
+              multiplicado por algo próximo de zero — ele tem uma via direta de volta até a entrada.
+              É a mesma ideia das ResNets (He et al., 2015), trazida para a linguagem.
+            </p>
+          </div>
+        </div>
+
+        <!-- Norm -->
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-6">
+          <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-ruler-vertical text-amber-400"></i> 2. A normalização: $\mathrm{LayerNorm}(\cdot)$
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            A soma $x + \mathrm{Sublayer}(x)$ pode ter qualquer escala. A LayerNorm devolve cada vetor de
+            token a uma escala controlada, <strong class="text-slate-200">por token</strong> — estatísticas
+            calculadas sobre as $d_{model}$ casas daquele vetor, nunca sobre o lote:
+          </p>
+          <p class="text-center my-3">
+            $$\mathrm{LN}(u) = \gamma \odot \frac{u - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta$$
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            com $\mu$ e $\sigma^2$ calculados sobre as casas de $u$, e $\gamma, \beta \in \mathbb{R}^{d_{model}}$
+            treináveis — $2 d_{model}$ parâmetros, ninharia perto do resto. Ser independente do lote é o que
+            permite lotes de tamanho 1, sequências de comprimentos diferentes e inferência token a token
+            sem mudar nada. <a href="add-norm/index.html" class="text-amber-300 hover:underline">2.1.2.2</a> destrincha essa fórmula.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tracker de dimensões -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-arrows-left-right-to-line text-cyan-400"></i> Por que a saída precisa ter exatamente $d_{model}$
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">
+            Mexa nos dois controles e acompanhe a forma do tensor em cada etapa. Toda forma abaixo é calculada na hora.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{model}$</span><span class="font-mono text-cyan-400" id="dim-d-out">768</span>
+            </label>
+            <input id="dim-d" type="range" min="64" max="1024" step="64" value="768" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{ff}$ (interior da FFN)</span><span class="font-mono text-cyan-400" id="dim-ff-out">3072</span>
+            </label>
+            <input id="dim-ff" type="range" min="128" max="8192" step="128" value="3072" class="w-full" aria-label="Dimensão interna da FFN">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[480px] font-mono">
+            <thead>
+              <tr class="text-left text-slate-500 border-b border-slate-800">
+                <th class="py-2 pr-4 font-medium font-sans">Etapa dentro do bloco</th>
+                <th class="py-2 pr-4 font-medium font-sans">Forma do tensor</th>
+                <th class="py-2 font-medium font-sans">Pode somar com $x$?</th>
+              </tr>
+            </thead>
+            <tbody id="dim-linhas" class="text-slate-300"></tbody>
+          </table>
+        </div>
+
+        <div class="mt-5 p-3.5 rounded-xl bg-cyan-500/5 border border-cyan-500/25 text-xs text-slate-300 leading-relaxed">
+          <i class="fa-solid fa-lightbulb text-cyan-400 mr-1"></i>
+          A FFN pode inflar para $d_{ff}$ no meio, e a atenção pode picotar $d_{model}$ em cabeças —
+          mas as duas <strong class="text-slate-200">terminam de volta em $d_{model}$</strong>. Não é
+          estética: a soma residual exige que os dois lados tenham a mesma forma. Como entrada e saída
+          do bloco coincidem, o bloco é <em>encaixável em si mesmo</em>, e é isso — e só isso — que
+          permite escrever "$\times n$" no diagrama.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — PRÉ x PÓS-NORMA ══════════════ -->
+    <section class="slide-section" data-nav="Pré vs Pós" data-icon="fa-shuffle">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-shuffle"></i> Módulo 03 • Onde a norma entra
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Duas linhas quase iguais, <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">treinos bem diferentes</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A discussão inteira cabe em mover um parêntese: a LayerNorm fica <em>depois</em> da soma
+          residual, ou <em>antes</em> do sublayer, dentro do ramo?
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-3 py-1 rounded-lg bg-slate-700/40 text-slate-300 text-xs font-mono font-semibold border border-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-clock-rotate-left"></i> pós-norma
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">Vaswani et al., 2017</span>
+          </div>
+          <p class="text-center my-4">$$x_{l+1} = \mathrm{LN}\big(x_l + F(x_l)\big)$$</p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A normalização é a última coisa que acontece — ela toca o resultado da soma. Consequência:
+            <strong class="text-slate-200">não existe caminho da entrada até a saída da pilha sem passar por uma LayerNorm</strong>.
+            Toda camada reescala o que recebeu.
+          </p>
+          <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-500">
+            Foi o que o paper original usou, e o que o treino do paper acomodou com aquecimento (warmup)
+            de taxa de aprendizado.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 text-xs font-mono font-semibold border border-emerald-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-trend-up"></i> pré-norma
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">padrão na maioria dos modelos atuais</span>
+          </div>
+          <p class="text-center my-4">$$x_{l+1} = x_l + F\big(\mathrm{LN}(x_l)\big)$$</p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A normalização entra <em>dentro</em> do ramo do sublayer: quem é normalizado é a cópia que
+            alimenta $F$, não o fluxo principal. O termo $x_l$ segue limpo. Empilhando,
+            $x_n = x_0 + \sum_{l} F_l(\mathrm{LN}(x_l))$ — uma soma de contribuições sobre um
+            <strong class="text-slate-200">caminho de identidade que atravessa a pilha inteira</strong>.
+          </p>
+          <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-500">
+            Exige uma LayerNorm extra no fim da pilha: a saída nunca foi normalizada por ninguém.
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini-simulador: peso do caminho de identidade -->
+      <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-5 sm:p-6 mb-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-chart-simple text-amber-400"></i> Quanto sobra da entrada depois de $L$ blocos?
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">
+            Modelo de brinquedo, e vale dizer com todas as letras: supõe que a contribuição de cada
+            sublayer tem variância 1 e é independente das demais, e que a LayerNorm devolve o vetor à
+            variância 1. Não é a dinâmica real de um treino — é a caricatura que mostra a
+            <em>direção</em> do efeito.
+          </p>
+        </div>
+
+        <div class="bg-surface-950 rounded-xl border border-slate-800 p-3 mb-5 max-w-sm">
+          <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+            <span>Profundidade $L$ (blocos)</span><span class="font-mono text-amber-400" id="res-l-out">12</span>
+          </label>
+          <input id="res-l" type="range" min="1" max="64" step="1" value="12" class="w-full" aria-label="Profundidade em blocos">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-xs font-semibold text-emerald-300 flex items-center gap-2 mb-2">
+              <i class="fa-solid fa-arrow-trend-up"></i> pré-norma
+            </div>
+            <div class="font-mono text-2xl font-bold text-white" id="res-pre">—</div>
+            <div class="h-2 rounded-full bg-surface-900 mt-3 overflow-hidden">
+              <div id="res-pre-bar" class="h-full bg-emerald-500 transition-all" style="width:0%"></div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed">
+              Peso relativo de $x_0$ no fluxo residual: $1/\sqrt{1+L}$. Cai, mas devagar — a entrada
+              continua presente lá no topo.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-xs font-semibold text-rose-300 flex items-center gap-2 mb-2">
+              <i class="fa-solid fa-clock-rotate-left"></i> pós-norma
+            </div>
+            <div class="font-mono text-2xl font-bold text-white" id="res-pos">—</div>
+            <div class="h-2 rounded-full bg-surface-900 mt-3 overflow-hidden">
+              <div id="res-pos-bar" class="h-full bg-rose-500 transition-all" style="width:0%"></div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed">
+              Cada LayerNorm reescala a soma inteira, então a parcela de $x_0$ é dividida a cada bloco:
+              $2^{-L/2}$. Cai exponencialmente.
+            </p>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed" id="res-nota"></p>
+      </div>
+
+      <!-- Trade-off honesto -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/30">
+          <div class="text-xs font-mono text-emerald-400 mb-1">a favor da pré-norma</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Treino mais tolerante</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Com o caminho de identidade intacto, o gradiente chega às camadas rasas sem ser
+            re-escalado a cada bloco. Na prática, modelos profundos treinam com taxas maiores e
+            dependem muito menos de um warmup bem ajustado — o que foi determinante quando as pilhas
+            passaram de dezenas de camadas.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1">o preço</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">O fluxo residual cresce</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Somando contribuições sem nunca normalizar o tronco, a magnitude de $x_l$ tende a aumentar
+            com a profundidade. As camadas finais recebem uma entrada dominada pela acumulação, e a
+            contribuição relativa de cada bloco novo diminui. Daí a LayerNorm final obrigatória, e daí
+            variantes que reescalam o ramo residual.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-700">
+          <div class="text-xs font-mono text-slate-400 mb-1">a favor da pós-norma</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Não é uma opção errada</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Com aquecimento e inicialização cuidadosos, pós-norma treina — e treinou o Transformer
+            original e o BERT. Relatos de que ela pode chegar a uma qualidade final competitiva em
+            profundidades moderadas existem. O que a pré-norma compra não é necessariamente qualidade:
+            é robustez do processo de treino.
+          </p>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+        <i class="fa-solid fa-circle-info text-amber-400 mr-1"></i>
+        Cuidado com a leitura preguiçosa de "pré-norma é melhor". O que se pode afirmar com segurança é
+        mais modesto: <strong class="text-slate-200">a pré-norma torna o treino de pilhas profundas menos
+        sensível a hiperparâmetros</strong>, e por isso virou o padrão de fato. Comparações de qualidade
+        final dependem de escala, dados e orçamento de treino — e trocar a posição da norma muda o
+        ajuste ideal de todo o resto.
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — EMPILHAR n VEZES / MONTADOR ══════════════ -->
+    <section class="slide-section" data-nav="Empilhar" data-icon="fa-cubes-stacked">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-cubes-stacked"></i> Módulo 04 • Montador de Bloco
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Monte o bloco e veja <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">o que custa empilhá-lo</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Cada cópia do bloco tem <strong class="text-slate-200">pesos próprios</strong> — nada é
+          compartilhado entre camadas. Mexa nos controles: o desenho se remonta e todas as contas são
+          refeitas em JavaScript na hora.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 sm:p-6 mb-6">
+        <!-- Controles -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{model}$</span><span class="font-mono text-brand-400" id="mb-d-out">768</span>
+            </label>
+            <input id="mb-d" type="range" min="64" max="2048" step="64" value="768" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{ff}$</span><span class="font-mono text-brand-400" id="mb-ff-out">3072</span>
+            </label>
+            <input id="mb-ff" type="range" min="128" max="16384" step="128" value="3072" class="w-full" aria-label="Dimensão interna da FFN">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Camadas $n$</span><span class="font-mono text-brand-400" id="mb-n-out">12</span>
+            </label>
+            <input id="mb-n" type="range" min="1" max="96" step="1" value="12" class="w-full" aria-label="Número de camadas">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 block mb-2">Cabeças $h$</label>
+            <select id="mb-h" class="w-full bg-surface-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono text-slate-200" aria-label="Número de cabeças">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="4">4</option>
+              <option value="8">8</option>
+              <option value="12" selected>12</option>
+              <option value="16">16</option>
+              <option value="32">32</option>
+            </select>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 block mb-2">Posição da LayerNorm</label>
+            <select id="mb-norm" class="w-full bg-surface-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono text-slate-200" aria-label="Posição da LayerNorm">
+              <option value="pos">pós-norma (2017)</option>
+              <option value="pre" selected>pré-norma (padrão atual)</option>
+            </select>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 block mb-2">Tipo de bloco</label>
+            <select id="mb-tipo" class="w-full bg-surface-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-mono text-slate-200" aria-label="Tipo de bloco">
+              <option value="encoder" selected>encoder — 2 sublayers</option>
+              <option value="decoder">decoder — 3 sublayers</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="mb-aviso" class="hidden mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-200"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Diagrama -->
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <div class="text-[11px] font-mono text-slate-500 uppercase tracking-widest mb-2 px-1">
+              Caminho do sinal dentro de um bloco
+            </div>
+            <div id="mb-svg" class="w-full overflow-x-auto"></div>
+          </div>
+
+          <!-- Números -->
+          <div class="space-y-4">
+            <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+              <div class="text-[11px] font-mono text-slate-500 uppercase tracking-widest mb-3">Parâmetros por sublayer</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs min-w-[300px]">
+                  <tbody id="mb-tabela" class="text-slate-300"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-surface-950 rounded-xl border border-brand-500/30 p-4">
+                <div class="text-[11px] font-mono text-brand-400 mb-1">por bloco</div>
+                <div class="font-mono text-xl font-bold text-white" id="mb-bloco">—</div>
+                <div class="text-[11px] text-slate-500 mt-1" id="mb-bloco-exato"></div>
+              </div>
+              <div class="bg-surface-950 rounded-xl border border-cyan-500/30 p-4">
+                <div class="text-[11px] font-mono text-cyan-400 mb-1">pilha de <span id="mb-n-eco">12</span> blocos</div>
+                <div class="font-mono text-xl font-bold text-white" id="mb-total">—</div>
+                <div class="text-[11px] text-slate-500 mt-1" id="mb-total-exato"></div>
+              </div>
+            </div>
+
+            <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+              <div class="text-[11px] font-mono text-slate-500 uppercase tracking-widest mb-3">Onde moram os parâmetros do bloco</div>
+              <div class="h-4 rounded-lg overflow-hidden flex border border-slate-800">
+                <div id="mb-bar-attn" class="h-full bg-brand-500" style="width:0%"></div>
+                <div id="mb-bar-ffn" class="h-full bg-cyan-500" style="width:0%"></div>
+                <div id="mb-bar-ln" class="h-full bg-amber-500" style="width:0%"></div>
+              </div>
+              <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] font-mono">
+                <span class="text-brand-300"><i class="fa-solid fa-square mr-1"></i>atenção <span id="mb-pct-attn">—</span></span>
+                <span class="text-cyan-300"><i class="fa-solid fa-square mr-1"></i>FFN <span id="mb-pct-ffn">—</span></span>
+                <span class="text-amber-300"><i class="fa-solid fa-square mr-1"></i>LayerNorm <span id="mb-pct-ln">—</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 mt-5 leading-relaxed">
+          Convenção adotada nas contas, para não haver dúvida: projeções $W_Q, W_K, W_V, W_O$ de forma
+          $d_{model} \times d_{model}$ <em>com</em> vetor de bias; FFN como $d_{model} \to d_{ff} \to d_{model}$,
+          também com bias; LayerNorm com $\gamma$ e $\beta$. <strong class="text-slate-200">Embeddings, tabela de
+          posição e camada de saída não entram</strong> — a conta é da pilha de blocos, só.
+        </p>
+      </div>
+
+      <!-- O que cresce com n -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-weight-hanging"></i> parâmetros</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Linear em $n$</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Blocos idênticos com pesos independentes: <span id="mb-cresc-param" class="font-mono text-brand-300">—</span>.
+            Dobrar a profundidade dobra exatamente esta parcela do modelo.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-stopwatch"></i> latência</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Linear em $n$, e sequencial</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Um bloco só começa quando o anterior termina. A profundidade não se paraleliza entre camadas —
+            diferente do comprimento da sequência, que se paraleliza dentro de cada camada.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-memory"></i> ativações</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Linear em $n$, no treino</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            O backward precisa dos tensores intermediários de cada bloco. Piso grosseiro só para as
+            entradas de sublayer, com 1 sequência de 512 tokens em 16 bits:
+            <span id="mb-cresc-mem" class="font-mono text-amber-300">—</span>. O consumo real é várias vezes
+            maior — este número é um limite inferior didático, não uma estimativa de uso.
+          </p>
+        </div>
+      </div>
+
+      <!-- Raso x profundo -->
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-slate-800 p-5 sm:p-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-layer-group text-purple-400"></i> Camadas rasas e camadas profundas fazem coisas diferentes
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          Os blocos são estruturalmente idênticos, mas não aprendem a mesma coisa. O que trabalhos de
+          análise e sondagem (<em>probing</em>) descrevem de forma recorrente é um gradiente qualitativo:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-cyan-500/30">
+            <div class="font-mono text-cyan-400 text-[11px] mb-1">blocos iniciais</div>
+            <p class="text-slate-400 leading-relaxed">
+              Atenção tende a ficar local e a informação recuperável é mais superficial: identidade do
+              token, morfologia, vizinhança imediata.
+            </p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-brand-500/30">
+            <div class="font-mono text-brand-400 text-[11px] mb-1">blocos do meio</div>
+            <p class="text-slate-400 leading-relaxed">
+              É onde relações estruturais de mais longo alcance costumam aparecer melhor — concordância,
+              dependência sintática, ligação entre argumentos.
+            </p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-purple-500/30">
+            <div class="font-mono text-purple-400 text-[11px] mb-1">blocos finais</div>
+            <p class="text-slate-400 leading-relaxed">
+              Representações mais especializadas no objetivo de treino — e, por isso, às vezes
+              <em>piores</em> como vetor de uso geral do que as camadas do meio.
+            </p>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          Dito com cuidado de propósito: é uma tendência observada, não uma lei, e varia com modelo,
+          objetivo de treino e tarefa de sondagem. Consequência prática que interessa a quem usa
+          embeddings: <strong class="text-slate-300">a última camada nem sempre é a melhor escolha</strong> —
+          vale testar camadas intermediárias, como discutido em
+          <a href="../../../ir/densos/embeddings/index.html" class="text-purple-300 hover:underline">1.2.1 Embeddings</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que o bloco <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">garante, e o que ele não resolve</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O invólucro é simples de enunciar e difícil de superar: soma a entrada, normaliza, preserva
+          $d_{model}$. Daqui, cada caixa tem uma página própria.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1">a unidade</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Dois ou três sublayers</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Encoder: atenção + FFN. Decoder: atenção mascarada + cross-attention + FFN. Cada um com seu invólucro.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/30">
+          <div class="text-xs font-mono text-emerald-400 mb-1">o invólucro</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$\mathrm{LN}(x + \mathrm{Sublayer}(x))$</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Residual dá o atalho $I$ no gradiente; a norma controla a escala por token; a dimensão $d_{model}$ é preservada.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1">a escolha</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Pré-norma venceu por robustez</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Caminho de identidade intacto, treino profundo menos dependente de warmup — ao custo de um fluxo residual que cresce e de uma LN final.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Limitações do que foi ensinado aqui
+        </h3>
+        <ul class="space-y-2.5 text-xs text-slate-400">
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-minus text-rose-400 mt-0.5"></i>
+            <span><strong class="text-slate-200">O montador conta parâmetros, não FLOPs nem memória real.</strong>
+            O custo de atenção cresce com o quadrado do comprimento da sequência e não aparece em
+            contagem alguma de pesos — um bloco com $d_{ff}$ enorme pode ter muitos parâmetros e mesmo
+            assim ser mais barato que a atenção em contexto longo.</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-minus text-rose-400 mt-0.5"></i>
+            <span><strong class="text-slate-200">A convenção de bias e a ausência de embeddings deslocam o total.</strong>
+            Modelos reais variam: alguns removem bias, outros trocam LayerNorm por RMSNorm (metade dos
+            parâmetros de norma), outros usam FFN com porta (três matrizes em vez de duas). Compare
+            ordens de grandeza, não dígitos.</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-minus text-rose-400 mt-0.5"></i>
+            <span><strong class="text-slate-200">O modelo de brinquedo do módulo 03 é uma caricatura.</strong>
+            Independência e variância unitária são suposições fortes; servem para mostrar a direção do
+            efeito, não para prever o comportamento de um treino de verdade.</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-minus text-rose-400 mt-0.5"></i>
+            <span><strong class="text-slate-200">Nada foi dito sobre o que acontece dentro das caixas.</strong>
+            Como as cabeças dividem $d_{model}$, por que a FFN expande antes de comprimir, o que a
+            máscara causal realmente faz — cada um é um tópico próprio, a seguir.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Onde isso se encaixa
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          A entrada do bloco vem do embedding somado ao
+          <a href="../positional-encoding/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">positional encoding</a> (2.1.1).
+          A partir daqui, abrimos as caixas: primeiro a
+          <strong class="text-slate-200">multi-head attention</strong>, depois o
+          <strong class="text-slate-200">Add &amp; Norm</strong> em detalhe e a
+          <strong class="text-slate-200">FFN</strong>. Com o bloco dominado, a pilha vira
+          <a href="../encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">encoder</a> (2.1.3) ou
+          <a href="../decoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">decoder</a> (2.1.4).
+          Para o quadro completo, volte a
+          <a href="../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1 Transformers</a>
+          ou ao capítulo
+          <a href="../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2. Redes Neurais</a>.
+        </p>
+        <a href="multi-head-attention/index.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition">
+          <i class="fa-solid fa-arrow-right"></i> Próximo: 2.1.2.1 Multi-head Attention
+        </a>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o esqueleto do bloco.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que todo sublayer precisa devolver um tensor com exatamente $d_{model}$ casas?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A LayerNorm funciona em qualquer dimensão; ela não impõe esse tamanho.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque a LayerNorm só sabe normalizar vetores de tamanho $d_{model}$.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A soma residual exige formas iguais, e entrada igual à saída é o que torna o bloco encaixável em si mesmo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque a soma residual $x + \mathrm{Sublayer}(x)$ exige a mesma forma nos dois lados — e é isso que permite empilhar o bloco $n$ vezes.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O softmax da atenção opera sobre pares de posições e não depende de o resultado voltar a d_model.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque o softmax da atenção exige saída de dimensão fixa.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A FFN de propósito expande para d_ff no meio — a dimensão interna é livre; o que não é livre é a saída.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque nenhuma etapa do bloco pode mudar a dimensão em momento algum.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Qual é a diferença estrutural entre pré-norma e pós-norma?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A quantidade de LayerNorms por sublayer é a mesma; a pré-norma só acrescenta uma no fim da pilha.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) A pré-norma usa duas LayerNorms por sublayer e a pós-norma usa uma.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Normalizar por token é característica da LayerNorm nas duas variantes — o que muda é a posição, não o eixo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) A pré-norma normaliza sobre o lote e a pós-norma normaliza por token.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Na pré-norma só a cópia que alimenta F é normalizada, então x atravessa a pilha inteira sem reescala — caminho residual limpo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Na pré-norma a LayerNorm fica dentro do ramo do sublayer, deixando um caminho de identidade que não é normalizado; na pós-norma ela age sobre o resultado da soma.
+              </button>
+              <button onclick="Guia.answer(this, false, 'As duas variantes têm exatamente os mesmos parâmetros por sublayer; a diferença de contagem é só a LN final da pré-norma.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) A pré-norma elimina os parâmetros $\gamma$ e $\beta$, ficando mais barata.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              No montador, dobrar o número de cabeças $h$ mantendo $d_{model}$ fixo faz o quê com a contagem de parâmetros da atenção?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Teste no montador: o total não se move. As projeções continuam somando d_model colunas no conjunto das cabeças.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Dobra, porque cada cabeça ganha suas próprias matrizes $W_Q, W_K, W_V$.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Não há divisão do total: o que é dividido é d_model entre as cabeças, e as fatias somam o mesmo tamanho.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Cai pela metade, porque cada cabeça passa a trabalhar em $d_k = d_{model}/h$.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'As cabeças repartem as mesmas d_model casas: o total das projeções continua 4 d² (mais bias). Muda o que cada cabeça enxerga, não o custo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Não muda nada: $h$ apenas reparte $d_{model}$ em mais subespaços menores, e o total das projeções continua $4 d_{model}^2$ (mais os bias).
+              </button>
+              <button onclick="Guia.answer(this, false, 'A FFN não tem relação com h — ela é aplicada posição a posição, depois que as cabeças já foram concatenadas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Não muda a atenção, mas dobra a FFN, que recebe as cabeças concatenadas.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════ utilidades ═══════════ */
+    const br = n => Math.round(n).toLocaleString('pt-BR');
+
+    function curto(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + ' B';
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + ' M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + ' k';
+      return String(Math.round(n));
+    }
+
+    function bytesCurto(b) {
+      if (b >= 1024 ** 3) return (b / 1024 ** 3).toFixed(2) + ' GiB';
+      if (b >= 1024 ** 2) return (b / 1024 ** 2).toFixed(1) + ' MiB';
+      return (b / 1024).toFixed(0) + ' KiB';
+    }
+
+    /* ═══════════ contagem de parâmetros — convenção declarada na página ═══════════
+       Atenção : W_Q, W_K, W_V, W_O, cada um d×d com bias  →  4d² + 4d
+       FFN     : d→d_ff e d_ff→d, ambos com bias           →  2·d·d_ff + d_ff + d
+       LayerNorm: gamma e beta                             →  2d                     */
+    const pAtencao = d => 4 * d * d + 4 * d;
+    const pFFN = (d, dff) => 2 * d * dff + dff + d;
+    const pLN = d => 2 * d;
+
+    Guia.ready(() => {
+      initDimensoes();
+      initResidual();
+      initMontador();
+    });
+
+    /* ═══════════ módulo 02 — o rastro das dimensões ═══════════ */
+    function initDimensoes() {
+      const sd = document.getElementById('dim-d');
+      const sff = document.getElementById('dim-ff');
+      const corpo = document.getElementById('dim-linhas');
+
+      function render() {
+        const d = +sd.value, dff = +sff.value;
+        document.getElementById('dim-d-out').textContent = br(d);
+        document.getElementById('dim-ff-out').textContent = br(dff);
+
+        const etapas = [
+          ['entrada do bloco: x', 'n × ' + br(d), true, 'é o próprio x'],
+          ['projeções Q, K, V (por cabeça)', 'n × d_k = ' + br(d) + '/h', false, 'h · d_k = ' + br(d) + ', concatenadas'],
+          ['saída da atenção, após W_O', 'n × ' + br(d), true, 'volta a d_model'],
+          ['soma residual x + Attn(x)', 'n × ' + br(d), true, 'soma válida'],
+          ['1ª camada da FFN', 'n × ' + br(dff), false, 'expansão intermediária'],
+          ['2ª camada da FFN', 'n × ' + br(d), true, 'volta a d_model'],
+          ['soma residual x + FFN(x)', 'n × ' + br(d), true, 'soma válida'],
+          ['saída do bloco', 'n × ' + br(d), true, 'igual à entrada → empilhável']
+        ];
+
+        corpo.innerHTML = etapas.map(([nome, forma, ok, nota]) => `
+          <tr class="border-b border-slate-800/60">
+            <td class="py-2 pr-4 font-sans text-slate-300">${nome}</td>
+            <td class="py-2 pr-4 text-${ok ? 'emerald' : 'amber'}-300">${forma}</td>
+            <td class="py-2 text-[11px] ${ok ? 'text-emerald-400' : 'text-slate-500'}">
+              <i class="fa-solid ${ok ? 'fa-check' : 'fa-minus'} mr-1"></i>${nota}
+            </td>
+          </tr>`).join('');
+      }
+
+      sd.addEventListener('input', render);
+      sff.addEventListener('input', render);
+      render();
+    }
+
+    /* ═══════════ módulo 03 — peso do caminho de identidade (modelo de brinquedo) ═══════════
+       Suposições declaradas na página: contribuições independentes de variância 1,
+       LayerNorm devolvendo variância 1.
+         pré-norma : x_L = x_0 + Σ F_l  →  Var = 1 + L  →  peso de x_0 = 1/√(1+L)
+         pós-norma : cada bloco normaliza a soma  →  peso de x_0 = (1/√2)^L          */
+    function initResidual() {
+      const sl = document.getElementById('res-l');
+
+      function render() {
+        const L = +sl.value;
+        document.getElementById('res-l-out').textContent = L;
+
+        const pre = 1 / Math.sqrt(1 + L);
+        const pos = Math.pow(2, -L / 2);
+
+        const fmt = v => v >= 1e-4 ? (v * 100).toFixed(2) + ' %' : (v * 100).toExponential(2) + ' %';
+        document.getElementById('res-pre').textContent = fmt(pre);
+        document.getElementById('res-pos').textContent = fmt(pos);
+        document.getElementById('res-pre-bar').style.width = (pre * 100).toFixed(2) + '%';
+        document.getElementById('res-pos-bar').style.width = Math.max(pos * 100, 0).toFixed(4) + '%';
+
+        const razao = pre / pos;
+        document.getElementById('res-nota').textContent =
+          'Com L = ' + L + ' blocos, neste modelo a entrada pesa ' +
+          (razao >= 1000 ? razao.toExponential(2) : razao.toFixed(1)) +
+          '× mais na pré-norma do que na pós-norma. A diferença não é de grau, é de regime: ' +
+          'uma cai como raiz, a outra cai como exponencial.';
+      }
+
+      sl.addEventListener('input', render);
+      render();
+    }
+
+    /* ═══════════ módulo 04 — montador de bloco ═══════════ */
+    const SUB_ENCODER = [
+      { k: 'attn', nome: 'Multi-head Self-Attention', cor: '#818cf8', classe: 'attn' },
+      { k: 'ffn', nome: 'Feed-Forward position-wise', cor: '#22d3ee', classe: 'ffn' }
+    ];
+    const SUB_DECODER = [
+      { k: 'attn', nome: 'Masked Self-Attention', cor: '#fb7185', classe: 'attn' },
+      { k: 'cross', nome: 'Cross-Attention', cor: '#c084fc', classe: 'attn' },
+      { k: 'ffn', nome: 'Feed-Forward position-wise', cor: '#22d3ee', classe: 'ffn' }
+    ];
+
+    function initMontador() {
+      const ctr = ['mb-d', 'mb-ff', 'mb-n', 'mb-h', 'mb-norm', 'mb-tipo'].map(id => document.getElementById(id));
+
+      function estado() {
+        return {
+          d: +document.getElementById('mb-d').value,
+          dff: +document.getElementById('mb-ff').value,
+          n: +document.getElementById('mb-n').value,
+          h: +document.getElementById('mb-h').value,
+          pre: document.getElementById('mb-norm').value === 'pre',
+          tipo: document.getElementById('mb-tipo').value
+        };
+      }
+
+      function render() {
+        const st = estado();
+        const subs = st.tipo === 'decoder' ? SUB_DECODER : SUB_ENCODER;
+
+        document.getElementById('mb-d-out').textContent = br(st.d);
+        document.getElementById('mb-ff-out').textContent = br(st.dff);
+        document.getElementById('mb-n-out').textContent = st.n;
+        document.getElementById('mb-n-eco').textContent = st.n;
+
+        /* divisibilidade das cabeças */
+        const aviso = document.getElementById('mb-aviso');
+        const dk = st.d / st.h;
+        if (!Number.isInteger(dk)) {
+          aviso.classList.remove('hidden');
+          aviso.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> ' + st.h +
+            ' cabeças não dividem d_model = ' + br(st.d) + ' (' + dk.toFixed(2) +
+            ' casas por cabeça). Implementações reais exigem divisão exata — as contagens abaixo continuam válidas, porque não dependem de h.';
+        } else {
+          aviso.classList.add('hidden');
+        }
+
+        /* parâmetros por sublayer */
+        const linhas = subs.map(s => {
+          const p = s.k === 'ffn' ? pFFN(st.d, st.dff) : pAtencao(st.d);
+          const formula = s.k === 'ffn'
+            ? '2·d·d_ff + d_ff + d'
+            : '4·d² + 4·d';
+          return { ...s, p, formula };
+        });
+
+        const pNorm = pLN(st.d);
+        const totalAttn = linhas.filter(l => l.classe === 'attn').reduce((a, l) => a + l.p, 0);
+        const totalFFN = linhas.filter(l => l.classe === 'ffn').reduce((a, l) => a + l.p, 0);
+        const totalLN = pNorm * subs.length;
+        const bloco = totalAttn + totalFFN + totalLN;
+        const lnFinal = st.pre ? pNorm : 0;
+        const total = bloco * st.n + lnFinal;
+
+        /* tabela */
+        const tab = document.getElementById('mb-tabela');
+        tab.innerHTML = linhas.map(l => `
+          <tr class="border-b border-slate-800/60">
+            <td class="py-2 pr-3">
+              <span class="inline-block w-2 h-2 rounded-sm mr-2 align-middle" style="background:${l.cor}"></span>
+              <span class="text-slate-300">${l.nome}</span>
+              <div class="text-[10px] font-mono text-slate-600 pl-4">${l.formula}</div>
+            </td>
+            <td class="py-2 text-right font-mono text-slate-200 whitespace-nowrap">${br(l.p)}</td>
+          </tr>`).join('') + `
+          <tr class="border-b border-slate-800/60">
+            <td class="py-2 pr-3">
+              <span class="inline-block w-2 h-2 rounded-sm mr-2 align-middle" style="background:#f59e0b"></span>
+              <span class="text-slate-300">${subs.length} × LayerNorm</span>
+              <div class="text-[10px] font-mono text-slate-600 pl-4">${subs.length} · 2·d</div>
+            </td>
+            <td class="py-2 text-right font-mono text-slate-200 whitespace-nowrap">${br(totalLN)}</td>
+          </tr>`;
+
+        /* totais */
+        document.getElementById('mb-bloco').textContent = curto(bloco);
+        document.getElementById('mb-bloco-exato').textContent = br(bloco) + ' parâmetros';
+        document.getElementById('mb-total').textContent = curto(total);
+        document.getElementById('mb-total-exato').textContent =
+          br(total) + ' parâmetros' + (st.pre ? ' (inclui a LayerNorm final)' : '');
+
+        /* fatias */
+        const pct = v => (100 * v / bloco);
+        document.getElementById('mb-bar-attn').style.width = pct(totalAttn).toFixed(2) + '%';
+        document.getElementById('mb-bar-ffn').style.width = pct(totalFFN).toFixed(2) + '%';
+        document.getElementById('mb-bar-ln').style.width = pct(totalLN).toFixed(2) + '%';
+        document.getElementById('mb-pct-attn').textContent = pct(totalAttn).toFixed(1) + ' %';
+        document.getElementById('mb-pct-ffn').textContent = pct(totalFFN).toFixed(1) + ' %';
+        document.getElementById('mb-pct-ln').textContent = pct(totalLN).toFixed(2) + ' %';
+
+        /* crescimento com n */
+        document.getElementById('mb-cresc-param').textContent =
+          br(bloco) + ' × ' + st.n + ' = ' + curto(total);
+        const bytes = st.n * subs.length * 1 * 512 * st.d * 2;
+        document.getElementById('mb-cresc-mem').textContent = bytesCurto(bytes);
+
+        /* diagrama */
+        document.getElementById('mb-svg').innerHTML = desenharBloco(st, subs, linhas, pNorm);
+      }
+
+      ctr.forEach(el => {
+        el.addEventListener('input', render);
+        el.addEventListener('change', render);
+      });
+      render();
+    }
+
+    /* ═══════════ o desenho do caminho do sinal ═══════════
+       SVG gerado em JS: escala sozinho, sem canvas e sem devicePixelRatio. */
+    function desenharBloco(st, subs, linhas, pNorm) {
+      const W = 470, BX = 140, BW = 250, CX = BX + BW / 2, RX = 92, R = 13;
+      const HB = 46, HN = 32, G = 18;
+      const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      let y = 44;
+      const partes = [];
+      const arcos = [];
+
+      const caixa = (yy, h, titulo, sub, cor, tracejada) => `
+        <rect x="${BX}" y="${yy}" width="${BW}" height="${h}" rx="9"
+              fill="#090d16" stroke="${cor}" stroke-width="1.5"
+              ${tracejada ? 'stroke-dasharray="5 4"' : ''}></rect>
+        <text x="${CX}" y="${yy + (sub ? 19 : h / 2 + 4)}" text-anchor="middle"
+              font-family="Inter, sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">${esc(titulo)}</text>
+        ${sub ? `<text x="${CX}" y="${yy + 34}" text-anchor="middle"
+              font-family="JetBrains Mono, monospace" font-size="9.5" fill="#64748b">${esc(sub)}</text>` : ''}`;
+
+      subs.forEach((s, i) => {
+        const l = linhas[i];
+        const yRamo = y - 10;               /* onde o residual se desprende do tronco */
+
+        if (st.pre) {
+          partes.push(caixa(y, HN, 'LayerNorm', null, '#f59e0b', false));
+          y += HN + G;
+        }
+
+        const detalhe = s.k === 'ffn'
+          ? 'd_ff = ' + br(st.dff) + '  ·  ' + br(l.p) + ' par.'
+          : 'h = ' + st.h + '  ·  d_k = ' + (Number.isInteger(st.d / st.h) ? br(st.d / st.h) : (st.d / st.h).toFixed(1)) + '  ·  ' + br(l.p) + ' par.';
+        partes.push(caixa(y, HB, s.nome, detalhe, s.cor, false));
+        y += HB + G;
+
+        const cy = y + R;
+        partes.push(`
+          <circle cx="${CX}" cy="${cy}" r="${R}" fill="#090d16" stroke="#34d399" stroke-width="1.5"></circle>
+          <text x="${CX}" y="${cy + 5}" text-anchor="middle" font-family="Inter, sans-serif"
+                font-size="14" font-weight="700" fill="#34d399">+</text>`);
+        arcos.push(`
+          <path d="M ${CX} ${yRamo} L ${RX} ${yRamo} L ${RX} ${cy} L ${CX - R - 3} ${cy}"
+                fill="none" stroke="#34d399" stroke-width="1.5" stroke-linejoin="round"
+                stroke-dasharray="4 3" marker-end="url(#pf)"></path>
+          <text x="${RX - 6}" y="${(yRamo + cy) / 2}" text-anchor="end"
+                font-family="JetBrains Mono, monospace" font-size="9" fill="#34d399"
+                transform="rotate(-90 ${RX - 6} ${(yRamo + cy) / 2})">residual</text>`);
+        y += 2 * R + G;
+
+        if (!st.pre) {
+          partes.push(caixa(y, HN, 'LayerNorm', null, '#f59e0b', false));
+          y += HN + G;
+        }
+      });
+
+      if (st.pre) {
+        partes.push(caixa(y, HN, 'LayerNorm final', 'uma só, depois dos ' + st.n + ' blocos', '#f59e0b', true));
+        y += HN + 14;
+      }
+
+      const yFim = y + 6;
+      const H = yFim + 34;
+
+      const rotulo = (yy, txt, cor) => `
+        <text x="${CX}" y="${yy}" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="10" fill="${cor}">${esc(txt)}</text>`;
+
+      return `
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:330px;max-width:100%;height:auto" role="img"
+           aria-label="Diagrama do caminho do sinal dentro de um bloco Transformer">
+        <defs>
+          <marker id="pf" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 8 4 L 0 8 z" fill="#34d399"></path>
+          </marker>
+          <marker id="pt" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 8 4 L 0 8 z" fill="#475569"></path>
+          </marker>
+        </defs>
+        <line x1="${CX}" y1="26" x2="${CX}" y2="${yFim}" stroke="#475569" stroke-width="1.5" marker-end="url(#pt)"></line>
+        ${rotulo(14, 'entrada   n × d_model = ' + br(st.d), '#94a3b8')}
+        ${arcos.join('')}
+        ${partes.join('')}
+        ${rotulo(H - 8, 'saída   n × d_model = ' + br(st.d), '#94a3b8')}
+      </svg>`;
+    }
+  </script>
+</body>
+</html>

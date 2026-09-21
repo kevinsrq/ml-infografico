@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encoder: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Encoder"
+      data-badge="Infográfico Interativo"
+      data-subtitle="A pilha que transforma a sequência de entrada em vetores contextuais"
+      data-icon="fa-right-to-bracket"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — O QUE ENTRA E O QUE SAI ══════════════ -->
+    <section class="slide-section" data-nav="Entra e sai" data-icon="fa-right-to-bracket">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-right-to-bracket"></i> Módulo 01 • O Contrato da Pilha
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          $n$ tokens entram, <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">$n$ vetores saem</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O encoder é a pilha do lado da entrada: $N$ blocos idênticos em forma, com pesos próprios,
+          empilhados um sobre o outro (Vaswani et al., 2017, usa $N = 6$). Ele tem um contrato rígido —
+          <strong class="text-cyan-300">o comprimento da sequência nunca muda</strong>. Entram $n$ posições,
+          saem $n$ posições. O que muda é o <em>conteúdo</em> de cada vetor: ele deixa de ser "o vetor da
+          palavra" e passa a ser "o vetor desta palavra <em>nesta</em> frase".
+        </p>
+      </div>
+
+      <!-- O contrato em fórmula -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+        <div class="lg:col-span-2 rounded-2xl bg-surface-900 border border-cyan-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-square-root-variable text-cyan-400"></i> A recorrência sobre as camadas
+          </h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3">
+            A entrada da pilha é a matriz de embeddings já somada à posição — a peça construída em
+            <a href="../positional-encoding/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.1</a>:
+          </p>
+          <p class="text-center my-4">
+            $$H^{(0)} = E + PE \in \mathbb{R}^{n \times d}$$
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3">
+            Daí em diante cada bloco consome uma matriz $n \times d$ e devolve outra matriz $n \times d$,
+            exatamente com a mesma forma:
+          </p>
+          <p class="text-center my-4">
+            $$H^{(\ell)} = \mathrm{Bloco}_\ell\big(H^{(\ell-1)}\big), \qquad \ell = 1, \dots, N$$
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            É essa invariância de forma que permite empilhar. Se um bloco encurtasse ou alargasse a
+            sequência, não haveria $N \times$ — haveria $N$ arquiteturas diferentes. A saída da pilha,
+            $H^{(N)}$, é o que o resto do sistema chama de <strong class="text-slate-200">vetores contextuais</strong>.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-ruler-combined text-brand-400"></i> O que muda e o que não muda
+          </h3>
+          <ul class="space-y-3 text-xs">
+            <li class="flex gap-2.5">
+              <i class="fa-solid fa-lock text-slate-500 mt-0.5"></i>
+              <span class="text-slate-400"><strong class="text-slate-200">$n$ (posições)</strong> — constante em toda a pilha. Um vetor de saída por token de entrada.</span>
+            </li>
+            <li class="flex gap-2.5">
+              <i class="fa-solid fa-lock text-slate-500 mt-0.5"></i>
+              <span class="text-slate-400"><strong class="text-slate-200">$d$ (largura)</strong> — constante. A conexão residual exige que entrada e saída do sublayer somem.</span>
+            </li>
+            <li class="flex gap-2.5">
+              <i class="fa-solid fa-arrows-rotate text-cyan-400 mt-0.5"></i>
+              <span class="text-slate-400"><strong class="text-cyan-300">O conteúdo</strong> — muda a cada camada. É o único grau de liberdade.</span>
+            </li>
+            <li class="flex gap-2.5">
+              <i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>
+              <span class="text-slate-400"><strong class="text-rose-300">Não há</strong> pooling, corte ou resumo dentro da pilha. Reduzir $n$ para 1 vetor é decisão de quem usa a saída, não do encoder.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ─────── SIMULADOR PRINCIPAL: visualizador de propagação ─────── -->
+      <div class="bg-surface-900 border border-cyan-500/30 rounded-2xl p-5 sm:p-6 glow-cyan">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-cyan-400"></i> Visualizador de propagação
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-3xl">
+              Escreva uma frase, escolha um token e veja, camada a camada, o vetor dele se afastar do
+              embedding inicial e se aproximar do contexto. Todos os números da tela são calculados aqui
+              no navegador a partir dos controles abaixo.
+            </p>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-mono shrink-0">
+            <i class="fa-solid fa-flask mr-1"></i> modelo ilustrativo
+          </span>
+        </div>
+
+        <!-- aviso honesto -->
+        <div class="p-3.5 rounded-xl bg-amber-950/25 border border-amber-500/25 text-[11px] text-slate-300 leading-relaxed mb-5">
+          <strong class="text-amber-300"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Simplificação didática.</strong>
+          Este não é um encoder treinado. Aqui $d = 4$, os embeddings iniciais são gerados de forma
+          determinística a partir das letras de cada palavra (a mesma palavra dá sempre o mesmo vetor, mas
+          não há semântica aprendida), e cada camada é reduzida a
+          $h_i \leftarrow \mathrm{norm}\big((1-\alpha)\,h_i + \alpha \sum_j a_{ij} h_j\big)$, com
+          $a = \mathrm{softmax}(h_i \cdot h_j / \sqrt{d})$ e $Q = K = V = H$. Ou seja: a conexão residual e a
+          atenção estão lá, a projeção multi-head e a FFN não. O que a simulação mostra fielmente é o
+          <em>padrão</em> — mistura progressiva e afastamento do embedding inicial — não os valores de um modelo real.
+        </div>
+
+        <!-- controles -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-5">
+          <div class="lg:col-span-6">
+            <label class="text-[11px] text-slate-400 font-medium block mb-1.5">Frase de entrada (até 8 tokens)</label>
+            <input id="enc-frase" type="text" value="o gato preto dormiu no telhado"
+                   class="w-full bg-surface-950 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 font-mono focus:ring-1 focus:ring-cyan-500 focus:outline-none">
+            <div class="flex flex-wrap gap-1.5 mt-2" id="enc-presets"></div>
+          </div>
+          <div class="lg:col-span-3">
+            <label class="text-[11px] text-slate-400 font-medium block mb-1.5">Token observado</label>
+            <select id="enc-alvo" class="w-full bg-surface-950 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 font-mono focus:ring-1 focus:ring-cyan-500 focus:outline-none"></select>
+          </div>
+          <div class="lg:col-span-3 flex items-end">
+            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none bg-surface-950 border border-slate-700 rounded-lg px-3 py-2 w-full">
+              <input id="enc-mask" type="checkbox" checked class="accent-cyan-500 w-3.5 h-3.5">
+              <span>Máscara de padding ativa</span>
+            </label>
+          </div>
+
+          <div class="lg:col-span-4">
+            <label class="text-[11px] text-slate-400 font-medium flex justify-between mb-1.5">
+              <span>Camadas $N$</span><span id="enc-camadas-v" class="font-mono text-cyan-400">4</span>
+            </label>
+            <input id="enc-camadas" type="range" min="1" max="6" step="1" value="4" class="w-full">
+          </div>
+          <div class="lg:col-span-4">
+            <label class="text-[11px] text-slate-400 font-medium flex justify-between mb-1.5">
+              <span>Comprimento do lote $L$</span><span id="enc-lote-v" class="font-mono text-cyan-400">8</span>
+            </label>
+            <input id="enc-lote" type="range" min="2" max="10" step="1" value="8" class="w-full">
+          </div>
+          <div class="lg:col-span-4">
+            <label class="text-[11px] text-slate-400 font-medium flex justify-between mb-1.5">
+              <span>Peso do sublayer $\alpha$</span><span id="enc-alpha-v" class="font-mono text-cyan-400">0.50</span>
+            </label>
+            <input id="enc-alpha" type="range" min="0.05" max="0.95" step="0.05" value="0.5" class="w-full">
+          </div>
+        </div>
+
+        <!-- fita do lote com padding visível -->
+        <div class="bg-surface-950 rounded-xl border border-slate-800 p-4 mb-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="text-[11px] font-semibold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-grip-lines text-cyan-400"></i> O lote como a GPU o vê
+            </div>
+            <div id="enc-lote-info" class="text-[10px] font-mono text-slate-500"></div>
+          </div>
+          <div class="overflow-x-auto">
+            <div id="enc-fita" class="flex gap-1.5 min-w-max pb-1"></div>
+          </div>
+          <p id="enc-fita-nota" class="text-[10px] text-slate-500 mt-2.5 leading-relaxed"></p>
+        </div>
+
+        <!-- gráfico + tabela -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div class="lg:col-span-3 bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-[11px] font-semibold text-slate-200 mb-1 flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-cyan-400"></i> Trajetória do token observado
+            </div>
+            <p class="text-[10px] text-slate-500 mb-3">
+              Cosseno entre $h^{(\ell)}$ e dois marcos fixos: o embedding inicial do próprio token e a
+              média dos embeddings iniciais dos demais tokens reais (o "contexto").
+            </p>
+            <canvas id="enc-canvas" class="w-full" style="height:220px"></canvas>
+            <div class="flex flex-wrap gap-4 mt-3 text-[10px] font-mono">
+              <span class="flex items-center gap-1.5 text-slate-400"><span class="w-3 h-0.5 bg-cyan-400 inline-block"></span> $\cos(h^{(\ell)}, e_{\text{token}})$</span>
+              <span class="flex items-center gap-1.5 text-slate-400"><span class="w-3 h-0.5 bg-emerald-400 inline-block"></span> $\cos(h^{(\ell)}, \bar{c})$</span>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-[11px] font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-table-list text-cyan-400"></i> Camada a camada
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[10px] font-mono">
+                <thead class="text-slate-500 border-b border-slate-800">
+                  <tr>
+                    <th class="text-left py-1.5 pr-2">$\ell$</th>
+                    <th class="text-right pr-2">$a_{tt}$</th>
+                    <th class="text-right pr-2">mistura</th>
+                    <th class="text-right pr-2">peso&nbsp;PAD</th>
+                    <th class="text-right">$\cos(h, e)$</th>
+                  </tr>
+                </thead>
+                <tbody id="enc-tbl" class="text-slate-300"></tbody>
+              </table>
+            </div>
+            <div id="enc-resumo" class="mt-4 p-3 rounded-lg bg-cyan-950/25 border border-cyan-500/25 text-[11px] text-slate-300 leading-relaxed"></div>
+          </div>
+        </div>
+
+        <!-- vetores de saída -->
+        <div class="bg-surface-950 rounded-xl border border-slate-800 p-4 mt-5">
+          <div class="text-[11px] font-semibold text-slate-200 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-right-from-bracket text-cyan-400"></i> $H^{(N)}$ — a saída da pilha
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[10px] font-mono min-w-max">
+              <thead class="text-slate-500 border-b border-slate-800">
+                <tr>
+                  <th class="text-left py-1.5 pr-3">pos</th>
+                  <th class="text-left pr-3">token</th>
+                  <th class="text-left pr-3">$h^{(0)}$ (entrada)</th>
+                  <th class="text-left pr-3">$h^{(N)}$ (saída)</th>
+                  <th class="text-right">deslocamento</th>
+                </tr>
+              </thead>
+              <tbody id="enc-saida" class="text-slate-300"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — ATENÇÃO BIDIRECIONAL ══════════════ -->
+    <section class="slide-section" data-nav="Bidirecional" data-icon="fa-arrows-left-right-to-line">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-arrows-left-right-to-line"></i> Módulo 02 • O que define o encoder
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Todo token vê <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">todos os outros</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Encoder e decoder usam o mesmo bloco, a mesma fórmula de atenção, as mesmas conexões residuais.
+          A diferença estrutural cabe em uma matriz: a máscara $M$ somada aos scores antes do softmax.
+          No encoder ela é <strong class="text-brand-300">toda zero</strong>. No decoder ela zera o futuro.
+          Essa única escolha decide para que a pilha serve.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-brand-400"></i> A máscara dentro do softmax
+        </h3>
+        <p class="text-center my-4">
+          $$\mathrm{Attn}(Q, K, V) = \mathrm{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}} + M\right)V$$
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+          <div class="p-4 rounded-xl bg-surface-950 border border-brand-500/25">
+            <div class="text-[10px] font-mono text-brand-400 mb-1">encoder — self-attention bidirecional</div>
+            <p class="text-center my-2">$$M_{ij} = 0 \quad \forall\, i,j$$</p>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              A posição 1 lê a posição 7 e a posição 7 lê a posição 1. Nada é escondido. Quando alguém diz
+              que "BERT é bidirecional", é literalmente isto: $M = 0$.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/25">
+            <div class="text-[10px] font-mono text-rose-400 mb-1">decoder — self-attention causal</div>
+            <p class="text-center my-2">$$M_{ij} = \begin{cases} 0 & j \le i \\ -\infty & j > i \end{cases}$$</p>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Triangular inferior: cada posição só lê o passado e a si mesma. É o assunto de
+              <a href="../decoder/masked-attention/index.html" class="text-rose-300 hover:text-rose-200 underline decoration-dotted">2.1.4.1</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR 2: matrizes lado a lado -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-table-cells-large text-brand-400"></i> As duas matrizes, mesma frase
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Pesos de atenção da primeira camada, calculados sobre a frase do módulo 01
+              (<span id="enc-frase-eco" class="font-mono text-slate-300"></span>). Linha = quem pergunta,
+              coluna = quem é lido. Cada linha soma $1$.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="bg-surface-950 rounded-xl border border-brand-500/25 p-4">
+            <div class="text-[11px] font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-brand-400"></span> Encoder — $M = 0$
+            </div>
+            <div class="overflow-x-auto"><table id="enc-mat-bi" class="text-[10px] font-mono min-w-max"></table></div>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-rose-500/25 p-4">
+            <div class="text-[11px] font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span> Decoder — $M$ triangular
+            </div>
+            <div class="overflow-x-auto"><table id="enc-mat-causal" class="text-[10px] font-mono min-w-max"></table></div>
+          </div>
+        </div>
+
+        <div id="enc-mat-verdict" class="mt-5 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed"></div>
+      </div>
+
+      <!-- consequência -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-check-double text-emerald-400"></i> Por que encoders são bons em compreensão
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Desambiguar exige o lado direito. Em <em>"ele deixou o banco para sacar dinheiro"</em>, o que
+            decide o sentido de <em>banco</em> vem depois dele. Um modelo causal, ao processar <em>banco</em>,
+            ainda não viu <em>sacar</em>; o encoder vê a frase inteira de uma vez, em toda posição, em toda camada.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Por isso encoder-only domina classificação, extração de entidades, similaridade de sentenças e
+            re-ranking — tarefas em que o texto inteiro já está disponível e o que se quer é uma leitura dele.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-ban text-rose-400"></i> E por que são ruins em geração
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Gerar texto é amostrar $p(x_t \mid x_{<t})$ — uma fatoração que <em>depende</em> de o modelo não
+            ter visto o futuro. Num encoder, o vetor da posição $t$ já foi construído lendo $x_{t+1}, \dots, x_n$.
+            Treinar com essa arquitetura para prever o próximo token seria pedir que ele copiasse uma resposta
+            que já está na entrada.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A saída disso é treinar por outro objetivo — mascarar tokens aleatórios e reconstruí-los, o
+            <em>masked language modeling</em> de BERT (Devlin et al., 2019) — que rende ótimas representações e
+            nenhum gerador autoregressivo.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — MÁSCARA DE PADDING ══════════════ -->
+    <section class="slide-section" data-nav="Máscara de padding" data-icon="fa-border-none">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-border-none"></i> Módulo 03 • Engenharia de Lote
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A outra máscara: <span class="bg-gradient-to-r from-amber-400 to-cyan-400 bg-clip-text text-transparent">preenchimento não é conteúdo</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Uma GPU processa um lote como um tensor retangular $B \times L \times d$. Frases reais têm
+          comprimentos diferentes, então as curtas são completadas com um token especial <span class="font-mono text-amber-300">[PAD]</span>
+          até o comprimento $L$ do lote. Esse preenchimento existe só para a forma do tensor — e precisa ser
+          apagado da atenção, ou o modelo aprende a atender a nada.
+        </p>
+      </div>
+
+      <!-- O mal-entendido -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation text-rose-400"></i> Não confunda com a máscara causal
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-max">
+            <thead class="text-slate-500 border-b border-slate-800">
+              <tr>
+                <th class="text-left py-2 pr-4"></th>
+                <th class="text-left py-2 pr-4 font-mono text-amber-400">máscara de padding</th>
+                <th class="text-left py-2 font-mono text-rose-400">máscara causal</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-400">
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-4 text-slate-300 font-medium">O que ela esconde</td>
+                <td class="py-2.5 pr-4">Posições que não são texto</td>
+                <td class="py-2.5">Posições que são texto, mas ainda não podem ser vistas</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-4 text-slate-300 font-medium">Forma</td>
+                <td class="py-2.5 pr-4 font-mono">colunas inteiras: $M_{ij} = -\infty$ se $j \in \mathcal{P}$</td>
+                <td class="py-2.5 font-mono">triangular: $M_{ij} = -\infty$ se $j > i$</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-4 text-slate-300 font-medium">Depende de</td>
+                <td class="py-2.5 pr-4">do exemplo (cada frase tem o seu $n$)</td>
+                <td class="py-2.5">só do índice (igual para todo exemplo)</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-4 text-slate-300 font-medium">Onde aparece</td>
+                <td class="py-2.5 pr-4">encoder <em>e</em> decoder, sempre que há lote</td>
+                <td class="py-2.5">só onde a geração exige — decoder</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-4 text-slate-300 font-medium">Se você tirá-la</td>
+                <td class="py-2.5 pr-4">bug silencioso: resultados mudam com o tamanho do lote</td>
+                <td class="py-2.5">vazamento do futuro: perda cai e a geração não funciona</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-4 leading-relaxed">
+          As duas se somam quando coexistem: $M = M_{\text{pad}} + M_{\text{causal}}$. São
+          independentes e resolvem problemas que não têm relação nenhuma — uma é sobre a forma do tensor,
+          a outra é sobre a ordem do tempo.
+        </p>
+      </div>
+
+      <!-- SIMULADOR 3: linha de scores -->
+      <div class="bg-surface-900 border border-amber-500/30 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass-chart text-amber-400"></i> Uma linha de atenção, passo a passo
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              A linha do token observado no módulo 01, na primeira camada, com o lote $L$ escolhido lá.
+              Ligue e desligue a máscara e acompanhe o peso que escorre para o preenchimento.
+            </p>
+          </div>
+          <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none bg-surface-950 border border-slate-700 rounded-lg px-3 py-2 shrink-0">
+            <input id="pad-mask" type="checkbox" checked class="accent-amber-500 w-3.5 h-3.5">
+            <span>Máscara de padding</span>
+          </label>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-[10px] font-mono min-w-max">
+            <thead class="text-slate-500 border-b border-slate-800">
+              <tr>
+                <th class="text-left py-2 pr-3">$j$</th>
+                <th class="text-left pr-3">token</th>
+                <th class="text-right pr-3">$q \cdot k_j / \sqrt{d}$</th>
+                <th class="text-right pr-3">$+\, M_{tj}$</th>
+                <th class="text-right pr-3">$\exp$</th>
+                <th class="text-right pr-3">$a_{tj}$</th>
+                <th class="text-left pl-2 w-32">peso</th>
+              </tr>
+            </thead>
+            <tbody id="pad-tbl" class="text-slate-300"></tbody>
+          </table>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] font-mono text-slate-500 mb-1">peso total no preenchimento</div>
+            <div id="pad-vaz" class="text-2xl font-bold font-mono text-amber-400">—</div>
+            <p class="text-[10px] text-slate-500 mt-1">$\sum_{j \in \mathcal{P}} a_{tj}$</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] font-mono text-slate-500 mb-1">desvio do vetor de saída</div>
+            <div id="pad-desvio" class="text-2xl font-bold font-mono text-rose-400">—</div>
+            <p class="text-[10px] text-slate-500 mt-1">$1 - \cos(h_{\text{com}}, h_{\text{sem}})$ na camada 1</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] font-mono text-slate-500 mb-1">posições de preenchimento</div>
+            <div id="pad-qtd" class="text-2xl font-bold font-mono text-cyan-400">—</div>
+            <p class="text-[10px] text-slate-500 mt-1">$L - n$ no lote atual</p>
+          </div>
+        </div>
+
+        <div id="pad-nota" class="mt-5 p-3.5 rounded-xl bg-amber-950/25 border border-amber-500/25 text-xs text-slate-300 leading-relaxed"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — PARA ONDE VAI A SAÍDA ══════════════ -->
+    <section class="slide-section" data-nav="Para onde vai" data-icon="fa-share-nodes">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-share-nodes"></i> Módulo 04 • Os consumidores de $H^{(N)}$
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          $H^{(N)}$ sai da pilha — <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">e aí?</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A matriz $n \times d$ que sai do último bloco tem dois destinos muito diferentes, e o segundo é o
+          que mais aparece na prática hoje.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6">
+          <div class="text-[10px] font-mono text-brand-400 mb-1">destino 1 — arquitetura completa</div>
+          <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-right-arrow-left text-brand-400"></i> A cross-attention do decoder
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            No Transformer original — tradução — $H^{(N)}$ é calculado <strong class="text-slate-200">uma única vez</strong>
+            para a frase de origem e depois reaproveitado a cada token gerado. Cada bloco do decoder tem um
+            sublayer em que
+          </p>
+          <p class="text-center my-3">
+            $$Q = H_{\text{dec}} W^Q, \qquad K = H^{(N)} W^K, \qquad V = H^{(N)} W^V$$
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A pergunta vem do decoder; a resposta vem do encoder. É a única ponte entre os dois lados, e
+            também a razão de a saída do encoder não precisar ser recomputada: a origem não muda enquanto
+            se gera. O detalhe está em
+            <a href="cross-attention/index.html" class="text-brand-300 hover:text-brand-200 underline decoration-dotted">2.1.3.1 Cross-attention</a>.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6">
+          <div class="text-[10px] font-mono text-emerald-400 mb-1">destino 2 — encoder-only</div>
+          <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-emerald-400"></i> Jogar fora o decoder
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Se a tarefa é entender e não gerar, o decoder é peso morto. Fica só a pilha do encoder, e o que
+            era um estágio intermediário vira o produto final. BERT (Devlin et al., 2019) é exatamente isso:
+            a metade esquerda do diagrama, treinada com <em>masked language modeling</em>.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A partir daí, o que muda entre as aplicações é só <strong class="text-slate-200">como se reduz a
+            matriz $n \times d$</strong> ao que a tarefa precisa — um vetor, $n$ rótulos ou um número.
+          </p>
+        </div>
+      </div>
+
+      <!-- SIMULADOR 4: pooling -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-compress text-emerald-400"></i> De $n$ vetores a um: o pooling
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Calculado sobre o $H^{(N)}$ da frase e das configurações do módulo 01. O ponto: a média sobre o
+              lote inteiro, sem máscara, arrasta o preenchimento para dentro do vetor de sentença.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/25">
+            <div class="text-[10px] font-mono text-emerald-400 mb-2">mean pooling mascarado</div>
+            <div id="pool-ok" class="text-[11px] font-mono text-slate-300 break-all mb-2">—</div>
+            <p class="text-[10px] text-slate-500 leading-relaxed">$\frac{1}{n}\sum_{i &lt; n} h_i^{(N)}$ — só posições reais.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/25">
+            <div class="text-[10px] font-mono text-rose-400 mb-2">mean pooling ingênuo</div>
+            <div id="pool-bad" class="text-[11px] font-mono text-slate-300 break-all mb-2">—</div>
+            <p class="text-[10px] text-slate-500 leading-relaxed">$\frac{1}{L}\sum_{i &lt; L} h_i^{(N)}$ — inclui o <span class="font-mono">[PAD]</span>.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] font-mono text-slate-500 mb-2">divergência entre os dois</div>
+            <div id="pool-cos" class="text-2xl font-bold font-mono text-amber-400">—</div>
+            <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">$1 - \cos$. Cresce com $L - n$: o mesmo texto vira vetores diferentes conforme o lote.</p>
+          </div>
+        </div>
+        <div id="pool-nota" class="mt-5 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed"></div>
+      </div>
+
+      <!-- Ponte com o capítulo 1 -->
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-cyan-500/30 p-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-link text-cyan-400"></i> Você já usou esta pilha no capítulo 1
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] font-mono text-cyan-400 mb-1.5">bi-encoder</div>
+            <p class="text-slate-400 leading-relaxed">
+              Uma passada de encoder por texto, pooling sobre $H^{(N)}$, um vetor por documento, indexado
+              offline. É o modelo de
+              <a href="../../../ir/densos/embeddings/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.1 Embeddings em IR</a>
+              — e o pooling mascarado do simulador acima é literalmente o passo que produz esse vetor.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] font-mono text-cyan-400 mb-1.5">cross-encoder</div>
+            <p class="text-slate-400 leading-relaxed">
+              Consulta e documento concatenados numa <em>única</em> sequência. Como a atenção é bidirecional,
+              cada token da consulta lê cada token do documento dentro da mesma pilha. Precisão alta, custo por
+              par — a troca discutida em
+              <a href="../../../ir/densos/cross-encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.5 Cross-Encoder</a>.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] font-mono text-cyan-400 mb-1.5">a mesma peça, duas leituras</div>
+            <p class="text-slate-400 leading-relaxed">
+              <a href="../../../ir/densos/transformer/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.4</a>
+              olha o Transformer pelo lado de fora, pelo que a busca consome. Aqui você viu de dentro por que a
+              saída tem a forma que tem — e por que o bi-encoder pode indexar mas o cross-encoder não.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese & Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O encoder <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">em quatro fatos</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Nada aqui é uma peça nova: é a pilha das peças de 2.1.1 e 2.1.2 com duas decisões próprias —
+          máscara zero e nenhuma redução de comprimento.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-1">forma</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$n \times d$ entra, $n \times d$ sai</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Invariância de forma é o que torna o $N\times$ possível. Nenhum pooling acontece dentro da pilha.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1">máscara</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$M = 0$: bidirecional</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Toda posição lê todas. É a única diferença estrutural para o decoder, e ela define a vocação da pilha.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1">lote</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Padding mascarado à parte</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Colunas inteiras em $-\infty$, uma máscara diferente para cada exemplo do lote. Não tem relação com a máscara causal.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/30">
+          <div class="text-xs font-mono text-emerald-400 mb-1">saída</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Cross-attention ou encoder-only</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Vira $K$ e $V$ do decoder, ou é o produto final de um bi-encoder, cross-encoder ou classificador.</p>
+        </div>
+      </div>
+
+      <!-- Limitações -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> O que esta página não resolve
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400">
+          <ul class="space-y-2.5">
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] text-rose-400 mt-1.5"></i>
+              <span><strong class="text-slate-200">O simulador é um brinquedo.</strong> $d = 4$, $Q = K = V = H$, sem multi-head, sem FFN, sem LayerNorm (só uma renormalização L2 por token, aplicada linha a linha) e com embeddings sem semântica. Ele reproduz o padrão qualitativo da contextualização, não os números de um modelo treinado.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] text-rose-400 mt-1.5"></i>
+              <span><strong class="text-slate-200">Custo quadrático.</strong> Bidirecional significa $n^2$ pares por camada, em memória e em tempo. É o limite prático do comprimento de contexto de um encoder, e nada foi dito aqui sobre como contorná-lo.</span></li>
+          </ul>
+          <ul class="space-y-2.5">
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] text-rose-400 mt-1.5"></i>
+              <span><strong class="text-slate-200">Nada sobre treino.</strong> Masked language modeling foi só citado. Como o objetivo é montado, quantos tokens se mascara e por que isso rende boas representações é outro assunto.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] text-rose-400 mt-1.5"></i>
+              <span><strong class="text-slate-200">Qual camada usar.</strong> Assumimos $H^{(N)}$, a última. Na prática, camadas intermediárias às vezes representam melhor certas tarefas — escolha empírica que esta página não cobre.</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Onde continuar -->
+      <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Próximo tópico
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          Você tem $H^{(N)}$ na mão. O passo imediato é ver como o decoder o consome: é a
+          <strong class="text-slate-200">cross-attention</strong>, a única ponte entre as duas pilhas.
+          Depois, a pilha do outro lado em
+          <a href="../decoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4 Decoder</a>,
+          e a atenção mascarada em
+          <a href="../decoder/masked-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4.1</a>.
+          Para rever as peças internas de cada bloco:
+          <a href="../bloco/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2 Bloco</a>,
+          <a href="../bloco/multi-head-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.1 Multi-head</a>,
+          <a href="../bloco/add-norm/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.2 Add &amp; Norm</a> e
+          <a href="../bloco/ffn/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.3 FFN</a>.
+          O diagrama completo está em
+          <a href="../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1 Transformers</a>,
+          e o capítulo em
+          <a href="../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2. Redes Neurais</a>.
+        </p>
+        <a href="cross-attention/index.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-500/15 border border-brand-500/40 text-brand-300 hover:bg-brand-500/25 hover:text-brand-200 transition text-xs font-semibold">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i> Ir para 2.1.3.1 — Cross-attention
+        </a>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que realmente distingue o encoder.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Uma sequência de 12 tokens atravessa um encoder de 6 camadas. Quantos vetores saem do último bloco?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Reduzir a sequência a um vetor é pooling — decisão de quem consome a saída, feita depois da pilha, nunca dentro dela.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Um só: a pilha resume a frase inteira em um vetor de sentença.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Invariância de forma: cada bloco recebe n×d e devolve n×d. Por isso os blocos podem ser empilhados.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Doze — um por posição de entrada, cada um contextualizado pela frase inteira.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A camada não multiplica posições; o número de camadas afeta o conteúdo dos vetores, nunca a quantidade.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Setenta e dois: doze posições vezes seis camadas.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Nada na pilha encurta a sequência — não há convolução com passo nem downsampling.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Menos de doze: cada camada comprime um pouco a sequência.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Um time esqueceu a máscara de padding no encoder, mas manteve a máscara causal no decoder. Qual é o sintoma mais provável?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Vazamento do futuro é sintoma da máscara causal ausente — e ela está lá, intacta.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) O modelo vê o futuro e a perda de treino despenca artificialmente.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Mascarar não custa memória extra: é uma soma de -infinito antes do softmax, e os pares continuam sendo calculados de qualquer jeito.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Estouro de memória, porque sem máscara a atenção deixa de ser esparsa.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Sem a máscara, parte do softmax vai para o [PAD] — e quanto de preenchimento existe depende de qual é a frase mais longa do lote. O mesmo texto passa a ter representações diferentes conforme com quem ele foi agrupado.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Bug silencioso: a representação do mesmo texto muda conforme o lote em que ele caiu.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A forma do tensor é justamente o que o padding garante; ela continua retangular com ou sem máscara.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Erro de forma no tensor, capturado logo na primeira multiplicação de matrizes.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Por que a atenção bidirecional, tão boa para compreensão, é justamente o que impede o encoder de gerar texto?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A pilha é a mesma; o gargalo não é largura nem profundidade.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque o encoder tem menos camadas do que um decoder e não comporta um vocabulário grande.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Encoder-only também tem softmax sobre o vocabulário quando é usado em masked language modeling; a cabeça de saída não é a diferença.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque falta ao encoder a camada de softmax sobre o vocabulário.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A ordem está lá, somada pelo positional encoding; o problema não é ausência de posição.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque sem máscara causal o encoder perde a noção de ordem dos tokens.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Gerar é amostrar de p(x_t | x_&lt;t), uma fatoração que só existe se a posição t nunca viu x_t em diante. Com M = 0 essa condição é violada em toda camada.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque o vetor da posição $t$ já foi construído lendo as posições seguintes, e a fatoração autoregressiva exige exatamente o contrário.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ════════════════════════════════════════════════════════════════
+       Encoder — modelo ilustrativo de propagação.
+       d = 4, Q = K = V = H, sem multi-head e sem FFN. O objetivo é
+       mostrar o padrão da contextualização, não reproduzir um modelo real.
+       ════════════════════════════════════════════════════════════════ */
+
+    const D = 4;
+    const MAX_TOKENS = 8;
+    const PRESETS = [
+      'o gato preto dormiu no telhado',
+      'ele deixou o banco para sacar dinheiro',
+      'a atenção lê a frase inteira'
+    ];
+
+    /* Hash FNV-1a: a mesma palavra dá sempre o mesmo vetor, sem tabela. */
+    function h32(s) {
+      let h = 2166136261;
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return h >>> 0;
+    }
+
+    function dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+    function norma(a) { return Math.sqrt(dot(a, a)); }
+    function unit(v) { const n = norma(v); return n < 1e-9 ? v.slice() : v.map(x => x / n); }
+    function cos(a, b) { const na = norma(a), nb = norma(b); return (na < 1e-9 || nb < 1e-9) ? 0 : dot(a, b) / (na * nb); }
+    function fmt(x, c) { return (x >= 0 ? '+' : '') + x.toFixed(c === undefined ? 2 : c); }
+
+    function embOf(tok) {
+      const v = [];
+      for (let j = 0; j < D; j++) v.push(((h32(tok + '|' + j) % 2001) / 1000) - 1);
+      return unit(v);
+    }
+    const PAD_VEC = embOf('[pad]');
+
+    function softmax(scores) {
+      const finitos = scores.filter(s => Number.isFinite(s));
+      const m = finitos.length ? Math.max(...finitos) : 0;
+      const exps = scores.map(s => Number.isFinite(s) ? Math.exp(s - m) : 0);
+      const soma = exps.reduce((a, b) => a + b, 0);
+      return soma < 1e-12 ? exps.map(() => 0) : exps.map(e => e / soma);
+    }
+
+    /* Uma camada: atenção (com máscaras) + conexão residual + renormalização. */
+    function camada(H, cfg, causal) {
+      const L = H.length;
+      const A = [];
+      for (let i = 0; i < L; i++) {
+        const sc = [];
+        for (let j = 0; j < L; j++) {
+          let s = dot(H[i], H[j]) / Math.sqrt(D);
+          if (cfg.mascara && j >= cfg.n) s = -Infinity;
+          if (causal && j > i) s = -Infinity;
+          sc.push(s);
+        }
+        A.push(softmax(sc));
+      }
+      const novo = [];
+      for (let i = 0; i < L; i++) {
+        const u = new Array(D).fill(0);
+        for (let j = 0; j < L; j++) {
+          const w = A[i][j];
+          if (w === 0) continue;
+          for (let c = 0; c < D; c++) u[c] += w * H[j][c];
+        }
+        novo.push(unit(H[i].map((x, c) => (1 - cfg.alpha) * x + cfg.alpha * u[c])));
+      }
+      return { A, H: novo };
+    }
+
+    function entrada(cfg) {
+      const H0 = [];
+      for (let i = 0; i < cfg.L; i++) H0.push(i < cfg.n ? embOf(cfg.tokens[i]) : PAD_VEC.slice());
+      return H0;
+    }
+
+    /* Roda a pilha inteira e devolve o histórico [{H, A}] com hist[0].A = null. */
+    function propagar(cfg, causal) {
+      let H = entrada(cfg);
+      const hist = [{ H, A: null }];
+      for (let l = 0; l < cfg.camadas; l++) {
+        const r = camada(H, cfg, !!causal);
+        H = r.H;
+        hist.push({ H, A: r.A });
+      }
+      return hist;
+    }
+
+    /* ═══════════ estado lido dos controles visíveis ═══════════ */
+    function lerConfig() {
+      const bruto = (document.getElementById('enc-frase').value || '').toLowerCase().trim();
+      let tokens = bruto.split(/\s+/).filter(Boolean).slice(0, MAX_TOKENS);
+      if (!tokens.length) tokens = ['frase', 'vazia'];
+      const n = tokens.length;
+      const Lslider = parseInt(document.getElementById('enc-lote').value, 10);
+      const L = Math.max(n, Lslider);
+      return {
+        tokens, n, L,
+        camadas: parseInt(document.getElementById('enc-camadas').value, 10),
+        alpha: parseFloat(document.getElementById('enc-alpha').value),
+        mascara: document.getElementById('enc-mask').checked,
+        alvo: Math.min(parseInt(document.getElementById('enc-alvo').value || '0', 10), n - 1)
+      };
+    }
+
+    let CFG = null;
+    let HIST = null;
+
+    /* ═══════════ módulo 01 — visualizador de propagação ═══════════ */
+    function popularAlvo(cfg, manter) {
+      const sel = document.getElementById('enc-alvo');
+      const anterior = manter ? sel.value : null;
+      sel.innerHTML = cfg.tokens.map((t, i) => `<option value="${i}">${i} · ${t}</option>`).join('');
+      sel.value = (anterior !== null && anterior !== '' && +anterior < cfg.n) ? anterior : String(Math.min(1, cfg.n - 1));
+    }
+
+    function renderFita(cfg) {
+      const fita = document.getElementById('enc-fita');
+      const pad = cfg.L - cfg.n;
+      let html = '';
+      for (let i = 0; i < cfg.L; i++) {
+        const real = i < cfg.n;
+        const alvo = real && i === cfg.alvo;
+        const cor = !real
+          ? (cfg.mascara ? 'bg-surface-950 border-slate-800 text-slate-600 line-through' : 'bg-rose-950/40 border-rose-500/40 text-rose-300')
+          : (alvo ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200' : 'bg-surface-900 border-slate-700 text-slate-300');
+        html += `<div class="shrink-0 w-[74px] rounded-lg border ${cor} px-2 py-2 text-center">
+                   <div class="text-[9px] font-mono text-slate-500 mb-0.5">pos ${i}</div>
+                   <div class="text-[11px] font-mono truncate" title="${real ? cfg.tokens[i] : '[PAD]'}">${real ? cfg.tokens[i] : '[PAD]'}</div>
+                 </div>`;
+      }
+      fita.innerHTML = html;
+      document.getElementById('enc-lote-info').textContent = `n = ${cfg.n} · L = ${cfg.L} · preenchimento = ${pad}`;
+
+      const nota = document.getElementById('enc-fita-nota');
+      if (pad === 0) {
+        nota.innerHTML = 'Lote justo: <span class="font-mono text-slate-400">L = n</span>, nenhuma posição de preenchimento. Aumente $L$ para ver a máscara entrar em ação.';
+      } else if (cfg.mascara) {
+        nota.innerHTML = `As ${pad} posições riscadas recebem $-\\infty$ em toda coluna da matriz de atenção: nenhum token real lhes atribui peso algum.`;
+      } else {
+        nota.innerHTML = `<span class="text-rose-300">Máscara desligada:</span> as ${pad} posições de preenchimento participam do softmax como se fossem texto. O que sai da pilha passa a depender do tamanho do lote.`;
+      }
+      Guia.renderMath(nota);
+    }
+
+    function metricas(cfg, hist) {
+      const t = cfg.alvo;
+      const e0 = hist[0].H[t];
+      const outros = [];
+      for (let i = 0; i < cfg.n; i++) if (i !== t) outros.push(hist[0].H[i]);
+      let ctx = null;
+      if (outros.length) {
+        const m = new Array(D).fill(0);
+        outros.forEach(v => { for (let c = 0; c < D; c++) m[c] += v[c] / outros.length; });
+        ctx = unit(m);
+      }
+      const linhas = [];
+      for (let l = 1; l < hist.length; l++) {
+        const A = hist[l].A[t];
+        const auto = A[t];
+        let padw = 0;
+        for (let j = cfg.n; j < cfg.L; j++) padw += A[j];
+        linhas.push({
+          l,
+          auto,
+          mistura: cfg.alpha * (1 - auto),
+          padw,
+          cosE: cos(hist[l].H[t], e0),
+          cosC: ctx ? cos(hist[l].H[t], ctx) : NaN
+        });
+      }
+      return { e0, ctx, linhas, cosE0: 1, cosC0: ctx ? cos(e0, ctx) : NaN };
+    }
+
+    function renderTabela(cfg, m) {
+      const tb = document.getElementById('enc-tbl');
+      tb.innerHTML = m.linhas.map(r => `
+        <tr class="border-b border-slate-800/60">
+          <td class="py-1.5 pr-2 text-slate-500">${r.l}</td>
+          <td class="py-1.5 pr-2 text-right text-slate-300">${r.auto.toFixed(3)}</td>
+          <td class="py-1.5 pr-2 text-right text-cyan-400">${(100 * r.mistura).toFixed(1)}%</td>
+          <td class="py-1.5 pr-2 text-right ${r.padw > 1e-6 ? 'text-rose-400' : 'text-slate-600'}">${(100 * r.padw).toFixed(1)}%</td>
+          <td class="py-1.5 text-right text-emerald-400">${r.cosE.toFixed(3)}</td>
+        </tr>`).join('');
+
+      let acc = 1;
+      m.linhas.forEach(r => { acc *= (1 - r.mistura); });
+      const misturaAcc = 1 - acc;
+      const ult = m.linhas[m.linhas.length - 1];
+      const deltaCtx = Number.isNaN(ult.cosC) ? null : (ult.cosC - m.cosC0);
+
+      const res = document.getElementById('enc-resumo');
+      res.innerHTML = `
+        Depois de ${cfg.camadas} camada${cfg.camadas > 1 ? 's' : ''}, o vetor de
+        <span class="font-mono text-cyan-300">${cfg.tokens[cfg.alvo]}</span> guarda
+        <strong class="text-emerald-300">${(100 * ult.cosE).toFixed(1)}%</strong> de alinhamento com o embedding
+        que entrou na pilha (cosseno ${ult.cosE.toFixed(3)}), e
+        <strong class="text-cyan-300">${(100 * misturaAcc).toFixed(1)}%</strong> do que ele é hoje veio de outras posições.
+        ${deltaCtx === null ? '' : `O alinhamento com a média do contexto ${deltaCtx >= 0 ? 'subiu' : 'caiu'}
+        ${fmt(deltaCtx, 3)} desde a entrada.`}`;
+    }
+
+    function renderSaida(cfg, hist) {
+      const H0 = hist[0].H, HN = hist[hist.length - 1].H;
+      const tb = document.getElementById('enc-saida');
+      let html = '';
+      for (let i = 0; i < cfg.L; i++) {
+        const real = i < cfg.n;
+        const desl = 1 - cos(H0[i], HN[i]);
+        html += `<tr class="border-b border-slate-800/60 ${real ? '' : 'opacity-50'}">
+          <td class="py-1.5 pr-3 text-slate-500">${i}</td>
+          <td class="py-1.5 pr-3 ${real ? (i === cfg.alvo ? 'text-cyan-300' : 'text-slate-300') : 'text-slate-600'}">${real ? cfg.tokens[i] : '[PAD]'}</td>
+          <td class="py-1.5 pr-3 text-slate-500">[${H0[i].map(x => fmt(x)).join(', ')}]</td>
+          <td class="py-1.5 pr-3 text-slate-300">[${HN[i].map(x => fmt(x)).join(', ')}]</td>
+          <td class="py-1.5 text-right ${desl > 0.15 ? 'text-cyan-400' : 'text-slate-500'}">${desl.toFixed(3)}</td>
+        </tr>`;
+      }
+      tb.innerHTML = html;
+    }
+
+    /* ═══════════ canvas: trajetória do token observado ═══════════ */
+    let ULTIMA_METRICA = null;
+
+    function desenharTrajetoria() {
+      const cv = document.getElementById('enc-canvas');
+      if (!cv || !ULTIMA_METRICA || !CFG) return;
+      const rect = cv.getBoundingClientRect();
+      if (rect.width < 20) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      cv.width = Math.round(rect.width * dpr);
+      cv.height = Math.round(rect.height * dpr);
+      const ctx = cv.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+
+      /* Toda coordenada daqui para baixo é em pixels CSS. */
+      const W = cv.width / dpr, H = cv.height / dpr;
+      const ml = 38, mr = 12, mt = 12, mb = 34;
+      const pw = W - ml - mr, ph = H - mt - mb;
+      ctx.clearRect(0, 0, W, H);
+
+      const m = ULTIMA_METRICA;
+      const N = m.linhas.length;
+      const x = l => ml + (N === 0 ? pw / 2 : (l / N) * pw);
+      const y = v => mt + ph * (1 - (v + 1) / 2);   /* cosseno em [-1, 1] */
+
+      /* grade */
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+      ctx.fillStyle = '#64748b'; ctx.font = '10px "JetBrains Mono", monospace';
+      [-1, -0.5, 0, 0.5, 1].forEach(v => {
+        const yy = Math.round(y(v)) + 0.5;
+        ctx.beginPath(); ctx.moveTo(ml, yy); ctx.lineTo(W - mr, yy); ctx.stroke();
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText(v.toFixed(1), ml - 6, yy);
+      });
+
+      /* eixo x: rótulo por camada */
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      for (let l = 0; l <= N; l++) ctx.fillText(String(l), x(l), H - mb + 5);
+      ctx.fillText('camada', ml + pw / 2, H - 13);
+
+      const serie = (vals, cor) => {
+        if (vals.some(v => Number.isNaN(v))) return;
+        ctx.strokeStyle = cor; ctx.lineWidth = 2;
+        ctx.beginPath();
+        vals.forEach((v, i) => { const px = x(i), py = y(v); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+        ctx.stroke();
+        ctx.fillStyle = cor;
+        vals.forEach((v, i) => { ctx.beginPath(); ctx.arc(x(i), y(v), 3, 0, Math.PI * 2); ctx.fill(); });
+      };
+
+      serie([m.cosE0].concat(m.linhas.map(r => r.cosE)), '#22d3ee');
+      if (!Number.isNaN(m.cosC0)) serie([m.cosC0].concat(m.linhas.map(r => r.cosC)), '#34d399');
+    }
+
+    /* ═══════════ módulo 02 — as duas matrizes ═══════════ */
+    function matrizHTML(A, tokens, causal) {
+      let h = '<thead><tr><th class="text-slate-600 pr-2 pb-1"></th>';
+      tokens.forEach(t => { h += `<th class="text-slate-500 font-normal px-1 pb-1 text-center truncate max-w-[56px]" title="${t}">${t}</th>`; });
+      h += '</tr></thead><tbody>';
+      A.forEach((row, i) => {
+        h += `<tr><td class="text-slate-500 pr-2 text-right whitespace-nowrap">${tokens[i]}</td>`;
+        row.forEach((w, j) => {
+          const oculto = causal && j > i;
+          const a = Math.min(0.9, 0.08 + w * 1.1);
+          const bg = oculto ? 'rgba(15,23,42,1)' : (causal ? `rgba(244,63,94,${a})` : `rgba(99,102,241,${a})`);
+          h += `<td class="px-1 py-0.5"><div class="w-11 h-6 rounded flex items-center justify-center text-[9px] ${oculto ? 'text-slate-700' : 'text-white'}" style="background:${bg}">${oculto ? '—' : w.toFixed(2)}</div></td>`;
+        });
+        h += '</tr>';
+      });
+      return h + '</tbody>';
+    }
+
+    function renderMatrizes(cfg) {
+      /* Sem padding aqui: só os n tokens reais, para isolar o efeito da máscara causal. */
+      const puro = { tokens: cfg.tokens, n: cfg.n, L: cfg.n, alpha: cfg.alpha, mascara: true };
+      const H0 = entrada(puro);
+      const bi = camada(H0, puro, false).A;
+      const ca = camada(H0, puro, true).A;
+      document.getElementById('enc-mat-bi').innerHTML = matrizHTML(bi, cfg.tokens, false);
+      document.getElementById('enc-mat-causal').innerHTML = matrizHTML(ca, cfg.tokens, true);
+      document.getElementById('enc-frase-eco').textContent = cfg.tokens.join(' ');
+
+      const ult = cfg.n - 1;
+      const prim = 0;
+      const olharFrente = bi[prim].slice(1).reduce((a, b) => a + b, 0);
+      const el = document.getElementById('enc-mat-verdict');
+      el.innerHTML = `
+        Na matriz do encoder, o primeiro token
+        (<span class="font-mono text-brand-300">${cfg.tokens[prim]}</span>) coloca
+        <strong class="text-brand-300">${(100 * olharFrente).toFixed(1)}%</strong> do seu peso em posições
+        <em>à direita</em> dele. Na matriz causal esse mesmo peso é
+        <strong class="text-rose-300">0%</strong> — a primeira linha só pode olhar para si mesma, e por isso
+        vale sempre $1{,}00$. A última linha (<span class="font-mono text-slate-300">${cfg.tokens[ult]}</span>)
+        é a única em que as duas matrizes têm o mesmo conjunto de posições disponíveis.`;
+      Guia.renderMath(el);
+    }
+
+    /* ═══════════ módulo 03 — a linha de atenção detalhada ═══════════ */
+    function renderPadding() {
+      const cfg = CFG;
+      if (!cfg) return;
+      const usaMascara = document.getElementById('pad-mask').checked;
+      const t = cfg.alvo;
+      const H0 = entrada(cfg);
+
+      const brutos = [];
+      for (let j = 0; j < cfg.L; j++) brutos.push(dot(H0[t], H0[j]) / Math.sqrt(D));
+      const mascarados = brutos.map((s, j) => (usaMascara && j >= cfg.n) ? -Infinity : s);
+      const pesos = softmax(mascarados);
+      const mx = Math.max(...mascarados.filter(Number.isFinite));
+      const exps = mascarados.map(s => Number.isFinite(s) ? Math.exp(s - mx) : 0);
+
+      let vaz = 0;
+      for (let j = cfg.n; j < cfg.L; j++) vaz += pesos[j];
+
+      document.getElementById('pad-tbl').innerHTML = brutos.map((s, j) => {
+        const real = j < cfg.n;
+        const bloqueado = usaMascara && !real;
+        const larg = Math.max(1, Math.round(100 * pesos[j]));
+        return `<tr class="border-b border-slate-800/60 ${bloqueado ? 'opacity-45' : ''}">
+          <td class="py-1.5 pr-3 text-slate-500">${j}</td>
+          <td class="py-1.5 pr-3 ${real ? (j === t ? 'text-cyan-300' : 'text-slate-300') : 'text-amber-300'}">${real ? cfg.tokens[j] : '[PAD]'}</td>
+          <td class="py-1.5 pr-3 text-right text-slate-400">${fmt(s, 3)}</td>
+          <td class="py-1.5 pr-3 text-right ${bloqueado ? 'text-rose-400' : 'text-slate-600'}">${bloqueado ? '-∞' : '0'}</td>
+          <td class="py-1.5 pr-3 text-right text-slate-400">${exps[j].toFixed(3)}</td>
+          <td class="py-1.5 pr-3 text-right ${!real && pesos[j] > 1e-6 ? 'text-rose-400 font-semibold' : 'text-slate-300'}">${pesos[j].toFixed(3)}</td>
+          <td class="py-1.5 pl-2"><div class="h-2 rounded-full ${real ? 'bg-cyan-500' : 'bg-rose-500'}" style="width:${larg}%"></div></td>
+        </tr>`;
+      }).join('');
+
+      /* Vetor de saída da camada 1 com e sem máscara, para medir o estrago. */
+      const comA = camada(H0, Object.assign({}, cfg, { mascara: true }), false).H[t];
+      const semA = camada(H0, Object.assign({}, cfg, { mascara: false }), false).H[t];
+      const desvio = 1 - cos(comA, semA);
+
+      document.getElementById('pad-vaz').textContent = (100 * vaz).toFixed(1) + '%';
+      document.getElementById('pad-desvio').textContent = desvio.toFixed(4);
+      document.getElementById('pad-qtd').textContent = String(cfg.L - cfg.n);
+
+      const nota = document.getElementById('pad-nota');
+      if (cfg.L === cfg.n) {
+        nota.innerHTML = 'O lote atual não tem preenchimento ($L = n$), então ligar ou desligar a máscara não muda nada. Volte ao módulo 01 e aumente $L$ para ver a diferença.';
+      } else if (usaMascara) {
+        nota.innerHTML = `Com a máscara, o $-\\infty$ vira $e^{-\\infty} = 0$ no numerador do softmax: as
+          ${cfg.L - cfg.n} posições de preenchimento saem da conta antes da normalização, e os pesos das
+          posições reais voltam a somar $1$. O desvio de ${desvio.toFixed(4)} ao lado é exatamente quanto o
+          vetor de saída mudaria se você esquecesse essa linha de código.`;
+      } else {
+        nota.innerHTML = `<span class="text-rose-300">Sem máscara:</span>
+          ${(100 * vaz).toFixed(1)}% da atenção deste token foi para posições que não contêm texto nenhum —
+          peso roubado das palavras reais. E como $L$ é definido pela frase mais longa do lote, o vetor de
+          saída deste texto passa a depender de quem mais entrou no lote junto com ele.`;
+      }
+      Guia.renderMath(nota);
+    }
+
+    /* ═══════════ módulo 04 — pooling ═══════════ */
+    function renderPooling(cfg, hist) {
+      const HN = hist[hist.length - 1].H;
+      const bom = new Array(D).fill(0), ing = new Array(D).fill(0);
+      for (let i = 0; i < cfg.n; i++) for (let c = 0; c < D; c++) bom[c] += HN[i][c] / cfg.n;
+      for (let i = 0; i < cfg.L; i++) for (let c = 0; c < D; c++) ing[c] += HN[i][c] / cfg.L;
+      const div = 1 - cos(bom, ing);
+
+      document.getElementById('pool-ok').textContent = '[' + bom.map(x => fmt(x, 3)).join(', ') + ']';
+      document.getElementById('pool-bad').textContent = '[' + ing.map(x => fmt(x, 3)).join(', ') + ']';
+      document.getElementById('pool-cos').textContent = div.toFixed(4);
+
+      const nota = document.getElementById('pool-nota');
+      if (cfg.L === cfg.n) {
+        nota.innerHTML = 'Com $L = n$ os dois pooling coincidem — a divergência é zero. Aumente o lote no módulo 01 e ela aparece.';
+      } else {
+        nota.innerHTML = `Com ${cfg.L - cfg.n} posi${cfg.L - cfg.n > 1 ? 'ções' : 'ção'} de preenchimento em
+          $L = ${cfg.L}$, a média ingênua diverge ${div.toFixed(4)} da média correta. Num bi-encoder isso
+          significa que o mesmo documento recebe vetores diferentes conforme o lote de indexação — e a
+          recuperação passa a depender de um detalhe de engenharia que nada tem a ver com o texto.
+          ${cfg.mascara ? '' : '<span class="text-rose-300">Note que a máscara está desligada no módulo 01, então o próprio $H^{(N)}$ já está contaminado antes do pooling.</span>'}`;
+      }
+      Guia.renderMath(nota);
+    }
+
+    /* ═══════════ orquestração ═══════════ */
+    function atualizarTudo(repopularAlvo) {
+      CFG = lerConfig();
+      if (repopularAlvo) { popularAlvo(CFG, true); CFG = lerConfig(); }
+
+      document.getElementById('enc-camadas-v').textContent = CFG.camadas;
+      document.getElementById('enc-lote-v').textContent = CFG.L;
+      document.getElementById('enc-alpha-v').textContent = CFG.alpha.toFixed(2);
+
+      HIST = propagar(CFG, false);
+      ULTIMA_METRICA = metricas(CFG, HIST);
+
+      renderFita(CFG);
+      renderTabela(CFG, ULTIMA_METRICA);
+      renderSaida(CFG, HIST);
+      desenharTrajetoria();
+      renderMatrizes(CFG);
+      renderPadding();
+      renderPooling(CFG, HIST);
+      Guia.renderMath(document.getElementById('enc-resumo'));
+    }
+
+    Guia.ready(() => {
+      const presets = document.getElementById('enc-presets');
+      presets.innerHTML = PRESETS.map((p, i) =>
+        `<button data-preset="${i}" class="px-2 py-1 rounded-md bg-surface-950 border border-slate-700 text-[10px] font-mono text-slate-400 hover:border-cyan-500/50 hover:text-cyan-300 transition">${p.split(' ').slice(0, 3).join(' ')}…</button>`
+      ).join('');
+      presets.addEventListener('click', e => {
+        const b = e.target.closest('[data-preset]');
+        if (!b) return;
+        document.getElementById('enc-frase').value = PRESETS[parseInt(b.dataset.preset, 10)];
+        atualizarTudo(true);
+        Guia.toast('Frase trocada — a pilha foi recalculada.', 'fa-rotate');
+      });
+
+      document.getElementById('enc-frase').addEventListener('input', () => atualizarTudo(true));
+      document.getElementById('enc-alvo').addEventListener('change', () => atualizarTudo(false));
+      ['enc-camadas', 'enc-lote', 'enc-alpha'].forEach(id =>
+        document.getElementById(id).addEventListener('input', () => atualizarTudo(false)));
+      document.getElementById('enc-mask').addEventListener('change', () => {
+        atualizarTudo(false);
+        Guia.toast(CFG.mascara ? 'Máscara de padding ligada.' : 'Máscara desligada: o [PAD] entra no softmax.',
+                   CFG.mascara ? 'fa-shield-halved' : 'fa-triangle-exclamation');
+      });
+      document.getElementById('pad-mask').addEventListener('change', renderPadding);
+
+      window.addEventListener('resize', desenharTrajetoria);
+
+      atualizarTudo(true);
+    });
+
+    /* O canvas vive no módulo 01: redesenha sempre que ele volta a aparecer. */
+    Guia.onSlide(0, desenharTrajetoria);
+  </script>
+</body>
+</html>

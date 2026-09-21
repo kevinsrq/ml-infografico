@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Positionwise FFN: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../../assets/guia.css">
+  <script src="../../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Positionwise FFN"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Onde moram a maior parte dos parâmetros — e por que ela é aplicada posição a posição"
+      data-icon="fa-arrows-left-right-to-line"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — O QUE É ══════════════ -->
+    <section class="slide-section" data-nav="O que é" data-icon="fa-arrows-left-right-to-line">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-arrows-left-right-to-line"></i> Módulo 01 • O Mecanismo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Duas camadas densas, <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">uma posição de cada vez</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Depois da atenção e do <em>Add &amp; Norm</em>, cada vetor do bloco passa por uma rede
+          feed-forward de duas camadas. O adjetivo <strong class="text-cyan-300">positionwise</strong>
+          é a parte importante: ela roda <em>separadamente</em> em cada posição, e a posição 1 nunca
+          fica sabendo o que aconteceu na posição 7.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-6 glow-cyan">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-square-root-variable text-cyan-400"></i> A fórmula, tal como no paper
+          </h3>
+          <p class="text-center my-5">
+            $$\mathrm{FFN}(x) = \max(0,\; xW_1 + b_1)\,W_2 + b_2$$
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            Vaswani et al. (2017) escrevem $x$ como <em>vetor-linha</em>: $x \in \mathbb{R}^{1 \times d_{model}}$,
+            multiplicado pela esquerda. O $\max(0,\cdot)$ é a ReLU. Nada mais: duas multiplicações de
+            matriz, dois vieses e uma não-linearidade no meio.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[11px]">
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="py-2 pr-3 font-mono text-cyan-300 align-top">$x$</td><td class="py-2 text-slate-400">o vetor de <strong class="text-slate-200">uma</strong> posição, já normalizado pelo <em>Add &amp; Norm</em> anterior. Tem $d_{model}$ casas.</td></tr>
+                <tr><td class="py-2 pr-3 font-mono text-cyan-300 align-top">$W_1$</td><td class="py-2 text-slate-400">$d_{model} \times d_{ff}$ — a projeção de <strong class="text-slate-200">expansão</strong>.</td></tr>
+                <tr><td class="py-2 pr-3 font-mono text-cyan-300 align-top">$W_2$</td><td class="py-2 text-slate-400">$d_{ff} \times d_{model}$ — a projeção de <strong class="text-slate-200">volta</strong>. A saída tem a mesma forma da entrada, porque ela ainda precisa ser somada ao residual.</td></tr>
+                <tr><td class="py-2 pr-3 font-mono text-cyan-300 align-top">$b_1, b_2$</td><td class="py-2 text-slate-400">vieses, $d_{ff}$ e $d_{model}$ casas. Vários modelos modernos simplesmente os removem.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-brand-400"></i> A mesma coisa, em forma matricial
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Na implementação real ninguém itera sobre posições: empilha-se a sequência inteira em
+            $X \in \mathbb{R}^{n \times d_{model}}$ e escreve-se
+          </p>
+          <p class="text-center my-4">
+            $$\mathrm{FFN}(X) = \max(0,\; XW_1 + \mathbf{1}b_1)\,W_2 + \mathbf{1}b_2$$
+          </p>
+          <div class="p-3.5 rounded-xl bg-brand-500/5 border border-brand-500/25 text-xs text-slate-300 leading-relaxed mb-4">
+            <i class="fa-solid fa-key text-brand-400 mr-1"></i>
+            Repare que $n$ nunca aparece dentro de $W_1$ ou $W_2$. A multiplicação
+            $XW_1$ trata cada <strong class="text-white">linha</strong> de $X$ isoladamente: a linha $i$
+            da saída depende só da linha $i$ da entrada. Rodar a sequência de uma vez é otimização de
+            GPU, não mistura de posições.
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            É exatamente o mesmo que uma convolução 1D de <strong class="text-slate-200">kernel 1</strong>
+            com $d_{ff}$ canais no meio — a leitura que o próprio paper oferece. Kernel 1 significa
+            campo receptivo de um token: zero contexto.
+          </p>
+        </div>
+      </div>
+
+      <!-- SIMULADOR 1 -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-hand-pointer text-cyan-400"></i> Simulador A · Cutuque uma posição só
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              FFN de brinquedo ($d_{model} = 4$, $d_{ff} = 8$, pesos fixos) e uma self-attention de
+              brinquedo ($Q=K=V=X$), ambas calculadas no navegador sobre os mesmos 4 vetores.
+              Perturbe <em>uma</em> posição e veja quem propaga a mudança.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Posição perturbada</span>
+              <span class="font-mono text-cyan-400" id="pw-pos-out">2</span>
+            </label>
+            <input id="pw-pos" type="range" min="0" max="3" step="1" value="2" class="w-full" aria-label="Posição perturbada">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Perturbação $\delta$ na 1ª casa</span>
+              <span class="font-mono text-cyan-400" id="pw-delta-out">+0,60</span>
+            </label>
+            <input id="pw-delta" type="range" min="-150" max="150" step="5" value="60" class="w-full" aria-label="Tamanho da perturbação">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="bg-surface-950 rounded-xl border border-cyan-500/30 p-4">
+            <div class="text-xs font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span> FFN positionwise
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] font-mono">
+                <thead class="text-slate-500 border-b border-slate-800">
+                  <tr><th class="text-left py-1.5 pr-2">pos</th><th class="text-left pr-2">saída</th><th class="text-right">mudança</th></tr>
+                </thead>
+                <tbody id="pw-tbl-ffn" class="text-slate-300"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-surface-950 rounded-xl border border-rose-500/30 p-4">
+            <div class="text-xs font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span> Self-attention, mesma perturbação
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] font-mono">
+                <thead class="text-slate-500 border-b border-slate-800">
+                  <tr><th class="text-left py-1.5 pr-2">pos</th><th class="text-left pr-2">saída</th><th class="text-right">mudança</th></tr>
+                </thead>
+                <tbody id="pw-tbl-attn" class="text-slate-300"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="pw-verdict" class="mt-5 p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/25 text-xs text-slate-300 leading-relaxed"></div>
+
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          Simplificação didática: os pesos aqui são fixos e arbitrários, não treinados, e a atenção
+          é de cabeça única e sem projeções. O que a demonstração mostra é a
+          <strong class="text-slate-400">topologia de dependência</strong> — quem depende de quem —,
+          não o comportamento de um modelo real.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-shuffle text-rose-400"></i> A atenção mistura
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A saída da posição $i$ é uma média ponderada de <em>todas</em> as posições. É o único
+            lugar do bloco onde tokens conversam entre si.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-arrows-left-right-to-line text-cyan-400"></i> A FFN processa
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Recebe o vetor já misturado e o transforma <em>in loco</em>, com capacidade não-linear.
+            A divisão de trabalho do bloco é essa: misturar, depois processar.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-copy text-brand-400"></i> Pesos compartilhados
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            $W_1$ e $W_2$ são os <strong class="text-slate-200">mesmos</strong> em todas as posições
+            do bloco — mas <strong class="text-slate-200">diferentes</strong> entre blocos. Cada
+            camada empilhada tem sua própria FFN.
+          </p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-500 mt-5 leading-relaxed">
+        A mistura que acontece logo antes está em
+        <a href="../multi-head-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.1 Multi-head Attention</a>;
+        a soma residual e a normalização que cercam esta camada, em
+        <a href="../add-norm/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.2 Add &amp; Norm</a>.
+      </p>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — EXPANDIR E VOLTAR ══════════════ -->
+    <section class="slide-section" data-nav="Expandir e voltar" data-icon="fa-up-right-and-down-left-from-center">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-up-right-and-down-left-from-center"></i> Módulo 02 • O Formato de Ampulheta Invertida
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Por que <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">inflar para quatro vezes</span> e voltar
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          No paper original, $d_{model} = 512$ e $d_{ff} = 2048$. No BERT-base, $768 \to 3072$.
+          A razão $d_{ff} = 4\,d_{model}$ pegou e virou quase um padrão de fábrica — sem que exista
+          nenhuma derivação teórica que a obrigue.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-chart-area text-brand-400"></i> O caminho do vetor
+          </h3>
+          <div class="flex items-center justify-center gap-2 sm:gap-4 py-4">
+            <div class="text-center">
+              <div class="w-10 sm:w-14 bg-cyan-500/20 border border-cyan-500/40 rounded-lg" style="height:52px"></div>
+              <div class="text-[10px] font-mono text-cyan-300 mt-2">$d_{model}$</div>
+              <div class="text-[10px] text-slate-500">entrada</div>
+            </div>
+            <i class="fa-solid fa-arrow-right text-slate-600 text-xs"></i>
+            <div class="text-center">
+              <div class="w-10 sm:w-14 bg-brand-500/20 border border-brand-500/40 rounded-lg" style="height:170px"></div>
+              <div class="text-[10px] font-mono text-brand-300 mt-2">$d_{ff}$</div>
+              <div class="text-[10px] text-slate-500">após ReLU</div>
+            </div>
+            <i class="fa-solid fa-arrow-right text-slate-600 text-xs"></i>
+            <div class="text-center">
+              <div class="w-10 sm:w-14 bg-cyan-500/20 border border-cyan-500/40 rounded-lg" style="height:52px"></div>
+              <div class="text-[10px] font-mono text-cyan-300 mt-2">$d_{model}$</div>
+              <div class="text-[10px] text-slate-500">saída</div>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mt-4">
+            A volta a $d_{model}$ não é opcional: a saída entra numa soma residual
+            $x + \mathrm{FFN}(x)$, e somar exige forma idêntica. O espaço largo do meio existe
+            <em>apenas por dentro</em> da camada, entre as duas multiplicações.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-lightbulb text-brand-400"></i> Uma intuição útil: banco de padrões
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Olhe para $W_1$ por linhas de saída: cada uma das $d_{ff}$ unidades internas calcula
+            $\mathrm{ReLU}(\langle x, w_j \rangle + b_j)$ — um produto escalar contra um vetor
+            próprio, seguido de corte em zero. Isso é literalmente um
+            <strong class="text-slate-200">detector</strong>: a unidade $j$ acende quando $x$ aponta
+            na direção de $w_j$ o suficiente, e fica exatamente em zero quando não aponta.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            $W_2$ faz o outro lado: cada unidade interna acesa despeja a sua própria coluna de $W_2$
+            na saída, escalada pela intensidade. Ler a camada como
+            <em>consulta um catálogo de $d_{ff}$ padrões, some as respostas dos que acenderam</em>
+            é a metáfora que costuma ajudar mais.
+          </p>
+          <div class="p-3 rounded-xl bg-amber-500/5 border border-amber-500/30 text-[11px] text-slate-300 leading-relaxed">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>
+            <strong class="text-white">Isto é intuição, não fato estabelecido.</strong> Há trabalho
+            empírico apoiando a leitura de chave-valor das FFNs (Geva et al., 2021), mas também
+            evidência de que muitas unidades são <em>polissemânticas</em>: respondem a vários
+            conceitos não relacionados, porque o modelo empacota mais direções do que tem neurônios.
+            A metáfora do catálogo orienta o raciocínio; não a use como descrição literal do que cada
+            neurônio faz.
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR 2 -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-brand-400"></i> Simulador B · Quem acende na camada larga
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              $d_{model} = 6$, $d_{ff} = 32$, pesos fixos. A entrada é uma mistura de três padrões
+              de referência; cada barra é o valor real de $\mathrm{ReLU}(\langle x, w_j \rangle + b_j)$.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button id="pb-preset-a" class="px-2.5 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white text-[11px] font-mono transition">só A</button>
+            <button id="pb-preset-b" class="px-2.5 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white text-[11px] font-mono transition">só B</button>
+            <button id="pb-preset-c" class="px-2.5 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white text-[11px] font-mono transition">só C</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Peso do padrão <span class="text-cyan-300 font-mono">A</span></span>
+              <span class="font-mono text-cyan-400" id="pb-a-out">1,00</span>
+            </label>
+            <input id="pb-a" type="range" min="0" max="150" step="5" value="100" class="w-full" aria-label="Peso do padrão A">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Peso do padrão <span class="text-emerald-300 font-mono">B</span></span>
+              <span class="font-mono text-emerald-400" id="pb-b-out">0,00</span>
+            </label>
+            <input id="pb-b" type="range" min="0" max="150" step="5" value="0" class="w-full" aria-label="Peso do padrão B">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Peso do padrão <span class="text-amber-300 font-mono">C</span></span>
+              <span class="font-mono text-amber-400" id="pb-c-out">0,00</span>
+            </label>
+            <input id="pb-c" type="range" min="0" max="150" step="5" value="0" class="w-full" aria-label="Peso do padrão C">
+          </div>
+        </div>
+
+        <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mb-3">
+            <span>Ativação das 32 unidades internas</span>
+            <span class="font-mono text-brand-400" id="pb-stats"></span>
+          </div>
+          <div id="pb-bars" class="flex items-end gap-[3px] h-32"></div>
+          <div class="text-[10px] text-slate-600 font-mono mt-2 flex justify-between"><span>unidade 0</span><span>unidade 31</span></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+          <div id="pb-note" class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed"></div>
+          <div id="pb-overlap" class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed"></div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          Simplificação didática: os $w_j$ aqui são vetores fixos arbitrários, não aprendidos, e os
+          padrões A, B e C são direções que escolhemos. Num modelo treinado, quem decide as direções é
+          o gradiente. O que a demonstração mostra de verdadeiro é o mecanismo: ReLU zera a maior
+          parte das unidades, entradas diferentes acendem conjuntos diferentes, e a saída é a soma das
+          colunas correspondentes.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+        <i class="fa-solid fa-circle-question text-brand-400 mr-1"></i>
+        <strong class="text-slate-200">E por que quatro, e não três ou oito?</strong> Não há resposta
+        teórica. Quatro é um número que funcionou bem no paper original, sobreviveu à replicação em
+        BERT, GPT-2 e sucessores, e tem a vantagem prática de ser potência de dois — o que casa com os
+        tamanhos de bloco de multiplicação de matriz das GPUs. Modelos recentes desviam dele com
+        frequência, principalmente quando adotam ativações com <em>gate</em> (módulo 04).
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — ONDE ESTÃO OS PARÂMETROS ══════════════ -->
+    <section class="slide-section" data-nav="Contagem" data-icon="fa-calculator">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-calculator"></i> Módulo 03 • A Conta
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A atenção leva a fama, a FFN leva <span class="bg-gradient-to-r from-amber-400 to-cyan-400 bg-clip-text text-transparent">o dobro dos parâmetros</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O nome do paper é "Attention Is All You Need", mas se você contar pesos dentro de um bloco,
+          a maioria está na camada mais simples das duas. A conta é curta o bastante para fazer de
+          cabeça.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-square-root-variable text-rose-400"></i> Atenção multi-head, por bloco
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            São quatro matrizes $d_{model} \times d_{model}$: as projeções $W_Q$, $W_K$, $W_V$
+            (somadas sobre todas as cabeças, cada uma com $d_k = d_{model}/h$ colunas) e a projeção
+            de saída $W_O$.
+          </p>
+          <p class="text-center my-4">
+            $$P_{attn} \approx 4\,d_{model}^{2}$$
+          </p>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Com vieses, $4d_{model}^2 + 4d_{model}$ — uma correção de ordem $1/d_{model}$, desprezível
+            para $d_{model}$ na casa dos milhares.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-square-root-variable text-cyan-400"></i> FFN, por bloco
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Duas matrizes: $W_1$ com $d_{model} \times d_{ff}$ e $W_2$ com $d_{ff} \times d_{model}$.
+          </p>
+          <p class="text-center my-4">
+            $$P_{ffn} \approx 2\,d_{model}\,d_{ff}$$
+          </p>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Substituindo $d_{ff} = 4\,d_{model}$: $P_{ffn} \approx 8\,d_{model}^{2}$ —
+            <strong class="text-cyan-300">exatamente o dobro</strong> da atenção. Ou seja, cerca de
+            $2/3$ dos parâmetros de um bloco vivem na FFN.
+          </p>
+        </div>
+      </div>
+
+      <!-- SIMULADOR 3 — OBRIGATÓRIO -->
+      <div class="bg-surface-900 border border-amber-500/30 rounded-2xl p-5 sm:p-6 mb-6 glow-amber">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-calculator text-amber-400"></i> Simulador C · Calculadora de parâmetros e custo por bloco
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Toda a aritmética abaixo é feita na hora a partir dos quatro controles. Nada aqui é
+              número decorativo.
+            </p>
+          </div>
+          <button id="calc-reset" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white text-xs font-mono transition">
+            <i class="fa-solid fa-rotate-left mr-1"></i> BERT-base
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{model}$</span><span class="font-mono text-amber-400" id="calc-d-out">768</span>
+            </label>
+            <input id="calc-d" type="range" min="128" max="4096" step="64" value="768" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{ff}$</span><span class="font-mono text-amber-400" id="calc-dff-out">3072</span>
+            </label>
+            <input id="calc-dff" type="range" min="128" max="16384" step="128" value="3072" class="w-full" aria-label="Dimensão interna da FFN">
+            <div class="text-[10px] font-mono text-slate-500 mt-1.5" id="calc-ratio">razão d_ff / d_model = 4,00×</div>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>cabeças $h$</span><span class="font-mono text-amber-400" id="calc-h-out">12</span>
+            </label>
+            <input id="calc-h" type="range" min="1" max="64" step="1" value="12" class="w-full" aria-label="Número de cabeças">
+            <div class="text-[10px] font-mono text-slate-500 mt-1.5" id="calc-dk">d_k = 64</div>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>sequência $n$</span><span class="font-mono text-amber-400" id="calc-n-out">512</span>
+            </label>
+            <input id="calc-n" type="range" min="64" max="16384" step="64" value="512" class="w-full" aria-label="Comprimento da sequência">
+          </div>
+        </div>
+
+        <!-- Parâmetros -->
+        <div class="bg-surface-950 rounded-xl border border-slate-800 p-4 mb-5">
+          <h4 class="text-xs font-bold text-slate-200 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-weight-hanging text-amber-400"></i> Parâmetros treináveis de um bloco
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div class="p-3.5 rounded-xl bg-surface-900 border border-rose-500/30">
+              <div class="text-[11px] font-mono text-rose-300 mb-1">Atenção · $4d_{model}^2 + 4d_{model}$</div>
+              <div class="font-mono text-2xl font-bold text-white" id="calc-pattn">—</div>
+              <div class="text-[11px] text-slate-500 mt-1" id="calc-pattn-share">—</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-surface-900 border border-cyan-500/30">
+              <div class="text-[11px] font-mono text-cyan-300 mb-1">FFN · $2d_{model}d_{ff} + d_{ff} + d_{model}$</div>
+              <div class="font-mono text-2xl font-bold text-white" id="calc-pffn">—</div>
+              <div class="text-[11px] text-slate-500 mt-1" id="calc-pffn-share">—</div>
+            </div>
+          </div>
+          <div class="h-7 w-full rounded-lg overflow-hidden flex border border-slate-800 text-[10px] font-mono">
+            <div id="bar-pattn" class="bg-rose-500/70 flex items-center justify-center text-white overflow-hidden whitespace-nowrap" style="width:33%">atenção</div>
+            <div id="bar-pffn" class="bg-cyan-500/70 flex items-center justify-center text-white overflow-hidden whitespace-nowrap" style="width:67%">FFN</div>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-3" id="calc-param-note">—</div>
+        </div>
+
+        <!-- Custo -->
+        <div class="bg-surface-950 rounded-xl border border-slate-800 p-4 mb-5">
+          <h4 class="text-xs font-bold text-slate-200 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-microchip text-amber-400"></i> Custo aritmético do <em>forward</em> de um bloco
+          </h4>
+          <p class="text-[11px] text-slate-500 mb-4 leading-relaxed">
+            Em multiplicações-acumulações (MACs), para uma sequência de $n$ tokens. Contamos só as
+            multiplicações de matriz — softmax, normalização e ativação ficam de fora porque são de
+            ordem menor.
+          </p>
+          <div class="overflow-x-auto mb-4">
+            <table class="w-full text-[11px] font-mono">
+              <thead class="text-slate-500 border-b border-slate-800">
+                <tr>
+                  <th class="text-left py-2 pr-3">parte</th>
+                  <th class="text-left pr-3">fórmula</th>
+                  <th class="text-right pr-3">MACs</th>
+                  <th class="text-right">cresce com</th>
+                </tr>
+              </thead>
+              <tbody id="calc-mac-tbl" class="text-slate-300"></tbody>
+            </table>
+          </div>
+          <div class="h-7 w-full rounded-lg overflow-hidden flex border border-slate-800 text-[10px] font-mono">
+            <div id="bar-mattn" class="bg-rose-500/70 flex items-center justify-center text-white overflow-hidden whitespace-nowrap" style="width:50%">atenção</div>
+            <div id="bar-mffn" class="bg-cyan-500/70 flex items-center justify-center text-white overflow-hidden whitespace-nowrap" style="width:50%">FFN</div>
+          </div>
+        </div>
+
+        <!-- Cruzamento -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="p-4 rounded-xl bg-surface-950 border border-amber-500/30">
+            <h4 class="text-xs font-bold text-slate-200 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-scale-unbalanced text-amber-400"></i> Onde a atenção passa a dominar
+            </h4>
+            <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+              Igualando as duas linhas — $4nd^2 + 2n^2d = 2n\,d\,d_{ff}$ — e cortando $2nd$:
+            </p>
+            <p class="text-center my-3">
+              $$n^{\star} = d_{ff} - 2\,d_{model}$$
+            </p>
+            <div id="calc-cross" class="p-3 rounded-lg bg-surface-900 border border-slate-800 text-[11px] text-slate-300 leading-relaxed"></div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <h4 class="text-xs font-bold text-slate-200 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-cyan-400"></i> A mesma conta, dobrando $n$
+            </h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] font-mono">
+                <thead class="text-slate-500 border-b border-slate-800">
+                  <tr><th class="text-left py-1.5 pr-3">$n$</th><th class="text-right pr-3">FFN</th><th class="text-right pr-3">atenção</th><th class="text-right">atenção / FFN</th></tr>
+                </thead>
+                <tbody id="calc-ladder" class="text-slate-300"></tbody>
+              </table>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-2 leading-relaxed">
+              Dobrar $n$ dobra a FFN e mais que dobra a atenção. É o termo $2n^2d$ trabalhando.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-users text-slate-400"></i> Cabeças não mudam a conta
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Mexa no slider de $h$ e observe: só o readout de $d_k$ reage — nenhuma contagem de parâmetros
+            nem de MACs muda. Como $d_k = d_{model}/h$, dobrar as
+            cabeças corta $d_k$ pela metade e o total de colunas continua $d_{model}$. O que muda é
+            <em>como</em> a capacidade é repartida, não quanta existe.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-memory text-amber-400"></i> Parâmetro não é memória de execução
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A FFN domina os <em>pesos</em>; a atenção domina a <em>memória de ativação</em> em
+            sequências longas, porque a matriz de scores tem $n^2$ entradas por cabeça. São dois
+            gargalos diferentes.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-scissors text-rose-400"></i> O que a conta ignora
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Embeddings de token, LayerNorm, cabeça de saída e o cache de chaves-valores na geração
+            ficaram de fora. A calculadora é por <strong class="text-slate-200">um bloco</strong>,
+            não pelo modelo inteiro.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — ATIVAÇÕES ══════════════ -->
+    <section class="slide-section" data-nav="Ativações" data-icon="fa-bolt">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-bolt"></i> Módulo 04 • A Não-linearidade
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Da ReLU ao <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">gate</span>: o que mudou no meio da FFN
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A estrutura expandir-e-voltar ficou. A função no meio foi trocada algumas vezes, e a última
+          troca mexeu também no $d_{ff}$.
+        </p>
+      </div>
+
+      <!-- SIMULADOR 4 -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-wave-square text-emerald-400"></i> Simulador D · As curvas, lado a lado
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Cada curva é avaliada ponto a ponto no navegador. Passe o mouse para ler os valores em
+              um mesmo $x$.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2 text-[11px] font-mono">
+            <button data-curva="relu" class="act-btn px-2.5 py-1.5 rounded-lg border transition">ReLU</button>
+            <button data-curva="gelu" class="act-btn px-2.5 py-1.5 rounded-lg border transition">GELU</button>
+            <button data-curva="silu" class="act-btn px-2.5 py-1.5 rounded-lg border transition">SiLU / Swish</button>
+          </div>
+        </div>
+
+        <div class="bg-surface-950 rounded-xl p-3 border border-slate-800 relative">
+          <canvas id="act-canvas" class="w-full h-[300px] rounded-lg cursor-crosshair block"></canvas>
+          <div id="act-tip" class="hidden absolute z-10 bg-surface-900/95 backdrop-blur px-3 py-2 rounded-lg border border-emerald-500/40 text-[11px] font-mono text-slate-200 shadow-xl pointer-events-none"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5 text-xs">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-rose-300 text-[11px] mb-1.5">ReLU · a do paper de 2017</div>
+            <p class="text-slate-400 leading-relaxed">
+              $\max(0,z)$. Barata e esparsa: toda unidade com pré-ativação negativa fica em zero exato,
+              e na prática isso costuma ser boa parte delas. O preço é a
+              derivada nula à esquerda — unidade que morre não volta.
+            </p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-cyan-300 text-[11px] mb-1.5">GELU · 2016</div>
+            <p class="text-slate-400 leading-relaxed">
+              $z\,\Phi(z)$, com $\Phi$ a acumulada da normal (Hendrycks &amp; Gimpel, 2016). Suave em
+              todo lugar, ligeiramente negativa perto de zero, com gradiente que não desaparece de
+              vez. Virou padrão em BERT e GPT-2.
+            </p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-emerald-300 text-[11px] mb-1.5">SiLU / Swish</div>
+            <p class="text-slate-400 leading-relaxed">
+              $z\,\sigma(z)$. Quase indistinguível da GELU no gráfico — e é a peça usada dentro do
+              SwiGLU. A diferença entre as duas é muito menor do que a diferença de qualquer uma
+              delas para a ReLU.
+            </p>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          A GELU desenhada aqui usa a aproximação por tangente hiperbólica dada pelos próprios
+          autores — a forma exata com $\mathrm{erf}$ é visualmente idêntica nesta escala.
+        </p>
+      </div>
+
+      <!-- Gate -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-door-open text-emerald-400"></i> A família com <em>gate</em>: SwiGLU
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            A ideia de <em>gated linear unit</em> é calcular duas projeções da mesma entrada e deixar
+            uma controlar a outra, multiplicando elemento a elemento:
+          </p>
+          <p class="text-center my-4">
+            $$\mathrm{FFN}_{\text{SwiGLU}}(x) = \big[\,\mathrm{SiLU}(xW_g) \odot (xV)\,\big]W_2$$
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            $W_g$ produz o <strong class="text-slate-200">gate</strong> e $V$ o
+            <strong class="text-slate-200">valor</strong>; $\odot$ é o produto de Hadamard. Em vez de
+            uma curva fixa decidindo o quanto passa, o próprio modelo aprende o portão. Shazeer (2020)
+            popularizou a variante, e ela aparece em boa parte dos modelos abertos recentes.
+          </p>
+          <div class="p-3 rounded-xl bg-amber-500/5 border border-amber-500/30 text-[11px] text-slate-300 leading-relaxed">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>
+            Três matrizes em vez de duas: $W_g$, $V$ e $W_2$. A mesma largura $d_{ff}$ custa
+            <strong class="text-white">50% mais parâmetros</strong> e 50% mais MACs na FFN.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-ruler-horizontal text-cyan-400"></i> O ajuste de $d_{ff}$ que isso exige
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            Para comparar SwiGLU com a FFN clássica de forma honesta, mantém-se a contagem de
+            parâmetros fixa. Igualando $3\,d\,d_{ff}^{gate} = 2\,d\,d_{ff}$:
+          </p>
+          <p class="text-center my-4">
+            $$d_{ff}^{gate} = \tfrac{2}{3}\,d_{ff}$$
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            É por isso que modelos com SwiGLU costumam ter razões estranhas como $2{,}7\times$ em vez
+            de $4\times$: é $4 \times \tfrac{2}{3}$, arredondado para um múltiplo conveniente.
+          </p>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-[11px] text-slate-400 mb-3">
+              Com os valores da calculadora do módulo 03 —
+              <span class="font-mono text-cyan-400" id="gate-dims">d = 768, d_ff = 3072</span>:
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] font-mono">
+                <thead class="text-slate-500 border-b border-slate-800">
+                  <tr><th class="text-left py-1.5 pr-3">variante</th><th class="text-right pr-3">matrizes</th><th class="text-right pr-3">largura</th><th class="text-right">parâmetros</th></tr>
+                </thead>
+                <tbody id="gate-tbl" class="text-slate-300"></tbody>
+              </table>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-2.5 leading-relaxed">
+              Só as matrizes de peso, sem vieses. Volte ao módulo 03, mexa nos sliders e esta tabela
+              acompanha.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+        <i class="fa-solid fa-scale-balanced text-amber-400 mr-1"></i>
+        <strong class="text-slate-200">Honestidade sobre os ganhos.</strong> As trocas de ativação
+        deram melhoras consistentes o bastante para serem adotadas em escala, mas são melhoras
+        <em>modestas</em> e dependentes de tarefa, tamanho e receita de treino. Nenhuma delas muda a
+        natureza da camada: continua sendo expandir, aplicar não-linearidade e voltar. Números
+        comparativos só fazem sentido dentro de um estudo controlado específico — por isso esta página
+        não exibe nenhum.
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese & Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que a FFN <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">resolve, e o que fica em aberto</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Fechada a última peça do sublayer, o bloco está completo: atenção para misturar,
+          <em>Add &amp; Norm</em> para estabilizar, FFN para processar, <em>Add &amp; Norm</em> de novo.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-1">o mecanismo</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Positionwise de verdade</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$\mathrm{FFN}(x) = \max(0, xW_1+b_1)W_2+b_2$, mesmos pesos em toda posição do bloco, campo receptivo de um token.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1">o formato</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Expandir para voltar</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$d_{ff} \approx 4\,d_{model}$ por convenção, não por teorema. A saída volta a $d_{model}$ porque o residual exige.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1">a conta</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Dois terços do bloco</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$2d\,d_{ff}$ contra $4d^2$: com a razão 4×, a FFN tem o dobro dos parâmetros da atenção — e custo linear em $n$.</p>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-surface-900 border border-rose-500/30 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Limitações do que foi ensinado aqui
+        </h3>
+        <ul class="text-xs text-slate-400 leading-relaxed space-y-2">
+          <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] mt-1.5 text-rose-400"></i>
+            <span><strong class="text-slate-200">O banco de padrões é uma metáfora.</strong> Ela orienta bem o raciocínio, mas unidades reais costumam ser polissemânticas. Interpretar uma FFN treinada é uma área de pesquisa aberta, não um procedimento.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] mt-1.5 text-rose-400"></i>
+            <span><strong class="text-slate-200">As contas são aproximações de primeira ordem.</strong> MACs não são tempo de execução: largura de banda de memória, fusão de kernels e uso de cache mudam bastante o quadro real numa GPU. Uma FFN é amiga do hardware; uma atenção longa nem sempre.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] mt-1.5 text-rose-400"></i>
+            <span><strong class="text-slate-200">O cruzamento $n^{\star} = d_{ff} - 2d_{model}$ vale para o forward denso.</strong> Na geração autorregressiva com cache de chaves-valores a aritmética é outra, e variantes de atenção eficiente mudam o termo quadrático.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-circle text-[5px] mt-1.5 text-rose-400"></i>
+            <span><strong class="text-slate-200">Ficou de fora a FFN esparsa.</strong> Modelos de mistura de especialistas trocam a FFN única por várias, ativando só algumas por token — mesma posição no bloco, outra economia. Não cabia nesta página.</span></li>
+        </ul>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Onde isso se encaixa e para onde vai
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-3">
+          Esta era a terceira peça de <a href="../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2 Bloco Transformer</a>,
+          depois de <a href="../multi-head-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.1 Multi-head Attention</a>
+          e <a href="../add-norm/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.2 Add &amp; Norm</a>.
+          O que entra aqui já carrega ordem, graças a
+          <a href="../../positional-encoding/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.1 Positional Encoding</a>.
+        </p>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          <strong class="text-slate-200">Próximo tópico:</strong>
+          <a href="../../encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted font-semibold">2.1.3 Encoder</a> —
+          o que acontece quando este bloco é empilhado $n$ vezes. Depois vêm
+          <a href="../../encoder/cross-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.3.1 Cross-attention</a>,
+          <a href="../../decoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4 Decoder</a> e
+          <a href="../../decoder/masked-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4.1 Masked Attention</a>.
+          Para o quadro completo, volte ao mapa de
+          <a href="../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1 Transformers</a>
+          ou ao <a href="../../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">capítulo 2</a>.
+          A visão de fora, pelo ângulo da busca, está em
+          <a href="../../../../ir/densos/transformer/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.4 Arquitetura Transformer</a>
+          e em <a href="../../../../ir/densos/cross-encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.5 Cross-Encoder</a>.
+        </p>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que realmente define a FFN do bloco.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              O que o termo <em>positionwise</em> quer dizer exatamente?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Pesos por posição seria o oposto: eles são compartilhados, e um modelo com pesos por posição não aceitaria sequências de comprimento variável.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Que cada posição da sequência tem o seu próprio par $W_1, W_2$.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A mesma FFN roda em cada linha da entrada, e a linha i da saída depende apenas da linha i: campo receptivo de um token.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Que a mesma rede é aplicada independentemente a cada posição, sem trocar informação entre elas.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Quem injeta posição é o positional encoding, na entrada do modelo, não a FFN.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Que a FFN soma o índice da posição ao vetor antes de projetar.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A FFN não olha janelas: o campo receptivo é de exatamente um token, equivalente a convolução de kernel 1.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Que a FFN processa uma janela deslizante de posições vizinhas.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Com $d_{ff} = 4\,d_{model}$, como ficam os parâmetros de um bloco?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A atenção fica com cerca de um terço, não com a maior parte: são 4d² contra 8d² da FFN.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) A atenção fica com a maior parte, porque tem quatro matrizes contra duas.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O número de cabeças não entra na conta: d_k = d_model/h mantém o total de colunas em d_model.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Depende do número de cabeças: mais cabeças, mais parâmetros na atenção.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, '2·d·4d = 8d² na FFN contra 4d² na atenção: o dobro, ou cerca de dois terços do bloco.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) A FFN tem $8\,d_{model}^2$ contra $4\,d_{model}^2$ da atenção — o dobro.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Elas só empatariam se d_ff fosse 2·d_model.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Ficam empatadas, por construção do bloco.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Por que modelos que adotam SwiGLU costumam reduzir $d_{ff}$ para cerca de dois terços?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O gate não tem nada a ver com saturação de memória de ativação; a razão é a contagem de matrizes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque o gate satura e largura extra deixaria de ter efeito.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A restrição de potência de dois é uma conveniência de hardware, não a causa do fator 2/3.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o gate exige que $d_{ff}$ seja potência de dois.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A SiLU não é mais cara que a GELU a ponto de justificar cortar um terço da largura; o custo está nas matrizes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque a SiLU é muito mais cara de calcular que a ReLU.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'São três matrizes (gate, valor e volta) em vez de duas: 3·d·d_ff. Multiplicar a largura por 2/3 devolve a contagem a 2·d·d_ff.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque a variante com gate usa três matrizes em vez de duas, e o fator $2/3$ mantém a contagem de parâmetros.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════ utilidades ═══════════ */
+    function br(n) { return Math.round(n).toLocaleString('pt-BR'); }
+
+    /* Escala legível: 1,2 mi / 3,4 bi / 5,6 tri. */
+    function compacto(n) {
+      const abs = Math.abs(n);
+      if (abs >= 1e12) return (n / 1e12).toFixed(2).replace('.', ',') + ' tri';
+      if (abs >= 1e9)  return (n / 1e9).toFixed(2).replace('.', ',') + ' bi';
+      if (abs >= 1e6)  return (n / 1e6).toFixed(2).replace('.', ',') + ' mi';
+      if (abs >= 1e3)  return (n / 1e3).toFixed(1).replace('.', ',') + ' mil';
+      return br(n);
+    }
+
+    function dec(n, casas) { return n.toFixed(casas).replace('.', ','); }
+
+    /* Gerador determinístico (LCG): os pesos de brinquedo são sempre os mesmos. */
+    function lcg(semente) {
+      let s = semente >>> 0;
+      return () => {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        return s / 4294967296;
+      };
+    }
+    function pesos(linhas, colunas, semente, escala) {
+      const r = lcg(semente), m = [];
+      for (let i = 0; i < linhas; i++) {
+        const linha = [];
+        for (let j = 0; j < colunas; j++) linha.push((r() * 2 - 1) * escala);
+        m.push(linha);
+      }
+      return m;
+    }
+    function dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+
+    /* x (vetor-linha) vezes W (linhas = dim de x) */
+    function vecMat(x, W, b) {
+      const out = new Array(W[0].length).fill(0);
+      for (let j = 0; j < out.length; j++) {
+        let s = b ? b[j] : 0;
+        for (let i = 0; i < x.length; i++) s += x[i] * W[i][j];
+        out[j] = s;
+      }
+      return out;
+    }
+
+    Guia.ready(() => {
+      initPositionwise();
+      initBancoPadroes();
+      initCalculadora();
+      initAtivacoes();
+    });
+    /* O canvas do módulo 04 (índice 3) só tem largura quando o módulo aparece. */
+    Guia.onSlide(3, redesenharAtivacoes);
+
+    /* ═══════════ módulo 01 — positionwise vs atenção ═══════════ */
+    const PW_TOKENS = ['o', 'gato', 'subiu', 'no'];
+    const PW_X = [
+      [0.30, -0.20, 0.50, 0.10],
+      [0.80, 0.10, -0.40, 0.20],
+      [-0.30, 0.70, 0.20, -0.10],
+      [0.15, -0.55, 0.35, 0.60]
+    ];
+    const PW_W1 = pesos(4, 8, 20240517, 1.0);
+    const PW_B1 = pesos(1, 8, 77, 0.3)[0];
+    const PW_W2 = pesos(8, 4, 991, 0.7);
+    const PW_B2 = pesos(1, 4, 13, 0.2)[0];
+
+    function ffnBrinquedo(x) {
+      const h = vecMat(x, PW_W1, PW_B1).map(v => Math.max(0, v));
+      return vecMat(h, PW_W2, PW_B2);
+    }
+
+    /* Self-attention de brinquedo: Q = K = V = X, escala 1/sqrt(d). */
+    function attnBrinquedo(X) {
+      const n = X.length, d = X[0].length, esc = Math.sqrt(d);
+      return X.map(q => {
+        const scores = X.map(k => dot(q, k) / esc);
+        const m = Math.max.apply(null, scores);
+        const exps = scores.map(s => Math.exp(s - m));
+        const soma = exps.reduce((a, b) => a + b, 0);
+        const out = new Array(d).fill(0);
+        for (let j = 0; j < n; j++) {
+          const w = exps[j] / soma;
+          for (let c = 0; c < d; c++) out[c] += w * X[j][c];
+        }
+        return out;
+      });
+    }
+
+    function initPositionwise() {
+      const pos = document.getElementById('pw-pos');
+      const del = document.getElementById('pw-delta');
+      if (!pos || !del) return;
+      pos.addEventListener('input', renderPositionwise);
+      del.addEventListener('input', renderPositionwise);
+      renderPositionwise();
+    }
+
+    function renderPositionwise() {
+      const p = parseInt(document.getElementById('pw-pos').value, 10);
+      const delta = parseInt(document.getElementById('pw-delta').value, 10) / 100;
+      document.getElementById('pw-pos-out').textContent = p + ' · ' + PW_TOKENS[p];
+      document.getElementById('pw-delta-out').textContent = (delta >= 0 ? '+' : '−') + dec(Math.abs(delta), 2);
+
+      const base = PW_X.map(v => v.slice());
+      const pert = PW_X.map(v => v.slice());
+      pert[p][0] += delta;
+
+      const ffnBase = base.map(ffnBrinquedo);
+      const ffnPert = pert.map(ffnBrinquedo);
+      const attnBase = attnBrinquedo(base);
+      const attnPert = attnBrinquedo(pert);
+
+      const linhas = (saidas, refs, cor) => saidas.map((v, i) => {
+        let dif = 0;
+        for (let c = 0; c < v.length; c++) dif = Math.max(dif, Math.abs(v[c] - refs[i][c]));
+        const mudou = dif > 1e-9;
+        const vec = v.map(x => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(2)).join(' ');
+        return '<tr class="border-b border-slate-800/60">'
+          + '<td class="py-1.5 pr-2 ' + (i === p ? 'text-amber-300 font-semibold' : 'text-slate-500') + '">'
+          + i + ' ' + PW_TOKENS[i] + '</td>'
+          + '<td class="pr-2 text-slate-400 whitespace-nowrap">[' + vec + ']</td>'
+          + '<td class="text-right ' + (mudou ? cor : 'text-slate-600') + '">'
+          + (mudou ? dif.toFixed(4) : '0') + '</td></tr>';
+      }).join('');
+
+      document.getElementById('pw-tbl-ffn').innerHTML = linhas(ffnPert, ffnBase, 'text-cyan-300');
+      document.getElementById('pw-tbl-attn').innerHTML = linhas(attnPert, attnBase, 'text-rose-300');
+
+      let mudadasFfn = 0, mudadasAttn = 0;
+      for (let i = 0; i < 4; i++) {
+        let df = 0, da = 0;
+        for (let c = 0; c < 4; c++) {
+          df = Math.max(df, Math.abs(ffnPert[i][c] - ffnBase[i][c]));
+          da = Math.max(da, Math.abs(attnPert[i][c] - attnBase[i][c]));
+        }
+        if (df > 1e-9) mudadasFfn++;
+        if (da > 1e-9) mudadasAttn++;
+      }
+
+      const nula = Math.abs(delta) < 1e-9;
+      document.getElementById('pw-verdict').innerHTML = nula
+        ? '<i class="fa-solid fa-circle-info text-slate-400 mr-1"></i> Mova o slider de perturbação para sair do zero.'
+        : '<i class="fa-solid fa-scale-unbalanced text-cyan-400 mr-1"></i> Perturbando apenas a posição '
+          + '<span class="font-mono text-amber-300">' + p + '</span>: a FFN alterou '
+          + '<span class="font-mono text-cyan-300 font-bold">' + mudadasFfn + ' de 4</span> saídas; '
+          + 'a atenção alterou <span class="font-mono text-rose-300 font-bold">' + mudadasAttn + ' de 4</span>. '
+          + 'A FFN é uma função de <em>uma</em> linha por vez; a atenção é uma função da sequência inteira. '
+          + 'É essa diferença — e não o número de parâmetros — que define o papel de cada sublayer.';
+    }
+
+    /* ═══════════ módulo 02 — banco de padrões ═══════════ */
+    const PB_D = 6, PB_FF = 32;
+    const PB_W1 = pesos(PB_D, PB_FF, 424242, 1.0);
+    const PB_B1 = pesos(1, PB_FF, 8181, 0.45)[0];
+    const PB_PADROES = {
+      a: [0.9, 0.2, -0.3, 0.5, -0.1, 0.4],
+      b: [-0.4, 0.8, 0.6, -0.2, 0.3, -0.5],
+      c: [0.1, -0.6, 0.2, 0.9, 0.7, 0.1]
+    };
+
+    function pbAtivacoes(x) {
+      return vecMat(x, PB_W1, PB_B1).map(v => Math.max(0, v));
+    }
+
+    function pbEntrada(wa, wb, wc) {
+      const x = new Array(PB_D).fill(0);
+      for (let i = 0; i < PB_D; i++) {
+        x[i] = wa * PB_PADROES.a[i] + wb * PB_PADROES.b[i] + wc * PB_PADROES.c[i];
+      }
+      return x;
+    }
+
+    function initBancoPadroes() {
+      const ids = ['pb-a', 'pb-b', 'pb-c'];
+      if (!document.getElementById('pb-a')) return;
+      ids.forEach(id => document.getElementById(id).addEventListener('input', renderBancoPadroes));
+      const presets = { 'pb-preset-a': [100, 0, 0], 'pb-preset-b': [0, 100, 0], 'pb-preset-c': [0, 0, 100] };
+      Object.keys(presets).forEach(btn => {
+        document.getElementById(btn).addEventListener('click', () => {
+          const v = presets[btn];
+          ids.forEach((id, i) => { document.getElementById(id).value = v[i]; });
+          renderBancoPadroes();
+          Guia.toast('Entrada trocada para o padrão puro', 'fa-sliders');
+        });
+      });
+      renderBancoPadroes();
+    }
+
+    function renderBancoPadroes() {
+      const wa = parseInt(document.getElementById('pb-a').value, 10) / 100;
+      const wb = parseInt(document.getElementById('pb-b').value, 10) / 100;
+      const wc = parseInt(document.getElementById('pb-c').value, 10) / 100;
+      document.getElementById('pb-a-out').textContent = dec(wa, 2);
+      document.getElementById('pb-b-out').textContent = dec(wb, 2);
+      document.getElementById('pb-c-out').textContent = dec(wc, 2);
+
+      const ativ = pbAtivacoes(pbEntrada(wa, wb, wc));
+      const maxV = Math.max.apply(null, ativ.concat([1e-6]));
+      const acesas = ativ.filter(v => v > 1e-9).length;
+
+      document.getElementById('pb-bars').innerHTML = ativ.map((v, j) => {
+        const alturaPct = Math.max(2, (v / maxV) * 100);
+        const cor = v > 1e-9 ? 'bg-brand-400' : 'bg-slate-800';
+        return '<div class="flex-1 ' + cor + ' rounded-t" style="height:' + alturaPct.toFixed(1) + '%"'
+          + ' title="unidade ' + j + ': ' + v.toFixed(3) + '"></div>';
+      }).join('');
+
+      document.getElementById('pb-stats').textContent =
+        acesas + ' de ' + PB_FF + ' acesas · pico ' + dec(maxV, 3);
+
+      const pctZero = ((PB_FF - acesas) / PB_FF) * 100;
+      document.getElementById('pb-note').innerHTML =
+        '<i class="fa-solid fa-power-off text-brand-400 mr-1"></i> <strong class="text-slate-200">'
+        + dec(pctZero, 0) + '% das unidades estão em zero exato.</strong> Essas contribuem '
+        + 'literalmente nada para a saída: a coluna correspondente de $W_2$ é multiplicada por zero. '
+        + 'A camada larga não é usada inteira em nenhuma entrada — ela é um catálogo do qual se lê '
+        + 'um subconjunto.';
+
+      /* Sobreposição entre os conjuntos acesos dos três padrões puros, calculada agora. */
+      const conj = k => {
+        const w = { a: 0, b: 0, c: 0 }; w[k] = 1;
+        return pbAtivacoes(pbEntrada(w.a, w.b, w.c)).map(v => v > 1e-9);
+      };
+      const A = conj('a'), B = conj('b'), C = conj('c');
+      const jac = (X, Y) => {
+        let inter = 0, uni = 0;
+        for (let i = 0; i < PB_FF; i++) { if (X[i] && Y[i]) inter++; if (X[i] || Y[i]) uni++; }
+        return uni === 0 ? 0 : (inter / uni) * 100;
+      };
+      document.getElementById('pb-overlap').innerHTML =
+        '<i class="fa-solid fa-circle-nodes text-cyan-400 mr-1"></i> <strong class="text-slate-200">'
+        + 'Sobreposição entre os padrões puros</strong> (Jaccard dos conjuntos acesos): '
+        + 'A∩B <span class="font-mono text-cyan-300">' + dec(jac(A, B), 0) + '%</span>, '
+        + 'A∩C <span class="font-mono text-cyan-300">' + dec(jac(A, C), 0) + '%</span>, '
+        + 'B∩C <span class="font-mono text-cyan-300">' + dec(jac(B, C), 0) + '%</span>. '
+        + 'Entradas diferentes acendem conjuntos parcialmente diferentes, mas longe de disjuntos. '
+        + 'Aqui os $w_j$ são arbitrários, então estes números medem só geometria — a polissemanticidade '
+        + 'de modelos treinados é o achado empírico citado acima, não algo que este brinquedo demonstre.';
+      Guia.renderMath(document.getElementById('pb-note'));
+      Guia.renderMath(document.getElementById('pb-overlap'));
+    }
+
+    /* ═══════════ módulo 03 — calculadora (simulador obrigatório) ═══════════ */
+    const CALC_PADRAO = { d: 768, dff: 3072, h: 12, n: 512 };
+
+    function calcValores() {
+      return {
+        d: parseInt(document.getElementById('calc-d').value, 10),
+        dff: parseInt(document.getElementById('calc-dff').value, 10),
+        h: parseInt(document.getElementById('calc-h').value, 10),
+        n: parseInt(document.getElementById('calc-n').value, 10)
+      };
+    }
+
+    function initCalculadora() {
+      const ids = ['calc-d', 'calc-dff', 'calc-h', 'calc-n'];
+      if (!document.getElementById('calc-d')) return;
+      ids.forEach(id => document.getElementById(id).addEventListener('input', renderCalculadora));
+      document.getElementById('calc-reset').addEventListener('click', () => {
+        document.getElementById('calc-d').value = CALC_PADRAO.d;
+        document.getElementById('calc-dff').value = CALC_PADRAO.dff;
+        document.getElementById('calc-h').value = CALC_PADRAO.h;
+        document.getElementById('calc-n').value = CALC_PADRAO.n;
+        renderCalculadora();
+        Guia.toast('Valores do BERT-base restaurados', 'fa-rotate-left');
+      });
+      renderCalculadora();
+    }
+
+    function macsAtencao(d, n) { return { proj: 4 * n * d * d, scores: 2 * n * n * d }; }
+    function macsFfn(d, dff, n) { return 2 * n * d * dff; }
+
+    function renderCalculadora() {
+      const v = calcValores();
+      const d = v.d, dff = v.dff, h = v.h, n = v.n;
+
+      document.getElementById('calc-d-out').textContent = br(d);
+      document.getElementById('calc-dff-out').textContent = br(dff);
+      document.getElementById('calc-h-out').textContent = h;
+      document.getElementById('calc-n-out').textContent = br(n);
+      document.getElementById('calc-ratio').textContent =
+        'razão d_ff / d_model = ' + dec(dff / d, 2) + '×';
+
+      const divide = d % h === 0;
+      document.getElementById('calc-dk').innerHTML = divide
+        ? 'd_k = ' + (d / h)
+        : '<span class="text-rose-400">d_k = ' + dec(d / h, 2) + ' — h não divide d_model</span>';
+
+      /* Parâmetros exatos, com vieses. */
+      const pAttn = 4 * d * d + 4 * d;
+      const pFfn = 2 * d * dff + dff + d;
+      const pTot = pAttn + pFfn;
+
+      document.getElementById('calc-pattn').textContent = compacto(pAttn);
+      document.getElementById('calc-pffn').textContent = compacto(pFfn);
+      document.getElementById('calc-pattn-share').textContent =
+        br(pAttn) + ' · ' + dec((pAttn / pTot) * 100, 1) + '% do bloco';
+      document.getElementById('calc-pffn-share').textContent =
+        br(pFfn) + ' · ' + dec((pFfn / pTot) * 100, 1) + '% do bloco';
+
+      const wa = (pAttn / pTot) * 100;
+      const barA = document.getElementById('bar-pattn');
+      const barF = document.getElementById('bar-pffn');
+      barA.style.width = wa.toFixed(2) + '%';
+      barF.style.width = (100 - wa).toFixed(2) + '%';
+      barA.textContent = wa >= 12 ? 'atenção ' + dec(wa, 0) + '%' : '';
+      barF.textContent = (100 - wa) >= 12 ? 'FFN ' + dec(100 - wa, 0) + '%' : '';
+
+      const razaoP = pFfn / pAttn;
+      document.getElementById('calc-param-note').innerHTML =
+        'A FFN tem <span class="font-mono text-cyan-300 font-bold">' + dec(razaoP, 2) + '×</span> '
+        + 'os parâmetros da atenção neste ajuste. '
+        + (Math.abs(dff / d - 4) < 0.01
+            ? 'Com a razão clássica de 4×, o valor tende a 2,00 — a diferença é só o peso dos vieses.'
+            : 'Volte d_ff para 4× d_model e ele encosta em 2,00.')
+        + ' O número de cabeças não aparece em nenhuma destas contas.';
+
+      /* Custo aritmético. */
+      const ma = macsAtencao(d, n);
+      const mAttn = ma.proj + ma.scores;
+      const mFfn = macsFfn(d, dff, n);
+      const mTot = mAttn + mFfn;
+
+      const linhas = [
+        ['projeções $Q,K,V,O$', '$4\\,n\\,d^2$', ma.proj, 'linear em $n$', 'text-rose-300'],
+        ['scores e mistura', '$2\\,n^2 d$', ma.scores, 'quadrático em $n$', 'text-rose-300'],
+        ['<strong>atenção, total</strong>', '$4nd^2 + 2n^2d$', mAttn, '—', 'text-rose-200'],
+        ['<strong>FFN</strong>', '$2\\,n\\,d\\,d_{ff}$', mFfn, 'linear em $n$', 'text-cyan-300']
+      ];
+      const tbl = document.getElementById('calc-mac-tbl');
+      tbl.innerHTML = linhas.map(l =>
+        '<tr class="border-b border-slate-800/60">'
+        + '<td class="py-1.5 pr-3 ' + l[4] + '">' + l[0] + '</td>'
+        + '<td class="pr-3 text-slate-500">' + l[1] + '</td>'
+        + '<td class="text-right pr-3 text-slate-200">' + compacto(l[2]) + '</td>'
+        + '<td class="text-right text-slate-500">' + l[3] + '</td></tr>'
+      ).join('');
+      Guia.renderMath(tbl);
+
+      const wma = (mAttn / mTot) * 100;
+      const bma = document.getElementById('bar-mattn');
+      const bmf = document.getElementById('bar-mffn');
+      bma.style.width = wma.toFixed(2) + '%';
+      bmf.style.width = (100 - wma).toFixed(2) + '%';
+      bma.textContent = wma >= 12 ? 'atenção ' + dec(wma, 0) + '%' : '';
+      bmf.textContent = (100 - wma) >= 12 ? 'FFN ' + dec(100 - wma, 0) + '%' : '';
+
+      /* Cruzamento. */
+      const nEstrela = dff - 2 * d;
+      const caixa = document.getElementById('calc-cross');
+      if (nEstrela <= 0) {
+        caixa.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400 mr-1"></i> '
+          + 'Com d_ff = ' + br(dff) + ' e d_model = ' + br(d) + ', temos n* = '
+          + '<span class="font-mono text-rose-300 font-bold">' + br(nEstrela) + '</span> — não positivo. '
+          + 'Esta FFN é estreita demais: a atenção custa mais que ela em <em>qualquer</em> comprimento '
+          + 'de sequência. Alargue d_ff para ver o cruzamento reaparecer.';
+      } else {
+        const dominante = n > nEstrela ? 'atenção' : (n < nEstrela ? 'FFN' : 'empate');
+        caixa.innerHTML = '<i class="fa-solid fa-flag-checkered text-amber-400 mr-1"></i> '
+          + 'n* = ' + br(dff) + ' − 2·' + br(d) + ' = '
+          + '<span class="font-mono text-amber-300 font-bold">' + br(nEstrela) + ' tokens</span>. '
+          + 'Com a sequência atual de <span class="font-mono text-amber-300">' + br(n) + '</span>, quem '
+          + 'consome mais MACs é a <strong class="text-white">' + dominante + '</strong> '
+          + '(' + dec(wma, 1) + '% do bloco na atenção). '
+          + (Math.abs(dff / d - 4) < 0.01
+              ? 'Com a razão clássica de 4×, n* = 2·d_model — uma regra de bolso que vale a pena guardar.'
+              : 'Arraste d_ff até 4× d_model e n* vira exatamente 2·d_model.');
+      }
+
+      /* Escada de n, dobrando. */
+      const escada = [128, 256, 512, 1024, 2048, 4096, 8192];
+      document.getElementById('calc-ladder').innerHTML = escada.map(ni => {
+        const mi = macsAtencao(d, ni);
+        const ai = mi.proj + mi.scores;
+        const fi = macsFfn(d, dff, ni);
+        const perto = Math.abs(ni - n) < Math.max(64, n * 0.05);
+        return '<tr class="border-b border-slate-800/60' + (perto ? ' bg-amber-500/5' : '') + '">'
+          + '<td class="py-1.5 pr-3 ' + (perto ? 'text-amber-300' : 'text-slate-500') + '">' + br(ni) + '</td>'
+          + '<td class="text-right pr-3 text-cyan-300">' + compacto(fi) + '</td>'
+          + '<td class="text-right pr-3 text-rose-300">' + compacto(ai) + '</td>'
+          + '<td class="text-right text-slate-300">' + dec(ai / fi, 2) + '×</td></tr>';
+      }).join('');
+
+      renderGate(d, dff);
+    }
+
+    /* Tabela do módulo 04 alimentada pelos sliders do módulo 03. */
+    function renderGate(d, dff) {
+      const alvo = document.getElementById('gate-tbl');
+      if (!alvo) return;
+      document.getElementById('gate-dims').textContent = 'd = ' + br(d) + ', d_ff = ' + br(dff);
+      const dffGate = Math.round((2 / 3) * dff);
+      const linhas = [
+        ['ReLU / GELU', 2, dff, 2 * d * dff, 'text-cyan-300'],
+        ['SwiGLU, mesma largura', 3, dff, 3 * d * dff, 'text-rose-300'],
+        ['SwiGLU, largura 2/3', 3, dffGate, 3 * d * dffGate, 'text-emerald-300']
+      ];
+      alvo.innerHTML = linhas.map(l =>
+        '<tr class="border-b border-slate-800/60">'
+        + '<td class="py-1.5 pr-3 ' + l[4] + '">' + l[0] + '</td>'
+        + '<td class="text-right pr-3 text-slate-500">' + l[1] + '</td>'
+        + '<td class="text-right pr-3 text-slate-400">' + br(l[2]) + '</td>'
+        + '<td class="text-right text-slate-200">' + compacto(l[3]) + '</td></tr>'
+      ).join('');
+    }
+
+    /* ═══════════ módulo 04 — curvas de ativação ═══════════ */
+    const ACT_H = 300, ACT_ML = 42, ACT_MR = 14, ACT_MT = 14, ACT_MB = 30;
+    const ACT_XMIN = -5, ACT_XMAX = 5, ACT_YMIN = -1.2, ACT_YMAX = 5;
+    const ACT_CURVAS = {
+      relu: { nome: 'ReLU', cor: '#fb7185', f: z => Math.max(0, z) },
+      gelu: { nome: 'GELU', cor: '#22d3ee', f: z => 0.5 * z * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (z + 0.044715 * z * z * z))) },
+      silu: { nome: 'SiLU', cor: '#34d399', f: z => z / (1 + Math.exp(-z)) }
+    };
+    const actAtivas = { relu: true, gelu: true, silu: true };
+    let actCanvas, actCtx, actX = null;
+
+    function initAtivacoes() {
+      actCanvas = document.getElementById('act-canvas');
+      if (!actCanvas) return;
+      actCtx = actCanvas.getContext('2d');
+
+      document.querySelectorAll('.act-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const k = btn.dataset.curva;
+          const ligadas = Object.keys(actAtivas).filter(c => actAtivas[c]);
+          if (actAtivas[k] && ligadas.length === 1) {
+            Guia.toast('Deixe pelo menos uma curva visível', 'fa-eye');
+            return;
+          }
+          actAtivas[k] = !actAtivas[k];
+          pintarBotoesAtivacao();
+          desenharAtivacoes();
+        });
+      });
+
+      actCanvas.addEventListener('mousemove', e => {
+        const rect = actCanvas.getBoundingClientRect();
+        /* getBoundingClientRect devolve pixels CSS — o hit-test usa canvas.width / dpr. */
+        const dpr = window.devicePixelRatio || 1;
+        const w = actCanvas.width / dpr;
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const pw = w - ACT_ML - ACT_MR;
+        if (mx < ACT_ML || mx > ACT_ML + pw) {
+          if (actX !== null) { actX = null; document.getElementById('act-tip').classList.add('hidden'); desenharAtivacoes(); }
+          return;
+        }
+        actX = ACT_XMIN + ((mx - ACT_ML) / pw) * (ACT_XMAX - ACT_XMIN);
+        const tip = document.getElementById('act-tip');
+        tip.innerHTML = 'x = <span class="text-slate-300">' + dec(actX, 2) + '</span><br>'
+          + Object.keys(ACT_CURVAS).filter(k => actAtivas[k]).map(k =>
+              '<span style="color:' + ACT_CURVAS[k].cor + '">' + ACT_CURVAS[k].nome + '</span> = '
+              + dec(ACT_CURVAS[k].f(actX), 3)
+            ).join('<br>');
+        tip.style.left = (actCanvas.offsetLeft + Math.min(mx + 14, w - 130)) + 'px';
+        tip.style.top = (actCanvas.offsetTop + Math.max(my - 60, 4)) + 'px';
+        tip.classList.remove('hidden');
+        desenharAtivacoes();
+      });
+
+      actCanvas.addEventListener('mouseleave', () => {
+        actX = null;
+        document.getElementById('act-tip').classList.add('hidden');
+        desenharAtivacoes();
+      });
+
+      window.addEventListener('resize', redesenharAtivacoes);
+      pintarBotoesAtivacao();
+      redesenharAtivacoes();
+    }
+
+    function pintarBotoesAtivacao() {
+      document.querySelectorAll('.act-btn').forEach(btn => {
+        const k = btn.dataset.curva;
+        const on = actAtivas[k];
+        btn.className = 'act-btn px-2.5 py-1.5 rounded-lg border transition '
+          + (on ? 'bg-surface-950 text-white' : 'bg-surface-950 text-slate-500 border-slate-800');
+        if (on) btn.style.borderColor = ACT_CURVAS[k].cor;
+        else btn.style.borderColor = '';
+      });
+    }
+
+    function redesenharAtivacoes() {
+      if (!actCanvas) return;
+      const rect = actCanvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const larguraCss = Math.max(240, rect.width - 24);
+      actCanvas.width = larguraCss * dpr;
+      actCanvas.height = ACT_H * dpr;
+      actCtx.setTransform(1, 0, 0, 1, 0, 0);
+      actCtx.scale(dpr, dpr);
+      actCanvas.style.width = larguraCss + 'px';
+      actCanvas.style.height = ACT_H + 'px';
+      desenharAtivacoes();
+    }
+
+    function desenharAtivacoes() {
+      if (!actCanvas || !actCtx) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = actCanvas.width / dpr, h = actCanvas.height / dpr;
+      const pw = w - ACT_ML - ACT_MR, ph = h - ACT_MT - ACT_MB;
+      const px = x => ACT_ML + ((x - ACT_XMIN) / (ACT_XMAX - ACT_XMIN)) * pw;
+      const py = y => ACT_MT + (1 - (y - ACT_YMIN) / (ACT_YMAX - ACT_YMIN)) * ph;
+
+      actCtx.clearRect(0, 0, w, h);
+
+      /* grade */
+      actCtx.strokeStyle = '#1e293b';
+      actCtx.lineWidth = 1;
+      actCtx.font = '10px JetBrains Mono';
+      actCtx.fillStyle = '#475569';
+      for (let x = ACT_XMIN; x <= ACT_XMAX; x++) {
+        actCtx.beginPath(); actCtx.moveTo(px(x), ACT_MT); actCtx.lineTo(px(x), ACT_MT + ph); actCtx.stroke();
+        actCtx.textAlign = 'center';
+        actCtx.fillText(String(x), px(x), h - 14);
+      }
+      for (let y = -1; y <= 5; y++) {
+        actCtx.beginPath(); actCtx.moveTo(ACT_ML, py(y)); actCtx.lineTo(ACT_ML + pw, py(y)); actCtx.stroke();
+        actCtx.textAlign = 'right';
+        actCtx.fillText(String(y), ACT_ML - 6, py(y) + 3);
+      }
+
+      /* eixos */
+      actCtx.strokeStyle = '#475569';
+      actCtx.lineWidth = 1.2;
+      actCtx.beginPath(); actCtx.moveTo(ACT_ML, py(0)); actCtx.lineTo(ACT_ML + pw, py(0)); actCtx.stroke();
+      actCtx.beginPath(); actCtx.moveTo(px(0), ACT_MT); actCtx.lineTo(px(0), ACT_MT + ph); actCtx.stroke();
+
+      /* curvas */
+      const passos = Math.max(120, Math.round(pw));
+      Object.keys(ACT_CURVAS).forEach(k => {
+        if (!actAtivas[k]) return;
+        const c = ACT_CURVAS[k];
+        actCtx.strokeStyle = c.cor;
+        actCtx.lineWidth = 2.2;
+        actCtx.beginPath();
+        for (let s = 0; s <= passos; s++) {
+          const x = ACT_XMIN + (s / passos) * (ACT_XMAX - ACT_XMIN);
+          const y = Math.max(ACT_YMIN, Math.min(ACT_YMAX, c.f(x)));
+          if (s === 0) actCtx.moveTo(px(x), py(y)); else actCtx.lineTo(px(x), py(y));
+        }
+        actCtx.stroke();
+      });
+
+      /* cursor */
+      if (actX !== null) {
+        actCtx.strokeStyle = '#94a3b8';
+        actCtx.setLineDash([4, 4]);
+        actCtx.lineWidth = 1;
+        actCtx.beginPath(); actCtx.moveTo(px(actX), ACT_MT); actCtx.lineTo(px(actX), ACT_MT + ph); actCtx.stroke();
+        actCtx.setLineDash([]);
+        Object.keys(ACT_CURVAS).forEach(k => {
+          if (!actAtivas[k]) return;
+          const y = Math.max(ACT_YMIN, Math.min(ACT_YMAX, ACT_CURVAS[k].f(actX)));
+          actCtx.fillStyle = ACT_CURVAS[k].cor;
+          actCtx.beginPath(); actCtx.arc(px(actX), py(y), 3.5, 0, Math.PI * 2); actCtx.fill();
+        });
+      }
+
+      actCtx.fillStyle = '#94a3b8';
+      actCtx.textAlign = 'center';
+      actCtx.font = '10px JetBrains Mono';
+      actCtx.fillText('entrada z da unidade interna →', ACT_ML + pw / 2, h - 2);
+    }
+  </script>
+</body>
+</html>

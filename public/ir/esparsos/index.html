@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modelos Esparsos</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/guia.css">
+  <script src="../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Modelos Esparsos"
+      data-badge="Seção 1.1"
+      data-subtitle="Casam palavra com palavra sobre um índice invertido"
+      data-icon="fa-table-cells"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- Trilha -->
+    <nav class="text-xs font-mono text-slate-500 mb-8 flex flex-wrap items-center gap-x-2 gap-y-1">
+      <a href="../../index.html" class="hover:text-cyan-300 transition">Guia Técnico</a>
+      <span class="text-slate-700">/</span>
+      <a href="../index.html" class="hover:text-cyan-300 transition">1. Information Retrieval</a>
+      <span class="text-slate-700">/</span>
+      <span class="text-slate-300">1.1 Modelos Esparsos</span>
+    </nav>
+
+    <!-- Hero -->
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-4">
+        <i class="fa-solid fa-table-cells"></i> Seção 1.1 • Busca léxica
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+        Casar <span class="bg-gradient-to-r from-cyan-400 via-sky-400 to-brand-400 bg-clip-text text-transparent">palavra com palavra</span>
+      </h2>
+      <p class="text-slate-400 mt-4 max-w-3xl text-sm sm:text-base leading-relaxed">
+        Um modelo esparso representa um texto como um vetor do <strong class="text-slate-200">tamanho do vocabulário</strong> —
+        dezenas ou centenas de milhares de dimensões, em que quase todas valem zero. Cada dimensão é uma palavra,
+        e o valor é o peso dela naquele texto. A busca compara os termos que aparecem, não o sentido.
+      </p>
+    </div>
+
+    <!-- Esparsidade visual -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">"Esparso" é literal</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-10">
+
+      <!-- Documento vira vetor -->
+      <article class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <div class="flex items-center gap-2.5 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+            <i class="fa-solid fa-file-lines"></i>
+          </span>
+          <h4 class="font-bold text-white text-sm">Um documento curto vira um vetor quase todo zero</h4>
+        </div>
+
+        <p class="text-xs text-slate-400 leading-relaxed mb-3">
+          Documento <span class="font-mono text-cyan-300">d17</span>:
+        </p>
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-3 text-xs text-slate-300 leading-relaxed mb-4">
+          "<span class="text-cyan-300 font-semibold">Paciente</span> com <span class="text-cyan-300 font-semibold">febre</span>
+          <span class="text-cyan-300 font-semibold">alta</span> e <span class="text-cyan-300 font-semibold">tosse</span>
+          <span class="text-cyan-300 font-semibold">seca</span>; solicitado <span class="text-cyan-300 font-semibold">exame</span>."
+        </div>
+
+        <div class="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-[2px] mb-3" aria-hidden="true">
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-cyan-400 ring-1 ring-cyan-300/60" title="dim 7: paciente"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-cyan-400 ring-1 ring-cyan-300/60" title="dim 41: febre"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-cyan-400 ring-1 ring-cyan-300/60" title="dim 68: alta"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-cyan-400 ring-1 ring-cyan-300/60" title="dim 123: tosse"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-cyan-400 ring-1 ring-cyan-300/60" title="dim 177: seca"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-cyan-400 ring-1 ring-cyan-300/60" title="dim 214: exame"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+          <div class="aspect-square rounded-[2px] bg-surface-800"></div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-slate-500">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-[2px] bg-cyan-400"></span> 6 dimensões com peso</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-[2px] bg-surface-800 border border-slate-800"></span> 234 zeros</span>
+        </div>
+
+        <p class="text-xs text-slate-400 leading-relaxed mt-4">
+          E essa é a versão reduzida. No tamanho real — um documento de 200 palavras num vocabulário de
+          <span class="font-mono text-slate-300">50 000</span> termos — sobram no máximo 200 dimensões não-nulas:
+          <strong class="text-cyan-300">99,6% de zeros</strong>.
+        </p>
+      </article>
+
+      <!-- Índice invertido -->
+      <article class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <div class="flex items-center gap-2.5 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-xs shrink-0">
+            <i class="fa-solid fa-list-ul"></i>
+          </span>
+          <h4 class="font-bold text-white text-sm">É a esparsidade que paga o índice invertido</h4>
+        </div>
+
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          Guardar o vetor inteiro seria absurdo — quase tudo é zero. Então guarde o contrário:
+          <strong class="text-slate-300">para cada termo, que documentos o contêm</strong>.
+        </p>
+
+        <div class="space-y-2 mb-4">
+          <div class="flex items-center gap-3 rounded-xl bg-surface-950 border border-slate-800 px-3 py-2">
+            <span class="font-mono text-xs text-brand-300 w-20 shrink-0 truncate">febre</span>
+            <i class="fa-solid fa-arrow-right text-[10px] text-slate-600 shrink-0"></i>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">d17</span>
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-900 border border-slate-800 text-slate-400">d92</span>
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-900 border border-slate-800 text-slate-400">d418</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 rounded-xl bg-surface-950 border border-slate-800 px-3 py-2">
+            <span class="font-mono text-xs text-brand-300 w-20 shrink-0 truncate">tosse</span>
+            <i class="fa-solid fa-arrow-right text-[10px] text-slate-600 shrink-0"></i>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">d17</span>
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-900 border border-slate-800 text-slate-400">d55</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 rounded-xl bg-surface-950 border border-slate-800 px-3 py-2">
+            <span class="font-mono text-xs text-brand-300 w-20 shrink-0 truncate">exame</span>
+            <i class="fa-solid fa-arrow-right text-[10px] text-slate-600 shrink-0"></i>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">d17</span>
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-900 border border-slate-800 text-slate-400">d3</span>
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-900 border border-slate-800 text-slate-400">d55</span>
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface-900 border border-slate-800 text-slate-400">d418</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-emerald-500/5 border border-emerald-500/25 p-3 flex items-start gap-2.5">
+          <i class="fa-solid fa-bolt text-emerald-400 text-xs mt-0.5 shrink-0"></i>
+          <p class="text-xs text-emerald-200/90 leading-relaxed">
+            A query <span class="font-mono text-emerald-300">"febre tosse"</span> não varre a coleção:
+            visita duas listas e cruza. Milhões de documentos, resposta em milissegundos — sem olhar
+            nenhum documento que não contenha nenhum dos termos.
+          </p>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Por que ainda importam -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Por que ainda importam</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <div class="rounded-2xl bg-surface-900 border border-slate-800 overflow-hidden mb-6">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[560px]">
+          <thead>
+            <tr class="border-b border-slate-800 text-left">
+              <th class="px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-slate-500 w-56">Força</th>
+              <th class="px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-slate-500">Na prática</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+            <tr>
+              <td class="px-5 py-4 align-top">
+                <span class="flex items-center gap-2 font-bold text-white text-sm"><i class="fa-solid fa-crosshairs text-cyan-400 text-xs"></i> Termo exato ganha</span>
+              </td>
+              <td class="px-5 py-4 text-xs text-slate-400 leading-relaxed">
+                Código de peça <code class="font-mono text-cyan-300">XJ-4471</code>, CID <code class="font-mono text-cyan-300">J45</code>,
+                nome próprio, jargão interno. O modelo denso aproxima; o esparso acerta na mosca.
+              </td>
+            </tr>
+            <tr>
+              <td class="px-5 py-4 align-top">
+                <span class="flex items-center gap-2 font-bold text-white text-sm"><i class="fa-solid fa-magnifying-glass-chart text-cyan-400 text-xs"></i> Explicável</span>
+              </td>
+              <td class="px-5 py-4 text-xs text-slate-400 leading-relaxed">
+                Dá para apontar qual termo gerou qual score. Auditoria e debug sem caixa-preta.
+              </td>
+            </tr>
+            <tr>
+              <td class="px-5 py-4 align-top">
+                <span class="flex items-center gap-2 font-bold text-white text-sm"><i class="fa-solid fa-coins text-cyan-400 text-xs"></i> Barato</span>
+              </td>
+              <td class="px-5 py-4 text-xs text-slate-400 leading-relaxed">
+                Sem GPU, sem treino, sem re-indexação quando o modelo muda. Latência em milissegundos
+                sobre milhões de documentos.
+              </td>
+            </tr>
+            <tr>
+              <td class="px-5 py-4 align-top">
+                <span class="flex items-center gap-2 font-bold text-white text-sm"><i class="fa-solid fa-plug-circle-check text-cyan-400 text-xs"></i> Zero-shot de verdade</span>
+              </td>
+              <td class="px-5 py-4 text-xs text-slate-400 leading-relaxed">
+                Funciona em qualquer domínio no dia um, sem dados rotulados. Um modelo denso fora do
+                domínio de treino pode ser pior que BM25.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Fraqueza -->
+    <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-10">
+      <div class="flex items-center gap-2.5 mb-3">
+        <span class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xs shrink-0">
+          <i class="fa-solid fa-link-slash"></i>
+        </span>
+        <h4 class="font-bold text-white text-sm">E a fraqueza: vocabulário descasado</h4>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 mb-3 text-xs font-mono">
+        <span class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-800 text-slate-300">query: "febre"</span>
+        <i class="fa-solid fa-xmark text-rose-400"></i>
+        <span class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-800 text-slate-300">doc: "hipertermia"</span>
+        <span class="text-slate-600">score = 0</span>
+      </div>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Para o esparso clássico as duas palavras são dimensões ortogonais — nenhuma relação, nenhum score.
+        É esse buraco que os <a href="../densos/index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted underline-offset-2">modelos densos</a>
+        preenchem, e que o <a href="sparse-encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted underline-offset-2">SPLADE</a>
+        ataca por dentro do próprio mundo esparso, expandindo a query com termos relacionados.
+      </p>
+    </div>
+
+    <!-- Tópicos -->
+    <div class="flex items-center gap-3 mb-2">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Tópicos desta seção</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+    <p class="text-xs text-slate-500 mb-5">Ordem de leitura — cada um constrói em cima do anterior.</p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
+
+      <a href="tf-idf/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-cyan-500/40 hover:bg-cyan-500/5 transition p-5 flex flex-col">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+            <i class="fa-solid fa-scale-unbalanced"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">1.1.1</span>
+            <h4 class="font-bold text-white text-sm group-hover:text-cyan-300 transition">TF-IDF</h4>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed flex-1">
+          A base de tudo: frequência do termo (TF) × raridade na coleção (IDF). Entenda antes do BM25.
+        </p>
+        <span class="mt-4 inline-flex items-center gap-2 text-[11px] font-mono text-cyan-400">abrir <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-0.5 transition"></i></span>
+      </a>
+
+      <a href="bm25/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-cyan-500/40 hover:bg-cyan-500/5 transition p-5 flex flex-col">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+            <i class="fa-solid fa-scale-balanced"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">1.1.2</span>
+            <h4 class="font-bold text-white text-sm group-hover:text-cyan-300 transition">BM25</h4>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed flex-1">
+          Saturação de frequência e normalização por tamanho do documento corrigem os dois erros do
+          TF-IDF. É o padrão de mercado da busca léxica.
+        </p>
+        <span class="mt-4 inline-flex items-center gap-2 text-[11px] font-mono text-cyan-400">abrir <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-0.5 transition"></i></span>
+      </a>
+
+      <a href="sparse-encoder/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-cyan-500/40 hover:bg-cyan-500/5 transition p-5 flex flex-col">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">1.1.3</span>
+            <h4 class="font-bold text-white text-sm group-hover:text-cyan-300 transition">Sparse Encoder (SPLADE)</h4>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed flex-1">
+          Um Transformer aprende os pesos e adiciona termos que não estavam no texto — mantendo o vetor
+          esparso e o índice invertido.
+        </p>
+        <span class="mt-4 inline-flex items-center gap-2 text-[11px] font-mono text-cyan-400">abrir <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-0.5 transition"></i></span>
+      </a>
+
+    </div>
+
+    <!-- Continuação -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Depois desta seção</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <a href="../densos/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition p-5 flex items-start gap-4">
+        <span class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+          <i class="fa-solid fa-vector-square"></i>
+        </span>
+        <div class="min-w-0">
+          <span class="font-mono text-[10px] text-slate-600">1.2</span>
+          <h4 class="font-bold text-white text-sm group-hover:text-emerald-300 transition">Modelos Densos</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mt-1">
+            Significado com significado: acham "febre" quando o documento diz "hipertermia".
+          </p>
+        </div>
+      </a>
+
+      <a href="../rrf/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-purple-500/40 hover:bg-purple-500/5 transition p-5 flex items-start gap-4">
+        <span class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+          <i class="fa-solid fa-code-merge"></i>
+        </span>
+        <div class="min-w-0">
+          <span class="font-mono text-[10px] text-slate-600">1.3</span>
+          <h4 class="font-bold text-white text-sm group-hover:text-purple-300 transition">Busca Híbrida e RRF</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mt-1">
+            Esparso e denso erram em situações diferentes: rode os dois e funda os rankings por posição.
+          </p>
+        </div>
+      </a>
+
+      <a href="../agente/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-brand-500/40 hover:bg-brand-500/5 transition p-5 flex items-start gap-4">
+        <span class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 shrink-0">
+          <i class="fa-solid fa-shield-halved"></i>
+        </span>
+        <div class="min-w-0">
+          <span class="font-mono text-[10px] text-slate-600">1.4</span>
+          <h4 class="font-bold text-white text-sm group-hover:text-brand-300 transition">Do Retrieval ao Agente Confiável</h4>
+          <p class="text-xs text-slate-400 leading-relaxed mt-1">
+            Com o trecho certo em mãos: grounding, citação, o laço do agente e como medir se está funcionando.
+          </p>
+        </div>
+      </a>
+    </div>
+
+  </main>
+</body>
+</html>

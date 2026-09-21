@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Information Retrieval (RAG)</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../assets/guia.css">
+  <script src="../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Information Retrieval (RAG)"
+      data-badge="Capítulo 1"
+      data-subtitle="A etapa que decide se um RAG responde ou alucina"
+      data-icon="fa-magnifying-glass"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- Trilha -->
+    <nav class="text-xs font-mono text-slate-500 mb-6 flex items-center gap-2 flex-wrap">
+      <a href="../index.html" class="hover:text-slate-300 transition">Guia Técnico</a>
+      <span class="text-slate-700">/</span>
+      <span class="text-slate-300">1. Information Retrieval (RAG)</span>
+    </nav>
+
+    <!-- Hero -->
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-4">
+        <i class="fa-solid fa-magnifying-glass"></i> Capítulo 1 • Information Retrieval
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+        Achar o trecho certo antes de <span class="bg-gradient-to-r from-brand-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">o LLM abrir a boca</span>
+      </h2>
+      <p class="text-slate-400 mt-4 max-w-3xl text-sm sm:text-base leading-relaxed">
+        Information Retrieval resolve um problema simples de descrever e difícil de fazer bem: dado um
+        <strong class="text-slate-200">monte de documentos</strong> e uma <strong class="text-slate-200">pergunta</strong> (query),
+        encontrar rapidamente os documentos mais relevantes — sem ler tudo do zero a cada busca.
+      </p>
+      <div class="mt-5 rounded-2xl bg-surface-900 border border-slate-800 p-5 text-sm text-slate-300 leading-relaxed max-w-3xl">
+        <i class="fa-solid fa-lightbulb text-amber-400 mr-2"></i>
+        Pense no Google, num <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-surface-950 border border-slate-800 text-cyan-300">Ctrl+F</code>
+        inteligente, ou na busca do seu e-mail. Todos fazem a mesma coisa: recebem uma query e devolvem uma lista
+        ordenada por relevância. RI é a teoria e as técnicas por trás disso.
+      </div>
+    </div>
+
+    <!-- As 3 peças -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">As 3 peças de todo sistema de RI</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+            <i class="fa-solid fa-database"></i>
+          </span>
+          <h4 class="font-bold text-white text-sm">Indexação</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">Pré-processa os documentos numa estrutura rápida de consultar — não varre tudo linearmente a cada busca.</p>
+        <p class="text-[11px] font-mono text-slate-600 mt-3">índice invertido · índice vetorial</p>
+      </div>
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-xs shrink-0">
+            <i class="fa-solid fa-ranking-star"></i>
+          </span>
+          <h4 class="font-bold text-white text-sm">Ranking / Score</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">Mede o quão relevante cada documento é para a query. É aqui que mora a diferença entre as técnicas.</p>
+        <p class="text-[11px] font-mono text-slate-600 mt-3">BM25 · similaridade de cosseno</p>
+      </div>
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs shrink-0">
+            <i class="fa-solid fa-inbox"></i>
+          </span>
+          <h4 class="font-bold text-white text-sm">Recuperação</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">Devolve os top-K documentos mais bem pontuados — o que efetivamente chega na próxima etapa.</p>
+        <p class="text-[11px] font-mono text-slate-600 mt-3">top-5 chunks mais parecidos</p>
+      </div>
+    </div>
+
+    <!-- Duas gerações -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+            <i class="fa-solid fa-table-cells"></i>
+          </span>
+          <h4 class="font-bold text-white text-sm">Léxica / esparsa</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Compara palavras literalmente. Rápida, explicável, ótima quando a palavra certa importa —
+          nomes próprios, códigos, jargão técnico. <span class="text-slate-300">TF-IDF, BM25.</span>
+        </p>
+      </div>
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs shrink-0">
+            <i class="fa-solid fa-vector-square"></i>
+          </span>
+          <h4 class="font-bold text-white text-sm">Semântica / densa</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Transforma texto em vetores (<em>embeddings</em>) e compara por significado, não por palavra exata.
+          Acha “aumento de temperatura corporal” quando a query é “febre”.
+          <span class="text-slate-300">Busca vetorial: FAISS, pgvector, kNN do Elasticsearch.</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-purple-500/5 border border-purple-500/30 p-5 mb-12 text-sm text-slate-300 leading-relaxed">
+      <i class="fa-solid fa-code-merge text-purple-400 mr-2"></i>
+      Na prática, sistemas bons combinam as duas (<em>hybrid search</em>): a léxica pega o termo exato,
+      a semântica pega o sinônimo. É exatamente onde este capítulo termina.
+    </div>
+
+    <!-- Por que RI é o coração do RAG -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Por que RI é o coração do RAG</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <p class="text-slate-400 text-sm sm:text-base leading-relaxed max-w-3xl mb-6">
+      <strong class="text-slate-200">RAG</strong> (Retrieval-Augmented Generation) é a técnica de dar a um LLM acesso
+      a uma base de conhecimento externa antes de ele responder. O nome já entrega a ordem das coisas:
+      primeiro <strong class="text-slate-200">Retrieval</strong>, depois <strong class="text-slate-200">Generation</strong>.
+    </p>
+
+    <!-- Pipeline -->
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-3 items-stretch md:items-center mb-6">
+      <div class="rounded-xl bg-surface-900 border border-slate-800 p-4 h-full">
+        <div class="font-mono text-[10px] text-slate-600 mb-1">01</div>
+        <div class="text-sm font-semibold text-white">Pergunta do usuário</div>
+      </div>
+      <div class="flex items-center justify-center text-slate-700 text-lg">
+        <i class="fa-solid fa-arrow-right hidden md:block"></i>
+        <i class="fa-solid fa-arrow-down md:hidden"></i>
+      </div>
+      <div class="rounded-xl bg-brand-500/10 border border-brand-500/30 p-4 h-full">
+        <div class="font-mono text-[10px] text-brand-400 mb-1">02 • RI</div>
+        <div class="text-sm font-semibold text-white">Busca os trechos relevantes na base</div>
+      </div>
+      <div class="flex items-center justify-center text-slate-700 text-lg">
+        <i class="fa-solid fa-arrow-right hidden md:block"></i>
+        <i class="fa-solid fa-arrow-down md:hidden"></i>
+      </div>
+      <div class="rounded-xl bg-surface-900 border border-slate-800 p-4 h-full">
+        <div class="font-mono text-[10px] text-slate-600 mb-1">03</div>
+        <div class="text-sm font-semibold text-white">LLM gera a resposta usando esses trechos</div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-5 sm:p-6 mb-10">
+      <p class="text-sm text-slate-300 leading-relaxed">
+        <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-2"></i>
+        O LLM nunca vê a base inteira. Ele só vê o que a etapa de RI escolheu entregar.
+        <strong class="text-white">Se a RI errar o que é relevante, o LLM erra a resposta — não importa o quão bom o modelo seja.</strong>
+      </p>
+    </div>
+
+    <!-- Garbage in, garbage out -->
+    <h4 class="text-lg font-bold text-white tracking-tight mb-4">Sem RI de qualidade, RAG vira “garbage in, garbage out”</h4>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-10">
+      <div class="rounded-xl bg-surface-900 border border-rose-500/25 p-4 flex items-start gap-3">
+        <i class="fa-solid fa-ghost text-rose-400 mt-0.5"></i>
+        <div>
+          <h5 class="text-sm font-bold text-white">RI fraca → alucinação</h5>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed">Contexto errado gera resposta errada, mesmo que a informação certa exista na base.</p>
+        </div>
+      </div>
+      <div class="rounded-xl bg-surface-900 border border-amber-500/25 p-4 flex items-start gap-3">
+        <i class="fa-solid fa-hourglass-half text-amber-400 mt-0.5"></i>
+        <div>
+          <h5 class="text-sm font-bold text-white">RI lenta → RAG lento</h5>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed">A busca acontece a cada pergunta, em tempo real. O custo dela entra em toda resposta.</p>
+        </div>
+      </div>
+      <div class="rounded-xl bg-surface-900 border border-rose-500/25 p-4 flex items-start gap-3">
+        <i class="fa-solid fa-wind text-rose-400 mt-0.5"></i>
+        <div>
+          <h5 class="text-sm font-bold text-white">Ranking ruim → contexto poluído</h5>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed">Manda 10 trechos, só 1 é útil, e o LLM se perde no meio do ruído.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Por que não tudo no prompt -->
+    <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-12">
+      <h4 class="text-lg font-bold text-white tracking-tight mb-3">
+        <i class="fa-solid fa-circle-question text-cyan-400 mr-2"></i>Por que não simplesmente colocar tudo no prompt?
+      </h4>
+      <p class="text-sm text-slate-400 leading-relaxed max-w-3xl">
+        Porque o LLM tem uma janela de contexto limitada e cara (em tokens e em custo), e bases de conhecimento reais
+        — documentação, contratos, tickets, código — são grandes demais para caber inteiras.
+        RI é o filtro que decide, de milhares de páginas, quais poucas realmente importam para
+        <em class="text-slate-300">essa</em> pergunta específica.
+      </p>
+    </div>
+
+    <!-- Demo -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Veja a diferença na prática</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <p class="text-slate-400 text-sm leading-relaxed max-w-3xl mb-5">
+      Uma base fictícia com 5 trechos de prontuário. Escolha uma pergunta e compare o que a RI
+      <strong class="text-slate-200">léxica</strong> (só palavras exatas) recupera contra o que a RI
+      <strong class="text-slate-200">semântica</strong> (por significado) recupera — e o efeito disso na resposta final do LLM.
+    </p>
+
+    <div class="rounded-2xl bg-surface-900 border border-slate-800 p-4 sm:p-6 mb-12">
+      <div class="flex flex-wrap gap-3 mb-5">
+        <div id="queryGrp" class="flex flex-wrap gap-1.5 p-1.5 rounded-xl bg-surface-950 border border-slate-800"></div>
+        <div id="modeGrp" class="flex flex-wrap gap-1.5 p-1.5 rounded-xl bg-surface-950 border border-slate-800"></div>
+      </div>
+      <div id="docList" class="flex flex-col gap-2"></div>
+      <div id="answerBox" class="mt-5 rounded-xl border p-4 text-sm leading-relaxed"></div>
+    </div>
+
+    <!-- Organização do capítulo -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Como este capítulo está organizado</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <p class="text-slate-400 text-sm leading-relaxed max-w-3xl mb-6">
+      Todo motor de busca responde à mesma pergunta — “quais documentos casam com esta query?” — e existem
+      duas famílias de resposta. O capítulo segue essa divisão e termina mostrando como combinar as duas.
+    </p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-12">
+
+      <!-- 1.1 -->
+      <section class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <a href="esparsos/index.html" class="group flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+            <i class="fa-solid fa-table-cells"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-500">1.1</span>
+            <h5 class="font-bold text-white text-sm group-hover:text-cyan-300 transition">Modelos Esparsos</h5>
+          </div>
+        </a>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          Vetor do tamanho do vocabulário, quase todo zero. Casam <strong class="text-slate-300">palavra com palavra</strong>
+          sobre um índice invertido. Rápidos, explicáveis, imbatíveis em nome próprio, código e jargão.
+        </p>
+        <ul class="space-y-1.5">
+          <li><a href="esparsos/tf-idf/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.1.1</span> TF-IDF</a></li>
+          <li><a href="esparsos/bm25/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.1.2</span> BM25</a></li>
+          <li><a href="esparsos/sparse-encoder/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.1.3</span> Sparse Encoder (SPLADE)</a></li>
+        </ul>
+      </section>
+
+      <!-- 1.2 -->
+      <section class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <a href="densos/index.html" class="group flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs shrink-0">
+            <i class="fa-solid fa-vector-square"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-500">1.2</span>
+            <h5 class="font-bold text-white text-sm group-hover:text-emerald-300 transition">Modelos Densos</h5>
+          </div>
+        </a>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          Algumas centenas de dimensões, todas preenchidas. Casam <strong class="text-slate-300">significado com significado</strong>:
+          acham “febre” quando a query diz “aumento de temperatura corporal”.
+        </p>
+        <ul class="space-y-1.5">
+          <li><a href="densos/embeddings/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.1</span> Embeddings em IR</a></li>
+          <li><a href="densos/word2vec/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.2</span> Word2Vec</a></li>
+          <li><a href="densos/fundamentos/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.3</span> Origem &amp; Além da Linguagem</a></li>
+          <li><a href="densos/transformer/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.4</span> Arquitetura Transformer</a></li>
+          <li><a href="densos/cross-encoder/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.5</span> Cross-Encoder</a></li>
+          <li><a href="densos/multi-vector/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.6</span> Multi-Vector (ColBERT)</a></li>
+        </ul>
+      </section>
+
+      <!-- 1.3 -->
+      <section class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <a href="rrf/index.html" class="group flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xs shrink-0">
+            <i class="fa-solid fa-code-merge"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-500">1.3</span>
+            <h5 class="font-bold text-white text-sm group-hover:text-purple-300 transition">Busca Híbrida e RRF</h5>
+          </div>
+        </a>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          Esparso e denso erram em situações diferentes, então rode os dois e funda os rankings
+          <strong class="text-slate-300">por posição</strong> (Reciprocal Rank Fusion) — sem tentar comparar scores
+          incomparáveis. Aqui o pipeline de recuperação fica pronto.
+        </p>
+        <a href="rrf/index.html" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold transition">
+          Reciprocal Rank Fusion <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </a>
+      </section>
+
+    </div>
+
+    <!-- 1.4 -->
+    <section class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-5 sm:p-6 mb-6">
+      <a href="agente/index.html" class="group flex items-start gap-3 mb-3">
+        <span class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 shrink-0">
+          <i class="fa-solid fa-shield-halved"></i>
+        </span>
+        <div>
+          <span class="font-mono text-[10px] text-slate-500">1.4</span>
+          <h5 class="font-bold text-white text-base group-hover:text-brand-300 transition">Do Retrieval ao Agente Confiável</h5>
+        </div>
+      </a>
+      <p class="text-xs text-slate-400 leading-relaxed mb-4 max-w-4xl">
+        As três seções anteriores ensinaram a achar o trecho certo. Esta mostra por que isso é o que separa um
+        agente confiável de um gerador de texto convincente: por que o modelo inventa, como exigir que cada
+        afirmação saia de um trecho citável, quando o agente decide buscar de novo, como medir se está
+        funcionando — e os ganhos que vêm junto além de não alucinar.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        <a href="agente/alucinacao/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-rose-500/40 transition group">
+          <i class="fa-solid fa-ghost text-rose-400 text-[11px] mt-0.5"></i>
+          <span><span class="font-mono text-[10px] text-slate-600 block">1.4.1</span><span class="text-xs text-slate-300 group-hover:text-white transition">Por que o modelo alucina</span></span>
+        </a>
+        <a href="agente/grounding/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-emerald-500/40 transition group">
+          <i class="fa-solid fa-anchor text-emerald-400 text-[11px] mt-0.5"></i>
+          <span><span class="font-mono text-[10px] text-slate-600 block">1.4.2</span><span class="text-xs text-slate-300 group-hover:text-white transition">Grounding e citação</span></span>
+        </a>
+        <a href="agente/laco/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-cyan-500/40 transition group">
+          <i class="fa-solid fa-rotate text-cyan-400 text-[11px] mt-0.5"></i>
+          <span><span class="font-mono text-[10px] text-slate-600 block">1.4.3</span><span class="text-xs text-slate-300 group-hover:text-white transition">O laço do agente</span></span>
+        </a>
+        <a href="agente/avaliacao/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-amber-500/40 transition group">
+          <i class="fa-solid fa-ruler-combined text-amber-400 text-[11px] mt-0.5"></i>
+          <span><span class="font-mono text-[10px] text-slate-600 block">1.4.4</span><span class="text-xs text-slate-300 group-hover:text-white transition">Medir se está funcionando</span></span>
+        </a>
+        <a href="agente/ganhos/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-purple-500/40 transition group">
+          <i class="fa-solid fa-gift text-purple-400 text-[11px] mt-0.5"></i>
+          <span><span class="font-mono text-[10px] text-slate-600 block">1.4.5</span><span class="text-xs text-slate-300 group-hover:text-white transition">Os outros ganhos</span></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Resumo -->
+    <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-slate-800 p-5 sm:p-6">
+      <h4 class="text-lg font-bold text-white tracking-tight mb-3">
+        <i class="fa-solid fa-flag-checkered text-purple-400 mr-2"></i>Resumo
+      </h4>
+      <p class="text-sm text-slate-400 leading-relaxed max-w-3xl">
+        RI não é um detalhe de implementação do RAG — é a etapa que determina se o sistema vai funcionar.
+        Um LLM excelente com recuperação ruim continua respondendo mal. Por isso, boa parte do trabalho de
+        construir um RAG confiável está em melhorar a RI: escolher a técnica certa
+        (<span class="text-slate-300">léxica, semântica ou híbrida</span>), o tamanho certo de chunk e o ranking certo.
+      </p>
+    </div>
+
+  </main>
+
+  <script>
+  Guia.ready(function () {
+    var DOCS = [
+      {id:1, text:"Paciente relatou febre alta durante a noite.", concept:"febre"},
+      {id:2, text:"Exame de sangue não indicou nenhuma anormalidade.", concept:"normal"},
+      {id:3, text:"Aumento da temperatura corporal pode indicar infecção.", concept:"febre"},
+      {id:4, text:"Recomenda-se hidratação e repouso em casos de gripe.", concept:"respiratorio"},
+      {id:5, text:"O resultado da tomografia veio normal, sem lesões.", concept:"normal"}
+    ];
+    var QUERIES = [
+      {id:"q1", label:"“aumento de temperatura corporal”", text:"aumento de temperatura corporal", concept:"febre"},
+      {id:"q2", label:"“problemas respiratórios”", text:"problemas respiratórios", concept:"respiratorio"}
+    ];
+    var STOP = {"de":1,"da":1,"em":1,"o":1,"a":1,"e":1};
+    var ANSWERS = {
+      "q1|lex": {ok:false, text:"Não encontrei menção a febre na base. (Só recuperei o trecho 3, sobre temperatura corporal — o trecho 1 fala em “febre”, uma palavra diferente, e ficou de fora.)"},
+      "q1|sem": {ok:true, text:"O paciente apresentou febre alta durante a noite, compatível com aumento de temperatura corporal e possível quadro infeccioso."},
+      "q2|lex": {ok:false, text:"Não encontrei informações suficientes na base para responder. (Nenhum trecho contém literalmente as palavras da pergunta.)"},
+      "q2|sem": {ok:true, text:"Para quadros respiratórios como gripe, recomenda-se hidratação e repouso."}
+    };
+    var state = {query:"q1", mode:"lex"};
+
+    var BTN_OFF = "btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-surface-800 transition";
+    var BTN_ON  = "btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-500/20 border border-brand-500/40 text-brand-200 transition";
+
+    function norm(s){ return s.toLowerCase().replace(/[.,;]/g,"").split(/\s+/).filter(function(w){return w && !STOP[w];}); }
+    function esc(s){ return s.replace(/[&<>]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+
+    function lexScore(doc, qWords){
+      var docWords = norm(doc.text);
+      var hits = qWords.filter(function(w){ return docWords.indexOf(w) !== -1; });
+      return hits.length;
+    }
+    /* Escapa o texto inteiro uma vez, depois marca as palavras da query. */
+    function highlight(text, qWords){
+      return esc(text).replace(/[\wÀ-ÿ]+/g, function(w){
+        return qWords.indexOf(w.toLowerCase()) !== -1
+          ? '<mark class="bg-brand-500/30 text-brand-100 rounded px-0.5">' + w + '</mark>'
+          : w;
+      });
+    }
+
+    function render(){
+      var q = QUERIES.filter(function(x){return x.id===state.query;})[0];
+      var qWords = norm(q.text);
+
+      document.getElementById("queryGrp").innerHTML = QUERIES.map(function(item){
+        return '<button class="' + (item.id===state.query?BTN_ON:BTN_OFF) + '" data-q="' + item.id + '">' + item.label + '</button>';
+      }).join("");
+      document.getElementById("modeGrp").innerHTML =
+        '<button class="' + (state.mode==='lex'?BTN_ON:BTN_OFF) + '" data-m="lex"><i class="fa-solid fa-table-cells text-[10px] mr-1.5"></i>Léxica</button>' +
+        '<button class="' + (state.mode==='sem'?BTN_ON:BTN_OFF) + '" data-m="sem"><i class="fa-solid fa-vector-square text-[10px] mr-1.5"></i>Semântica (RAG)</button>';
+
+      var scored = DOCS.map(function(d){
+        var score = state.mode === "lex" ? lexScore(d, qWords) : (d.concept === q.concept ? 3 : 0);
+        return {doc:d, score:score};
+      }).sort(function(a,b){ return b.score - a.score; });
+
+      document.getElementById("docList").innerHTML = scored.map(function(s){
+        var hit = s.score > 0;
+        var txt = state.mode === "lex" ? highlight(s.doc.text, qWords) : esc(s.doc.text);
+        return '<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl border p-3 sm:px-4 transition ' +
+            (hit ? 'bg-brand-500/5 border-brand-500/40' : 'bg-surface-950 border-slate-800 opacity-60') + '">' +
+          '<span class="flex-1 text-sm text-slate-200 leading-relaxed">' + txt + '</span>' +
+          '<span class="font-mono text-[11px] whitespace-nowrap ' + (hit ? 'text-brand-300' : 'text-slate-600') + '">' +
+            (hit ? '<i class="fa-solid fa-arrow-turn-down mr-1"></i>enviado ao LLM' : 'não recuperado') +
+          '</span>' +
+          '</div>';
+      }).join("");
+
+      var a = ANSWERS[state.query + "|" + state.mode];
+      var box = document.getElementById("answerBox");
+      box.className = "mt-5 rounded-xl border p-4 text-sm leading-relaxed " +
+        (a.ok ? "bg-emerald-500/5 border-emerald-500/30 text-emerald-200"
+              : "bg-rose-500/5 border-rose-500/30 text-rose-200");
+      box.innerHTML =
+        '<div class="font-mono text-[10px] uppercase tracking-widest opacity-70 mb-1.5">' +
+          '<i class="fa-solid ' + (a.ok ? 'fa-circle-check' : 'fa-circle-xmark') + ' mr-1.5"></i>Resposta do LLM com esse contexto</div>' +
+        esc(a.text);
+
+      document.querySelectorAll("[data-q]").forEach(function(b){ b.onclick = function(){ state.query = b.getAttribute("data-q"); render(); }; });
+      document.querySelectorAll("[data-m]").forEach(function(b){ b.onclick = function(){ state.mode = b.getAttribute("data-m"); render(); }; });
+    }
+    render();
+  });
+  </script>
+</body>
+</html>

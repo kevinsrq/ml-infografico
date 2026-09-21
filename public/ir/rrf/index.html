@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Busca Híbrida e RRF: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/guia.css">
+  <script src="../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Busca Híbrida e RRF"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Reciprocal Rank Fusion: fundir rankings sem comparar scores (Cormack et al., 2009)"
+      data-icon="fa-code-merge"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 01 — Dois erros diferentes ══════════════ -->
+    <section class="slide-section" data-nav="Dois Erros" data-icon="fa-code-compare">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Esparso e Denso <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">Erram em Lugares Diferentes</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O capítulo apresentou motores léxicos (TF-IDF, BM25, SPLADE) e motores semânticos (bi-encoder, multi-vector).
+          Cada família acerta exatamente onde a outra falha. Em produção não se escolhe uma: rodam-se as duas em
+          paralelo e funde-se o resultado. Troque a consulta abaixo e observe o erro trocar de motor.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center shrink-0 text-brand-400 text-xl">
+            <i class="fa-solid fa-code-merge"></i>
+          </div>
+          <div>
+            <p class="text-base sm:text-lg font-medium text-slate-100 leading-snug">
+              Busca híbrida é rodar dois ou mais motores de <em>primeiro estágio</em> em paralelo e fundir os rankings num só.
+            </p>
+            <p class="text-xs text-brand-400 font-mono mt-2">É a configuração padrão de RAG em produção — não uma otimização exótica.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seletor de consulta (compartilhado por todos os módulos) -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center gap-3 pb-5 border-b border-slate-800">
+          <span class="text-xs text-slate-400 font-medium flex items-center gap-2">
+            <i class="fa-solid fa-magnifying-glass text-brand-400"></i> Consulta em teste:
+          </span>
+          <button onclick="RRF.setQuery(0)" data-qbtn="0" class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition border">“açúcar no sangue em jejum”</button>
+          <button onclick="RRF.setQuery(1)" data-qbtn="1" class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition border">“hemograma CBC sem jejum”</button>
+          <span class="text-[11px] text-slate-500 ml-auto hidden sm:block">A escolha vale para os 4 módulos seguintes.</span>
+        </div>
+
+        <div class="pt-5 grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <!-- Acervo -->
+          <div>
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-folder-open text-slate-500"></i> Acervo · 5 laudos
+            </h4>
+            <div id="m1-corpus" class="space-y-2"></div>
+          </div>
+
+          <!-- Rankings dos dois motores -->
+          <div class="lg:col-span-2">
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-slate-500"></i> O que cada motor devolve
+            </h4>
+            <div id="m1-engines" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            <div id="m1-verdict" class="mt-4 text-xs leading-relaxed p-3.5 rounded-xl border"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <h4 class="font-bold text-white text-sm mb-1.5 flex items-center gap-2"><i class="fa-solid fa-hashtag text-cyan-400"></i> O esparso acerta</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Siglas, códigos, nomes próprios, números de exame — qualquer <em>match</em> literal raro. <span class="text-cyan-300">“CBC”</span> só existe no documento que escreve “CBC”.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/30">
+          <h4 class="font-bold text-white text-sm mb-1.5 flex items-center gap-2"><i class="fa-solid fa-brain text-emerald-400"></i> O denso acerta</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Sinônimos e paráfrases. <span class="text-emerald-300">“açúcar no sangue”</span> e “glicemia” não compartilham um único token, mas ficam perto no espaço vetorial.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <h4 class="font-bold text-white text-sm mb-1.5 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Ninguém acerta os dois</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Escolher um motor é escolher qual classe de consulta você aceita errar. A fusão remove a escolha.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 02 — Somar scores não funciona ══════════════ -->
+    <section class="slide-section" data-nav="Somar Scores" data-icon="fa-scale-unbalanced">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-scale-unbalanced"></i> Módulo 02 • A Tentativa Ingênua
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Somar Scores: <span class="bg-gradient-to-r from-rose-400 to-amber-400 bg-clip-text text-transparent">a Escala Maior Engole as Outras</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A primeira ideia de todo mundo é somar os scores dos dois motores. O problema é que
+          $s_{\text{BM25}} \in [0, \infty)$ e $s_{\cos} \in [-1, 1]$: são grandezas de universos distintos,
+          como somar quilômetros com quilogramas.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="lg:col-span-2 bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-plus text-rose-400"></i> CombSUM cru: $s_{\text{BM25}}(d) + s_{\cos}(d)$
+            </h3>
+            <span class="text-[11px] font-mono text-slate-500">calculado ao vivo a partir dos scores do módulo 01</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs font-mono border-collapse min-w-[520px]">
+              <thead>
+                <tr class="text-slate-400 border-b border-slate-800">
+                  <th class="text-left py-2 pr-2 font-medium">#</th>
+                  <th class="text-left py-2 pr-2 font-medium">doc</th>
+                  <th class="text-right py-2 px-2 font-medium">BM25</th>
+                  <th class="text-right py-2 px-2 font-medium">cosseno</th>
+                  <th class="text-right py-2 px-2 font-medium">soma</th>
+                  <th class="text-right py-2 pl-2 font-medium">fatia do BM25</th>
+                </tr>
+              </thead>
+              <tbody id="m2-table"></tbody>
+            </table>
+          </div>
+          <div id="m2-verdict" class="mt-4 text-xs leading-relaxed p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/30 text-slate-300"></div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="p-4 rounded-2xl bg-surface-900 border border-amber-500/30">
+            <h4 class="font-bold text-white text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-ruler text-amber-400"></i> E normalizar antes?</h4>
+            <p class="text-xs text-slate-400 leading-relaxed mb-2">
+              Min-max leva cada lista a $[0,1]$: $\tilde{s} = \frac{s - s_{\min}}{s_{\max} - s_{\min}}$.
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Funciona no papel, mas usa o melhor e o pior score <em>daquela consulta</em>. Se um motor devolve 5 documentos
+              igualmente ruins, o “menos ruim” vira $1{,}0$ e pesa igual a um acerto de verdade. Um outlier no topo achata todo o resto.
+            </p>
+          </div>
+          <div class="p-4 rounded-2xl bg-surface-900 border border-slate-800">
+            <h4 class="font-bold text-white text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-chart-line text-slate-400"></i> E z-score?</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              $z = (s - \mu)/\sigma$ depende da distribuição de cada consulta. Consultas com poucos candidatos relevantes
+              têm $\sigma$ minúsculo e explodem os $z$. A fragilidade é a mesma: <strong class="text-slate-300">a escala é uma
+              propriedade do motor, não do documento</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-table-list text-brand-400"></i> Formas de fundir rankings: o que muda na prática
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse min-w-[720px]">
+            <thead>
+              <tr class="text-brand-300 border-b border-slate-800 text-left">
+                <th class="py-2.5 pr-3 font-semibold">Método</th>
+                <th class="py-2.5 px-3 font-semibold">Scores comparáveis?</th>
+                <th class="py-2.5 px-3 font-semibold">Precisa de treino?</th>
+                <th class="py-2.5 px-3 font-semibold">Robustez a um motor ruim</th>
+                <th class="py-2.5 pl-3 font-semibold">Onde é nativa</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-400">
+              <tr class="border-b border-slate-800/70 bg-emerald-500/[0.04]">
+                <td class="py-2.5 pr-3 font-semibold text-white">RRF</td>
+                <td class="py-2.5 px-3 text-emerald-400">Não precisa (usa só a posição)</td>
+                <td class="py-2.5 px-3 text-emerald-400">Não ($k = 60$ serve)</td>
+                <td class="py-2.5 px-3 text-emerald-400">Alta: motor ruim só adiciona ruído pequeno</td>
+                <td class="py-2.5 pl-3 font-mono text-[11px]">Elasticsearch/OpenSearch <code>rrf</code>, Qdrant <code>fusion: rrf</code>, Weaviate <code>hybrid</code>, Vespa, Azure AI Search</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 font-semibold text-white">Soma normalizada (min-max)</td>
+                <td class="py-2.5 px-3 text-rose-400">Sim, após normalizar por consulta</td>
+                <td class="py-2.5 px-3">Não, mas exige pesos por lista</td>
+                <td class="py-2.5 px-3 text-rose-400">Baixa: outlier no topo distorce tudo</td>
+                <td class="py-2.5 pl-3 font-mono text-[11px]">Weaviate <code>relativeScoreFusion</code>, OpenSearch normalization processor</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 font-semibold text-white">CombSUM / CombMNZ</td>
+                <td class="py-2.5 px-3 text-rose-400">Sim (CombMNZ ainda multiplica pelo nº de listas)</td>
+                <td class="py-2.5 px-3 text-emerald-400">Não</td>
+                <td class="py-2.5 px-3 text-amber-400">Média: premia consenso, herda a escala</td>
+                <td class="py-2.5 pl-3 font-mono text-[11px]">Implementação manual; Vespa via expressão de ranking</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 font-semibold text-white">Learning-to-rank</td>
+                <td class="py-2.5 px-3 text-emerald-400">Não (os scores viram <em>features</em>)</td>
+                <td class="py-2.5 px-3 text-rose-400">Sim: pares (consulta, doc, relevância) rotulados</td>
+                <td class="py-2.5 px-3 text-emerald-400">Alta, se o treino cobrir o caso</td>
+                <td class="py-2.5 pl-3 font-mono text-[11px]">LightGBM/LambdaMART, Elasticsearch LTR plugin, Vespa</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 03 — A fórmula e a mesa de fusão ══════════════ -->
+    <section class="slide-section" data-nav="Mesa de Fusão" data-icon="fa-square-root-variable">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-square-root-variable"></i> Módulo 03 • O Mecanismo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          RRF: <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">Jogue o Score Fora, Fique com a Posição</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Cormack, Clarke e Büttcher (SIGIR 2009) propuseram a solução mais simples possível — e ela supera
+          fusões treinadas em boa parte dos benchmarks. O RRF nunca pergunta <em>quanto</em> um motor gostou do documento,
+          só <em>em que lugar</em> ele o colocou.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-5 sm:p-7 mb-6 glow-cyan">
+        <div class="text-center text-base sm:text-lg text-slate-100 overflow-x-auto">
+          $$\text{RRF}(d) \;=\; \sum_{r \in R} \frac{1}{k + \text{rank}_r(d)}$$
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5 text-xs">
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-cyan-400 mb-1">$R$</div>
+            <p class="text-slate-400 leading-relaxed">Conjunto de listas fundidas — um <em>retriever</em> por lista (BM25, bi-encoder, SPLADE…).</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-cyan-400 mb-1">$\text{rank}_r(d)$</div>
+            <p class="text-slate-400 leading-relaxed">Posição de $d$ na lista $r$, com $1$ = melhor. Se $d$ não entrou no top-k daquele motor, ele simplesmente não recebe parcela.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-cyan-400 mb-1">$k$</div>
+            <p class="text-slate-400 leading-relaxed">Constante de suavização somada ao rank. Padrão universal: $k = 60$. O módulo 04 é inteiro sobre ela.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ░░░ SIMULADOR PRINCIPAL: Mesa de Fusão ░░░ -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-flask text-cyan-400"></i> Mesa de Fusão RRF
+            </h3>
+            <p class="text-[11px] text-slate-500 mt-1">
+              Arraste os documentos (ou use <i class="fa-solid fa-caret-up"></i>/<i class="fa-solid fa-caret-down"></i>) para reordenar cada motor e ver a fusão recalcular.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+              <label for="lab-k" class="text-xs text-slate-400 font-medium">Constante $k$:</label>
+              <input id="lab-k" type="range" min="1" max="120" step="1" value="60" oninput="RRF.setK(this.value)" class="w-28 sm:w-36 cursor-pointer">
+              <span id="lab-k-out" class="font-mono text-xs text-cyan-400 font-bold w-8">60</span>
+            </div>
+            <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+              <input id="lab-third" type="checkbox" onchange="RRF.setThird(this.checked)" class="accent-purple-500 cursor-pointer">
+              3ª lista (SPLADE)
+            </label>
+            <button onclick="RRF.reset()" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white text-xs transition flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate-left"></i> Restaurar
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-5">
+          <!-- Listas de entrada -->
+          <div>
+            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-arrows-up-down text-slate-500"></i> Rankings de entrada
+            </div>
+            <div id="lab-inputs" class="space-y-4"></div>
+          </div>
+
+          <!-- Ranking fundido -->
+          <div>
+            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-code-merge text-cyan-400"></i> Ranking fundido · <span id="lab-nlists" class="font-mono text-cyan-400 normal-case">2 listas</span>
+            </div>
+            <div id="lab-fused" class="space-y-2"></div>
+            <div id="lab-note" class="mt-4 text-xs leading-relaxed p-3.5 rounded-xl border"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 04 — A constante k ══════════════ -->
+    <section class="slide-section" data-nav="A Constante k" data-icon="fa-sliders">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sliders"></i> Módulo 04 • O Único Hiperparâmetro
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O Papel de <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">$k$</span>:
+          Quanto o Topo Pesa
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          $k$ controla <em>o quão íngreme</em> é a curva de valor por posição. Ele é o amortecedor que impede
+          uma lista sozinha de decidir a fusão. O slider abaixo é o mesmo do módulo 03 — tudo se move junto.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center gap-4 pb-5 border-b border-slate-800">
+          <label for="k2" class="text-xs text-slate-400 font-medium">Constante $k$:</label>
+          <input id="k2" type="range" min="1" max="120" step="1" value="60" oninput="RRF.setK(this.value)" class="flex-1 min-w-[140px] max-w-sm cursor-pointer">
+          <span id="k2-out" class="font-mono text-sm text-amber-400 font-bold">60</span>
+          <div class="flex items-center gap-2 text-xs">
+            <button onclick="RRF.setK(1)" class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white font-mono transition">k=1</button>
+            <button onclick="RRF.setK(60)" class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white font-mono transition">k=60</button>
+            <button onclick="RRF.setK(120)" class="px-2.5 py-1 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white font-mono transition">k=120</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-5">
+          <!-- Canvas da curva -->
+          <div>
+            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-chart-area text-amber-400"></i> Valor da parcela por posição
+            </div>
+            <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+              <canvas id="k-canvas" class="w-full" style="height:260px"></canvas>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">
+              Cada curva mostra $1/(k+\text{rank})$ normalizada pelo valor do 1º lugar, para ranks de 1 a 10.
+              Quanto mais plana a curva, menos o topo pesa.
+            </p>
+          </div>
+
+          <!-- Tabela de parcelas + regime -->
+          <div>
+            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-table-cells text-slate-500"></i> Parcela exata com o $k$ atual
+            </div>
+            <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800">
+              <table class="w-full text-xs font-mono min-w-[300px]">
+                <thead>
+                  <tr class="text-slate-400 border-b border-slate-800">
+                    <th class="text-left py-2 px-3 font-medium">rank</th>
+                    <th class="text-left py-2 px-3 font-medium">parcela</th>
+                    <th class="text-right py-2 px-3 font-medium">valor</th>
+                    <th class="text-right py-2 px-3 font-medium">vs 1º</th>
+                  </tr>
+                </thead>
+                <tbody id="k-table"></tbody>
+              </table>
+            </div>
+            <div id="k-regime" class="mt-4 text-xs leading-relaxed p-3.5 rounded-xl border"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <div class="font-mono text-rose-400 text-xs font-bold mb-1.5">$k \to 0$</div>
+          <h4 class="font-bold text-white text-sm mb-1">Votação por primeiro lugar</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">O 1º lugar vale muito mais que o 2º. Quem lidera uma lista quase sempre lidera a fusão — e um motor ruim consegue sequestrar o topo.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/40 glow-emerald">
+          <div class="font-mono text-emerald-400 text-xs font-bold mb-1.5">$k = 60$</div>
+          <h4 class="font-bold text-white text-sm mb-1">O default do paper</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Funcionou bem em todas as coleções TREC testadas <em>sem ajuste algum</em>. É o valor que Elasticsearch, Qdrant e Azure adotam como padrão.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="font-mono text-amber-400 text-xs font-bold mb-1.5">$k \to \infty$</div>
+          <h4 class="font-bold text-white text-sm mb-1">Média de posições</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Tudo se achata: $1/(k+1) \approx 1/(k+10)$. A fusão vira quase contagem de Borda e perde a sensibilidade ao topo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 05 — Pipeline, limites e quiz ══════════════ -->
+    <section class="slide-section" data-nav="Pipeline & Quiz" data-icon="fa-diagram-project">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-diagram-project"></i> Módulo 05 • Aplicação, Limites & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O Pipeline Completo: <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">Fusão Barata, Re-rank Caro</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Tudo o que o capítulo mostrou, em ordem: motores baratos em paralelo produzem candidatos, o RRF os cola
+          numa lista só, e só então o modelo caro entra em cena. Cada bloco leva à sua página.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-4 sm:p-6 mb-6">
+        <div class="overflow-x-auto">
+          <svg viewBox="0 0 860 260" role="img" aria-label="Pipeline: consulta, motores em paralelo, RRF, cross-encoder, LLM"
+               class="w-full h-auto min-w-[640px]" style="max-width:100%">
+            <defs>
+              <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" fill="#64748b"/>
+              </marker>
+            </defs>
+            <text x="250" y="18" text-anchor="middle" font-size="11" fill="#818cf8" font-weight="bold" font-family="JetBrains Mono, monospace">1º ESTÁGIO · PARALELO · ms</text>
+            <text x="470" y="18" text-anchor="middle" font-size="11" fill="#22d3ee" font-weight="bold" font-family="JetBrains Mono, monospace">FUSÃO</text>
+            <text x="660" y="18" text-anchor="middle" font-size="11" fill="#fb7185" font-weight="bold" font-family="JetBrains Mono, monospace">RE-RANK · CARO</text>
+
+            <rect x="12" y="110" width="86" height="46" rx="8" fill="#0f172a" stroke="#818cf8"/>
+            <text x="55" y="138" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="Inter, sans-serif">consulta</text>
+
+            <a href="../esparsos/bm25/index.html">
+              <rect x="160" y="38" width="184" height="46" rx="8" fill="#0f172a" stroke="#22d3ee"/>
+              <text x="252" y="60" text-anchor="middle" font-size="12" fill="#67e8f9" font-family="Inter, sans-serif">BM25 / SPLADE</text>
+              <text x="252" y="75" text-anchor="middle" font-size="10" fill="#64748b" font-family="Inter, sans-serif">índice invertido</text>
+            </a>
+            <a href="../densos/embeddings/index.html">
+              <rect x="160" y="110" width="184" height="46" rx="8" fill="#0f172a" stroke="#34d399"/>
+              <text x="252" y="132" text-anchor="middle" font-size="12" fill="#6ee7b7" font-family="Inter, sans-serif">Bi-Encoder</text>
+              <text x="252" y="147" text-anchor="middle" font-size="10" fill="#64748b" font-family="Inter, sans-serif">HNSW / ANN</text>
+            </a>
+            <a href="../densos/multi-vector/index.html">
+              <rect x="160" y="182" width="184" height="46" rx="8" fill="#0f172a" stroke="#a78bfa"/>
+              <text x="252" y="204" text-anchor="middle" font-size="12" fill="#c4b5fd" font-family="Inter, sans-serif">Multi-Vector</text>
+              <text x="252" y="219" text-anchor="middle" font-size="10" fill="#64748b" font-family="Inter, sans-serif">MaxSim por token</text>
+            </a>
+
+            <line x1="100" y1="133" x2="156" y2="62"  stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+            <line x1="100" y1="133" x2="156" y2="133" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+            <line x1="100" y1="133" x2="156" y2="204" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+
+            <rect x="428" y="110" width="86" height="46" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="2"/>
+            <text x="471" y="131" text-anchor="middle" font-size="12" fill="#e2e8f0" font-weight="bold" font-family="Inter, sans-serif">RRF</text>
+            <text x="471" y="146" text-anchor="middle" font-size="10" fill="#67e8f9" font-family="JetBrains Mono, monospace">k = 60</text>
+
+            <line x1="346" y1="62"  x2="426" y2="124" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+            <line x1="346" y1="133" x2="426" y2="133" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+            <line x1="346" y1="204" x2="426" y2="142" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+            <text x="388" y="84"  text-anchor="middle" font-size="10" fill="#34d399" font-family="JetBrains Mono, monospace">top-50</text>
+            <text x="388" y="128" text-anchor="middle" font-size="10" fill="#34d399" font-family="JetBrains Mono, monospace">top-50</text>
+            <text x="388" y="185" text-anchor="middle" font-size="10" fill="#34d399" font-family="JetBrains Mono, monospace">top-50</text>
+
+            <a href="../densos/cross-encoder/index.html">
+              <rect x="580" y="110" width="132" height="46" rx="8" fill="#0f172a" stroke="#fb7185"/>
+              <text x="646" y="132" text-anchor="middle" font-size="12" fill="#fda4af" font-family="Inter, sans-serif">Cross-Encoder</text>
+              <text x="646" y="147" text-anchor="middle" font-size="10" fill="#64748b" font-family="Inter, sans-serif">re-ranker</text>
+            </a>
+            <line x1="516" y1="133" x2="578" y2="133" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+            <text x="547" y="127" text-anchor="middle" font-size="10" fill="#34d399" font-family="JetBrains Mono, monospace">top-20</text>
+
+            <rect x="778" y="110" width="70" height="46" rx="8" fill="#0f172a" stroke="#818cf8"/>
+            <text x="813" y="138" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="Inter, sans-serif">LLM</text>
+            <line x1="714" y1="133" x2="776" y2="133" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+            <text x="745" y="127" text-anchor="middle" font-size="10" fill="#34d399" font-family="JetBrains Mono, monospace">top-5</text>
+          </svg>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          A fusão custa uma soma por documento; o cross-encoder custa uma passagem completa de Transformer <em>por par</em> —
+          por isso ele só vê os top-20. Os cortes 50/20/5 são os defaults mais comuns; ajuste com um conjunto de avaliação, nunca de olho.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Código -->
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-brands fa-python text-cyan-400"></i> RRF não precisa de biblioteca
+          </h3>
+          <pre class="bg-surface-950 border border-slate-800 rounded-xl p-4 overflow-x-auto text-[11px] font-mono leading-relaxed text-slate-300"><code><span class="text-purple-400">from</span> collections <span class="text-purple-400">import</span> defaultdict
+
+<span class="text-purple-400">def</span> <span class="text-cyan-400">rrf</span>(rankings, k=<span class="text-amber-300">60</span>):
+    scores = defaultdict(<span class="text-emerald-400">float</span>)
+    <span class="text-purple-400">for</span> ranking <span class="text-purple-400">in</span> rankings:   <span class="text-slate-500"># lista de ids, do melhor ao pior</span>
+        <span class="text-purple-400">for</span> pos, doc_id <span class="text-purple-400">in</span> <span class="text-emerald-400">enumerate</span>(ranking, start=<span class="text-amber-300">1</span>):
+            scores[doc_id] += <span class="text-amber-300">1.0</span> / (k + pos)
+    <span class="text-purple-400">return</span> <span class="text-emerald-400">sorted</span>(scores.items(), key=<span class="text-purple-400">lambda</span> x: -x[<span class="text-amber-300">1</span>])
+
+bm25   = [<span class="text-emerald-300">"D5"</span>, <span class="text-emerald-300">"D2"</span>, <span class="text-emerald-300">"D3"</span>, <span class="text-emerald-300">"D1"</span>, <span class="text-emerald-300">"D4"</span>]   <span class="text-slate-500"># rank_bm25</span>
+denso  = [<span class="text-emerald-300">"D2"</span>, <span class="text-emerald-300">"D5"</span>, <span class="text-emerald-300">"D3"</span>, <span class="text-emerald-300">"D1"</span>, <span class="text-emerald-300">"D4"</span>]   <span class="text-slate-500"># SentenceTransformer</span>
+splade = [<span class="text-emerald-300">"D2"</span>, <span class="text-emerald-300">"D5"</span>, <span class="text-emerald-300">"D3"</span>, <span class="text-emerald-300">"D1"</span>, <span class="text-emerald-300">"D4"</span>]   <span class="text-slate-500"># SparseEncoder</span>
+<span class="text-emerald-400">print</span>(rrf([bm25, denso, splade]))</code></pre>
+          <div class="mt-3 p-3 rounded-xl bg-surface-950 border border-slate-800 text-[11px] font-mono text-slate-400 overflow-x-auto">
+            <div id="py-out" class="whitespace-pre text-emerald-300"></div>
+            <div class="text-slate-500 mt-1.5 whitespace-pre" id="py-note"></div>
+          </div>
+        </div>
+
+        <!-- Nativo + regra prática -->
+        <div class="space-y-4">
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5">
+            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-server text-brand-400"></i> Nativo nos motores <span class="text-[10px] text-slate-500 font-normal">(ilustrativo — confira a versão)</span>
+            </h3>
+            <pre class="bg-surface-950 border border-slate-800 rounded-xl p-4 overflow-x-auto text-[11px] font-mono leading-relaxed text-slate-300"><code><span class="text-slate-500"># Qdrant — sparse + dense fundidos no servidor</span>
+<span class="text-purple-400">from</span> qdrant_client.models <span class="text-purple-400">import</span> FusionQuery, Fusion
+client.query_points(collection_name=<span class="text-emerald-300">"laudos"</span>,
+                    prefetch=[sparse_q, dense_q],
+                    query=FusionQuery(fusion=Fusion.RRF),
+                    limit=<span class="text-amber-300">20</span>)
+
+<span class="text-slate-500"># Elasticsearch — retriever rrf sobre léxico + kNN</span>
+<span class="text-emerald-300">"retriever"</span>: {<span class="text-emerald-300">"rrf"</span>: {
+  <span class="text-emerald-300">"retrievers"</span>: [{<span class="text-emerald-300">"standard"</span>: {...}}, {<span class="text-emerald-300">"knn"</span>: {...}}],
+  <span class="text-emerald-300">"rank_constant"</span>: <span class="text-amber-300">60</span>,
+  <span class="text-emerald-300">"rank_window_size"</span>: <span class="text-amber-300">50</span>}}</code></pre>
+          </div>
+          <div class="p-4 rounded-2xl bg-brand-500/[0.07] border border-brand-500/40">
+            <h4 class="font-bold text-white text-sm mb-1.5 flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-brand-400"></i> Regra prática</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              2 a 3 listas · $k = 60$ · top-50 por lista · RRF · cross-encoder nos top-20.
+              Só mexa em $k$ se tiver um conjunto de avaliação (nDCG@10, recall@50) para medir a diferença.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Limitações -->
+      <div class="bg-surface-900 border border-rose-500/30 rounded-2xl p-5 sm:p-6 mb-6">
+        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Limitações do RRF
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-semibold text-rose-300 mb-1">Joga fora a magnitude</div>
+            <p class="text-slate-400 leading-relaxed">Um documento com cosseno $0{,}95$ e outro com $0{,}31$ podem ser 1º e 2º na mesma lista e receber parcelas quase idênticas. A confiança do motor é descartada por construção.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-semibold text-rose-300 mb-1">Empates são frequentes com 2 listas</div>
+            <p class="text-slate-400 leading-relaxed">1º+2º empata com 2º+1º. A soma de ranks também não desempata. As saídas: adicionar uma 3ª lista, desempatar pelo motor preferido ou deixar para o re-ranker.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-semibold text-rose-300 mb-1">Trata todas as listas como iguais</div>
+            <p class="text-slate-400 leading-relaxed">Se um motor é sabidamente melhor no seu domínio, o RRF puro o ignora. A correção é o RRF ponderado, $\sum_r w_r/(k+\text{rank}_r(d))$ — mas aí voltam os pesos a calibrar.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-semibold text-rose-300 mb-1">Depende do top-k de cada lista</div>
+            <p class="text-slate-400 leading-relaxed">Um documento fora do top-50 de um motor não recebe parcela dele — equivalente a atribuir rank infinito. Janelas curtas tornam a fusão instável.</p>
+          </div>
+        </div>
+        <div class="mt-4 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-brand-500/10 border border-purple-500/30 text-xs text-slate-300 leading-relaxed">
+          <strong class="text-purple-300">Para onde isso aponta:</strong> o RRF é a cola barata entre motores — ele não avalia relevância,
+          só reconcilia opiniões. Quem de fato lê consulta e documento juntos é o
+          <a href="../densos/cross-encoder/index.html" class="text-brand-400 hover:text-brand-300 underline underline-offset-2">Cross-Encoder</a>,
+          o polimento caro no fim do pipeline. Com o pipeline de recuperação montado, siga para
+          <a href="../agente/index.html" class="text-brand-400 hover:text-brand-300 underline underline-offset-2">1.4 — Do Retrieval ao Agente Confiável</a>,
+          que mostra o que fazer com esses trechos na ponta; ou volte ao
+          <a href="../index.html" class="text-brand-400 hover:text-brand-300 underline underline-offset-2">índice do capítulo</a>
+          para revisar qualquer motor de primeiro estágio.
+        </div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800 gap-4 flex-wrap">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação Conceitual
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre fusão de rankings.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">1</span>
+              Por que o RRF descarta os scores e usa apenas a posição?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Obter posições também exige ordenar a lista — o custo é praticamente o mesmo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Porque calcular posições é computacionalmente mais barato que ler scores.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'O BM25 vive em um intervalo ilimitado e o cosseno em [-1, 1]: a posição é a única grandeza que significa a mesma coisa nas duas listas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Porque os scores de motores diferentes vivem em escalas incomparáveis, e a posição é invariante à escala.</button>
+              <button onclick="Guia.answer(this, false, 'O cosseno é perfeitamente confiável dentro da sua lista — o problema é comparar a escala dele com a do BM25.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Porque scores de modelos neurais são sempre imprecisos.</button>
+              <button onclick="Guia.answer(this, false, 'O RRF é anterior aos transformers e não depende de treino algum.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Porque o RRF precisa de um modelo treinado para interpretar os scores.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">2</span>
+              O que acontece com a fusão quando $k$ se aproxima de 1?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button data-correct onclick="Guia.answer(this, true, 'Com k = 1 o 1º lugar vale 1/2 e o 5º vale 1/6 — três vezes menos. O topo domina a soma.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) A curva fica íngreme e a fusão vira quase uma votação por primeiro lugar.</button>
+              <button onclick="Guia.answer(this, false, 'É o contrário: k grande é que achata a curva e iguala as posições.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Todas as posições passam a valer praticamente o mesmo.</button>
+              <button onclick="Guia.answer(this, false, 'Empates dependem da simetria entre as listas, não do valor de k — ele escala todas as parcelas igualmente.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Os empates entre documentos desaparecem automaticamente.</button>
+              <button onclick="Guia.answer(this, false, 'A fórmula continua a mesma; muda só o quanto o topo pesa.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) O RRF deixa de funcionar e é preciso normalizar os scores.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">3</span>
+              Num pipeline de RAG, onde o RRF entra?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A indexação é anterior e independente: o RRF só existe em tempo de consulta.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Durante a indexação, para decidir quais documentos armazenar.</button>
+              <button onclick="Guia.answer(this, false, 'Fundir depois do re-ranker desperdiçaria a passagem cara do cross-encoder em candidatos que seriam descartados.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Depois do cross-encoder, para reordenar a saída do re-ranker.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'Ele cola os top-50 de cada motor de primeiro estágio numa lista só e entrega os top-20 ao re-ranker.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Entre os motores de primeiro estágio e o re-ranker.</button>
+              <button onclick="Guia.answer(this, false, 'O LLM recebe os trechos já ordenados; o RRF nunca vê o prompt.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Dentro do LLM, na montagem do prompt final.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  /* ═══════════════════════════════════════════════════════════════════
+     Simulador da página: Mesa de Fusão RRF.
+     Todo número exibido é calculado aqui a partir dos controles visíveis.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  const DOCS = {
+    D1: { titulo: "Hemograma",       texto: "hemograma completo sem jejum" },
+    D2: { titulo: "Glicemia",        texto: "glicemia de jejum exige jejum de 8 horas" },
+    D3: { titulo: "Colesterol",      texto: "colesterol total e frações com jejum de 12 horas antes da coleta" },
+    D4: { titulo: "Urina",           texto: "exame de urina, primeira urina da manhã" },
+    D5: { titulo: "Tabela de jejum", texto: "tabela de jejum: jejum de 8 horas, jejum de 12 horas" }
+  };
+
+  const ENGINES = {
+    bm25:   { nome: "BM25",       cor: "#22d3ee", unidade: "score BM25",  pagina: "../esparsos/bm25/index.html" },
+    bi:     { nome: "Bi-Encoder", cor: "#34d399", unidade: "cosseno",     pagina: "../densos/embeddings/index.html" },
+    splade: { nome: "SPLADE",     cor: "#a78bfa", unidade: "peso SPLADE", pagina: "../esparsos/sparse-encoder/index.html" }
+  };
+
+  /* Rankings ilustrativos por motor: [id, score na escala própria], do melhor ao pior. */
+  const QUERIES = [
+    {
+      texto: "açúcar no sangue em jejum",
+      alvo: "D2",
+      porque: "é uma paráfrase pura: só o motor denso sabe que “açúcar no sangue” significa “glicemia”. O BM25 enxerga apenas o token “jejum” e, como D5 o repete três vezes, coloca a tabela acima do laudo certo.",
+      listas: {
+        bm25:   [["D5", 9.8], ["D2", 9.6], ["D3", 6.1], ["D1", 2.0], ["D4", 0.0]],
+        bi:     [["D2", 0.82], ["D5", 0.59], ["D3", 0.52], ["D1", 0.36], ["D4", 0.13]],
+        splade: [["D2", 4.9], ["D5", 3.7], ["D3", 2.8], ["D1", 1.1], ["D4", 0.3]]
+      }
+    },
+    {
+      texto: "hemograma CBC sem jejum",
+      alvo: "D1",
+      porque: "tem sigla e palavra exata: o BM25 acerta D1 pelo token raro “hemograma”. O denso se distrai com a carga semântica de “jejum” e sobe D5 (a tabela) acima do laudo certo.",
+      listas: {
+        bm25:   [["D1", 12.4], ["D5", 4.1], ["D2", 3.9], ["D3", 3.5], ["D4", 0.0]],
+        bi:     [["D5", 0.71], ["D1", 0.69], ["D2", 0.55], ["D3", 0.40], ["D4", 0.10]],
+        splade: [["D1", 5.6], ["D5", 2.2], ["D2", 1.9], ["D3", 1.4], ["D4", 0.2]]
+      }
+    }
+  ];
+
+  const RRF = {
+    qidx: 0,
+    k: 60,
+    third: false,
+    pronto: false,
+    ordem: {},          // ids por motor, editáveis pelo leitor
+    drag: null,
+
+    /* ---------- ciclo de vida ---------- */
+    init() {
+      this.restaurar();
+      this.renderAll();
+      this.pronto = true;
+    },
+
+    restaurar() {
+      const q = QUERIES[this.qidx];
+      this.ordem = {};
+      Object.keys(ENGINES).forEach(id => { this.ordem[id] = q.listas[id].map(p => p[0]); });
+    },
+
+    reset() {
+      this.restaurar();
+      this.renderAll();
+      Guia.toast('Rankings restaurados ao que os motores devolveram.', 'fa-rotate-left');
+    },
+
+    setQuery(i) {
+      this.qidx = i;
+      this.restaurar();
+      this.renderAll();
+      if (this.pronto) Guia.toast('Consulta: “' + QUERIES[i].texto + '”', 'fa-magnifying-glass');
+    },
+
+    setK(v) {
+      this.k = Number(v);
+      document.getElementById('lab-k').value = this.k;
+      document.getElementById('k2').value = this.k;
+      this.renderAll();
+    },
+
+    setThird(on) {
+      this.third = on;
+      document.getElementById('lab-third').checked = on;
+      this.renderAll();
+    },
+
+    /* ---------- cálculo ---------- */
+    motoresAtivos() { return this.third ? ['bm25', 'bi', 'splade'] : ['bm25', 'bi']; },
+
+    posicao(motor, id) {
+      const i = this.ordem[motor].indexOf(id);
+      return i < 0 ? this.ordem[motor].length + 1 : i + 1;
+    },
+
+    scoreBruto(motor, id) {
+      const par = QUERIES[this.qidx].listas[motor].find(p => p[0] === id);
+      return par ? par[1] : 0;
+    },
+
+    /* RRF(d) = Σ 1/(k + rank_r(d)); desempate por soma de ranks, depois por id. */
+    fundir(motores) {
+      const linhas = Object.keys(DOCS).map(id => {
+        const parcelas = motores.map(m => {
+          const r = this.posicao(m, id);
+          return { motor: m, rank: r, valor: 1 / (this.k + r) };
+        });
+        const score = parcelas.reduce((a, p) => a + p.valor, 0);
+        const somaRanks = parcelas.reduce((a, p) => a + p.rank, 0);
+        return { id, parcelas, score, somaRanks, empate: false };
+      });
+      linhas.sort((a, b) => {
+        if (Math.abs(a.score - b.score) > 1e-12) return b.score - a.score;
+        if (a.somaRanks !== b.somaRanks) return a.somaRanks - b.somaRanks;
+        return a.id < b.id ? -1 : 1;
+      });
+      for (let i = 1; i < linhas.length; i++) {
+        if (Math.abs(linhas[i].score - linhas[i - 1].score) < 1e-12) {
+          linhas[i].empate = true; linhas[i - 1].empate = true;
+        }
+      }
+      return linhas;
+    },
+
+    fmt(n, d) { return n.toFixed(d === undefined ? 2 : d).replace('.', ','); },
+
+    /* ---------- renderização ---------- */
+    renderAll() {
+      this.renderQueryBtns();
+      this.renderM1();
+      this.renderM2();
+      this.renderLab();
+      this.renderK();
+      this.renderPy();
+      // só o box de regime injeta KaTeX dinâmico; o resto do HTML já foi renderizado no init
+      Guia.renderMath(document.getElementById('k-regime'));
+    },
+
+    renderQueryBtns() {
+      document.querySelectorAll('[data-qbtn]').forEach(b => {
+        const sel = Number(b.dataset.qbtn) === this.qidx;
+        b.className = 'q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition border ' +
+          (sel ? 'bg-brand-600 border-brand-500 text-white shadow-lg shadow-brand-600/20'
+               : 'bg-surface-950 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600');
+      });
+    },
+
+    /* Módulo 01: acervo + rankings crus dos dois motores, marcando quem errou. */
+    renderM1() {
+      const q = QUERIES[this.qidx];
+
+      document.getElementById('m1-corpus').innerHTML = Object.keys(DOCS).map(id => {
+        const alvo = id === q.alvo;
+        return '<div class="p-2.5 rounded-xl border ' +
+          (alvo ? 'bg-emerald-500/[0.07] border-emerald-500/40' : 'bg-surface-950 border-slate-800') + '">' +
+            '<div class="flex items-center gap-2 mb-0.5">' +
+              '<span class="font-mono text-xs font-bold ' + (alvo ? 'text-emerald-400' : 'text-slate-300') + '">' + id + '</span>' +
+              '<span class="text-[11px] text-slate-500">' + DOCS[id].titulo + '</span>' +
+              (alvo ? '<span class="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">alvo</span>' : '') +
+            '</div>' +
+            '<div class="text-[11px] text-slate-400 leading-snug">' + DOCS[id].texto + '</div>' +
+          '</div>';
+      }).join('');
+
+      const erram = [];
+      document.getElementById('m1-engines').innerHTML = ['bm25', 'bi'].map(m => {
+        const e = ENGINES[m];
+        const lista = q.listas[m];
+        const posAlvo = lista.findIndex(p => p[0] === q.alvo) + 1;
+        if (posAlvo > 1) erram.push(e.nome);
+        const maxS = lista[0][1] || 1;
+        const linhas = lista.map((par, i) => {
+          const erro = i + 1 < posAlvo;
+          const ehAlvo = par[0] === q.alvo;
+          const pct = Math.max(2, Math.round(par[1] / maxS * 100));
+          return '<div class="flex items-center gap-2 text-[11px] font-mono">' +
+              '<span class="w-4 text-slate-500">' + (i + 1) + '</span>' +
+              '<span class="w-7 font-bold ' + (erro ? 'text-rose-400' : (ehAlvo ? 'text-emerald-400' : 'text-slate-300')) + '">' + par[0] + '</span>' +
+              '<div class="flex-1 h-2.5 rounded bg-surface-900 overflow-hidden min-w-0">' +
+                '<div class="h-full rounded" style="width:' + pct + '%;background:' + (erro ? '#fb7185' : e.cor) + '"></div>' +
+              '</div>' +
+              '<span class="w-10 text-right text-slate-500">' + this.fmt(par[1], m === 'bi' ? 2 : 1) + '</span>' +
+            '</div>';
+        }).join('');
+        return '<div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">' +
+            '<div class="flex items-baseline justify-between mb-2.5">' +
+              '<a href="' + e.pagina + '" class="text-xs font-bold hover:underline" style="color:' + e.cor + '">' + e.nome + '</a>' +
+              '<span class="text-[10px] font-mono text-slate-500">' + e.unidade + '</span>' +
+            '</div>' +
+            '<div class="space-y-1.5">' + linhas + '</div>' +
+            '<div class="mt-2.5 pt-2 border-t border-slate-800 text-[10px] font-mono ' + (posAlvo === 1 ? 'text-emerald-400' : 'text-rose-400') + '">' +
+              (posAlvo === 1 ? 'acertou: ' + q.alvo + ' em 1º' : 'errou: ' + q.alvo + ' só em ' + posAlvo + 'º') +
+            '</div>' +
+          '</div>';
+      }).join('');
+
+      const v = document.getElementById('m1-verdict');
+      v.className = 'mt-4 text-xs leading-relaxed p-3.5 rounded-xl border ' +
+        (erram.length ? 'bg-rose-950/30 border-rose-500/30 text-slate-300' : 'bg-emerald-950/30 border-emerald-500/30 text-slate-300');
+      v.innerHTML = 'Nesta consulta, <strong class="text-rose-300">' + (erram.length ? erram.join(' e ') : 'ninguém') +
+        '</strong> erra: ' + q.porque + ' Troque a consulta e o erro muda de motor — é exatamente por isso que se rodam os dois.';
+    },
+
+    /* Módulo 02: soma crua dos scores + fatia do BM25 na soma. */
+    renderM2() {
+      const q = QUERIES[this.qidx];
+      const linhas = Object.keys(DOCS).map(id => {
+        const b = this.scoreBruto('bm25', id), c = this.scoreBruto('bi', id);
+        const soma = b + c;
+        return { id, b, c, soma, fatia: soma > 0 ? b / soma : 0 };
+      }).sort((a, x) => x.soma - a.soma);
+
+      const ordemBM25 = q.listas.bm25.map(p => p[0]);
+      const iguais = linhas.filter((l, i) => ordemBM25[i] === l.id).length;
+      const fatiaMedia = linhas.reduce((a, l) => a + l.fatia, 0) / linhas.length;
+
+      document.getElementById('m2-table').innerHTML = linhas.map((l, i) => {
+        const alvo = l.id === q.alvo;
+        return '<tr class="border-b border-slate-800/60">' +
+            '<td class="py-2 pr-2 text-slate-500">' + (i + 1) + 'º</td>' +
+            '<td class="py-2 pr-2 font-bold ' + (alvo ? 'text-emerald-400' : 'text-slate-300') + '">' + l.id + (alvo ? ' ★' : '') + '</td>' +
+            '<td class="py-2 px-2 text-right text-cyan-400">' + this.fmt(l.b, 1) + '</td>' +
+            '<td class="py-2 px-2 text-right text-emerald-400">' + this.fmt(l.c, 2) + '</td>' +
+            '<td class="py-2 px-2 text-right text-white font-bold">' + this.fmt(l.soma, 2) + '</td>' +
+            '<td class="py-2 pl-2 text-right ' + (l.fatia > 0.8 ? 'text-rose-400' : 'text-slate-500') + '">' + Math.round(l.fatia * 100) + '%</td>' +
+          '</tr>';
+      }).join('');
+
+      const melhorCos = Math.max.apply(null, q.listas.bi.map(p => p[1]));
+      document.getElementById('m2-verdict').innerHTML =
+        'A soma crua reproduz o ranking do BM25 em <strong class="text-rose-300">' + iguais + ' de 5</strong> posições, ' +
+        'porque o BM25 responde por <strong class="text-rose-300">' + Math.round(fatiaMedia * 100) + '%</strong> da soma em média. ' +
+        'O motor denso virou um arredondamento: o melhor cosseno da lista (' + this.fmt(melhorCos, 2) + ') não consegue mover ' +
+        'documento algum contra um BM25 de ' + this.fmt(q.listas.bm25[0][1], 1) + '.';
+    },
+
+    /* Módulo 03: a mesa de fusão — listas arrastáveis + ranking fundido. */
+    renderLab() {
+      const motores = this.motoresAtivos();
+
+      document.getElementById('lab-k-out').textContent = this.k;
+      document.getElementById('lab-nlists').textContent = motores.length + ' listas';
+
+      document.getElementById('lab-inputs').innerHTML = motores.map(m => {
+        const e = ENGINES[m];
+        const itens = this.ordem[m].map((id, i) => {
+          return '<li draggable="true" data-motor="' + m + '" data-id="' + id + '"' +
+              ' class="lab-item flex items-center gap-2 px-2 py-1.5 rounded-lg bg-surface-900 border border-slate-800 cursor-grab active:cursor-grabbing transition hover:border-slate-600">' +
+              '<i class="fa-solid fa-grip-vertical text-[10px] text-slate-600"></i>' +
+              '<span class="font-mono text-[11px] text-slate-500 w-4">' + (i + 1) + '</span>' +
+              '<span class="font-mono text-xs font-bold text-slate-200">' + id + '</span>' +
+              '<span class="text-[10px] text-slate-500 truncate min-w-0 flex-1">' + DOCS[id].titulo + '</span>' +
+              '<span class="font-mono text-[10px] px-1.5 py-0.5 rounded" style="background:' + e.cor + '22;color:' + e.cor + '">1/' + (this.k + i + 1) + '</span>' +
+              '<span class="flex flex-col leading-none">' +
+                '<button onclick="RRF.mover(\'' + m + '\',' + i + ',-1)" class="text-slate-600 hover:text-white text-[9px] px-1" aria-label="Subir ' + id + '"><i class="fa-solid fa-caret-up"></i></button>' +
+                '<button onclick="RRF.mover(\'' + m + '\',' + i + ',1)" class="text-slate-600 hover:text-white text-[9px] px-1" aria-label="Descer ' + id + '"><i class="fa-solid fa-caret-down"></i></button>' +
+              '</span>' +
+            '</li>';
+        }).join('');
+        return '<div class="p-3 rounded-xl bg-surface-950 border border-slate-800">' +
+            '<div class="flex items-baseline justify-between mb-2">' +
+              '<span class="text-xs font-bold" style="color:' + e.cor + '">' + e.nome + '</span>' +
+              '<span class="text-[10px] font-mono text-slate-500">parcela 1/(' + this.k + ' + rank)</span>' +
+            '</div>' +
+            '<ul class="space-y-1.5" data-lista="' + m + '">' + itens + '</ul>' +
+          '</div>';
+      }).join('');
+
+      this.ligarDrag();
+
+      const linhas = this.fundir(motores);
+      const melhor = motores.length / (this.k + 1);
+      const pior = motores.length / (this.k + 5);
+
+      document.getElementById('lab-fused').innerHTML = linhas.map((l, i) => {
+        const pct = melhor > pior ? Math.max(2, Math.round((l.score - pior) / (melhor - pior) * 100)) : 100;
+        const parcelas = l.parcelas.map(p =>
+          '<span class="font-mono text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap" style="background:' + ENGINES[p.motor].cor + '22;color:' + ENGINES[p.motor].cor + '"' +
+          ' title="' + ENGINES[p.motor].nome + ', ' + p.rank + 'º">1/' + (this.k + p.rank) + '</span>'
+        ).join('<span class="text-slate-600 text-[10px]">+</span>');
+        return '<div class="p-2.5 rounded-xl bg-surface-950 border ' +
+            (l.empate ? 'border-amber-500/40' : (i === 0 ? 'border-cyan-500/40' : 'border-slate-800')) + '">' +
+            '<div class="flex items-center gap-2 mb-1.5">' +
+              '<span class="font-mono text-[11px] text-slate-500 w-5">' + (i + 1) + 'º</span>' +
+              '<span class="font-mono text-xs font-bold ' + (l.empate ? 'text-amber-300' : (i === 0 ? 'text-cyan-300' : 'text-slate-300')) + '">' + l.id + '</span>' +
+              '<div class="flex-1 h-2.5 rounded bg-surface-900 overflow-hidden min-w-0">' +
+                '<div class="h-full rounded ' + (l.empate ? 'bg-amber-500' : (i === 0 ? 'bg-cyan-500' : 'bg-slate-600')) + '" style="width:' + pct + '%"></div>' +
+              '</div>' +
+              '<span class="font-mono text-[11px] font-bold ' + (l.empate ? 'text-amber-300' : 'text-cyan-300') + '">' + this.fmt(l.score, 4) + (l.empate ? ' !' : '') + '</span>' +
+            '</div>' +
+            '<div class="flex flex-wrap items-center gap-1 pl-7">' + parcelas +
+              '<span class="text-slate-600 text-[10px]">=</span>' +
+              '<span class="font-mono text-[10px] text-slate-400">' + this.fmt(l.score, 4) + '</span>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+
+      const empatados = linhas.filter(l => l.empate).map(l => l.id);
+      const nota = document.getElementById('lab-note');
+      if (empatados.length) {
+        nota.className = 'mt-4 text-xs leading-relaxed p-3.5 rounded-xl border bg-amber-950/30 border-amber-500/40 text-slate-300';
+        nota.innerHTML = '<strong class="text-amber-300">Empate:</strong> ' + empatados.join(' e ') + ' somam exatamente ' +
+          this.fmt(linhas[0].score, 4) + '. Com duas listas, quem é 1º numa e 2º na outra empata com o inverso — e a soma de ranks ' +
+          '(1+2 = 2+1) também não desempata. Ligue a 3ª lista acima, ou arraste um documento, para ver o empate se desfazer.';
+      } else {
+        nota.className = 'mt-4 text-xs leading-relaxed p-3.5 rounded-xl border bg-cyan-950/30 border-cyan-500/40 text-slate-300';
+        nota.innerHTML = '<strong class="text-cyan-300">' + linhas[0].id + ' lidera</strong> com ' + this.fmt(linhas[0].score, 4) +
+          ' contra ' + this.fmt(linhas[1].score, 4) + ' de ' + linhas[1].id + '. A diferença aparece na 4ª casa decimal: ' +
+          'é a escala natural do RRF, e ela basta — o que importa é a ordem, não a distância.';
+      }
+    },
+
+    mover(motor, i, d) {
+      const lista = this.ordem[motor];
+      const j = i + d;
+      if (j < 0 || j >= lista.length) return;
+      const tmp = lista[i]; lista[i] = lista[j]; lista[j] = tmp;
+      this.renderLab();
+    },
+
+    ligarDrag() {
+      document.querySelectorAll('#lab-inputs .lab-item').forEach(li => {
+        li.addEventListener('dragstart', e => {
+          this.drag = { motor: li.dataset.motor, id: li.dataset.id };
+          li.classList.add('opacity-40');
+          e.dataTransfer.effectAllowed = 'move';
+          try { e.dataTransfer.setData('text/plain', li.dataset.id); } catch (err) {}
+        });
+        li.addEventListener('dragend', () => li.classList.remove('opacity-40'));
+        li.addEventListener('dragover', e => {
+          if (this.drag && this.drag.motor === li.dataset.motor) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+        });
+        li.addEventListener('drop', e => {
+          e.preventDefault();
+          if (!this.drag || this.drag.motor !== li.dataset.motor) return;
+          const lista = this.ordem[li.dataset.motor];
+          const arrastado = this.drag.id;
+          const alvo = li.dataset.id;
+          this.drag = null;
+          const de = lista.indexOf(arrastado);
+          if (de < 0 || arrastado === alvo) return;
+          lista.splice(de, 1);                       // remove primeiro: o índice de destino é recalculado depois
+          const para = lista.indexOf(alvo);
+          if (para < 0) { lista.splice(de, 0, arrastado); return; }
+          lista.splice(para, 0, arrastado);
+          this.renderLab();
+        });
+      });
+    },
+
+    /* Módulo 04: tabela de parcelas, regime e canvas da curva. */
+    renderK() {
+      document.getElementById('k2-out').textContent = this.k;
+      const p1 = 1 / (this.k + 1);
+      document.getElementById('k-table').innerHTML = [1, 2, 3, 5, 10].map(r => {
+        const v = 1 / (this.k + r);
+        return '<tr class="border-b border-slate-800/60">' +
+            '<td class="py-1.5 px-3 text-slate-300">' + r + 'º</td>' +
+            '<td class="py-1.5 px-3 text-slate-500">1 / (' + this.k + ' + ' + r + ')</td>' +
+            '<td class="py-1.5 px-3 text-right text-amber-300 font-bold">' + this.fmt(v, 5) + '</td>' +
+            '<td class="py-1.5 px-3 text-right text-slate-500">' + this.fmt(v / p1 * 100, 1) + '%</td>' +
+          '</tr>';
+      }).join('');
+
+      const razao = p1 / (1 / (this.k + 5));
+      const box = document.getElementById('k-regime');
+      let cls, txt;
+      if (this.k <= 5) {
+        cls = 'bg-rose-950/30 border-rose-500/40';
+        txt = '<strong class="text-rose-300">Regime íngreme.</strong> Com $k = ' + this.k + '$, o 1º lugar vale ' + this.fmt(razao, 2) +
+          '× o 5º. A fusão vira uma votação por primeiro lugar: basta um motor liderar para carregar o documento ao topo — ruído incluído.';
+      } else if (this.k >= 100) {
+        cls = 'bg-amber-950/30 border-amber-500/40';
+        txt = '<strong class="text-amber-300">Regime achatado.</strong> Com $k = ' + this.k + '$, o 1º lugar vale apenas ' + this.fmt(razao, 3) +
+          '× o 5º. As posições quase se equivalem e o RRF degenera numa média de posições, perdendo a sensibilidade ao topo.';
+      } else {
+        cls = 'bg-emerald-950/30 border-emerald-500/40';
+        txt = '<strong class="text-emerald-300">Meio-termo.</strong> Com $k = ' + this.k + '$, o 1º lugar vale ' + this.fmt(razao, 3) +
+          '× o 5º: o topo pesa mais, mas nenhuma lista sozinha decide. É a faixa em que o RRF foi calibrado por Cormack et al. (2009).';
+      }
+      box.className = 'mt-4 text-xs leading-relaxed p-3.5 rounded-xl border text-slate-300 ' + cls;
+      box.innerHTML = txt;
+
+      this.drawK();
+    },
+
+    drawK() {
+      const cv = document.getElementById('k-canvas');
+      if (!cv || !cv.clientWidth) return;
+      const dpr = window.devicePixelRatio || 1;
+      const W = cv.clientWidth, H = 260;
+      cv.width = W * dpr; cv.height = H * dpr;
+      const g = cv.getContext('2d');
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, W, H);
+
+      const L = 44, R = 12, T = 16, B = 30;
+      const pw = W - L - R, ph = H - T - B;
+      const RANKS = 10;
+      const x = r => L + (r - 1) / (RANKS - 1) * pw;
+      const y = v => T + (1 - v) * ph;
+
+      g.strokeStyle = '#1e293b'; g.lineWidth = 1;
+      g.font = '10px JetBrains Mono, monospace'; g.fillStyle = '#64748b';
+      for (let i = 0; i <= 4; i++) {
+        const v = i / 4, py = y(v);
+        g.beginPath(); g.moveTo(L, py); g.lineTo(L + pw, py); g.stroke();
+        g.textAlign = 'right'; g.fillText(Math.round(v * 100) + '%', L - 6, py + 3);
+      }
+      g.textAlign = 'center';
+      for (let r = 1; r <= RANKS; r++) {
+        if (r === 1 || r % 3 === 0 || r === RANKS) g.fillText(String(r), x(r), H - 12);
+      }
+      g.fillStyle = '#475569';
+      g.fillText('posição (rank)', L + pw / 2, H - 1);
+
+      const curva = (kk, cor, largura, tracejado) => {
+        g.strokeStyle = cor; g.lineWidth = largura;
+        g.setLineDash(tracejado ? [4, 4] : []);
+        g.beginPath();
+        for (let r = 1; r <= RANKS; r++) {
+          const v = (1 / (kk + r)) / (1 / (kk + 1));
+          if (r === 1) g.moveTo(x(r), y(v)); else g.lineTo(x(r), y(v));
+        }
+        g.stroke();
+        g.setLineDash([]);
+      };
+      curva(1, '#fb7185', 1.5, true);
+      curva(60, '#34d399', 1.5, true);
+      curva(this.k, '#fbbf24', 2.5, false);
+
+      g.fillStyle = '#fbbf24';
+      for (let r = 1; r <= RANKS; r++) {
+        const v = (1 / (this.k + r)) / (1 / (this.k + 1));
+        g.beginPath(); g.arc(x(r), y(v), 2.5, 0, Math.PI * 2); g.fill();
+      }
+
+      g.font = '10px JetBrains Mono, monospace'; g.textAlign = 'left';
+      const leg = [['k = 1', '#fb7185'], ['k = 60', '#34d399'], ['k = ' + this.k + ' (atual)', '#fbbf24']];
+      leg.forEach((l, i) => {
+        const ly = T + 10 + i * 14;
+        g.fillStyle = l[1]; g.fillRect(L + pw - 112, ly - 6, 8, 3);
+        g.fillStyle = '#94a3b8'; g.fillText(l[0], L + pw - 100, ly - 2);
+      });
+    },
+
+    /* Módulo 05: saída do snippet Python, calculada de verdade. */
+    renderPy() {
+      const bm25 = ['D5', 'D2', 'D3', 'D1', 'D4'];
+      const denso = ['D2', 'D5', 'D3', 'D1', 'D4'];
+      const splade = ['D2', 'D5', 'D3', 'D1', 'D4'];
+      const calc = listas => {
+        const s = {};
+        listas.forEach(l => l.forEach((id, i) => { s[id] = (s[id] || 0) + 1 / (60 + i + 1); }));
+        return Object.keys(s).map(id => [id, s[id]]).sort((a, b) => b[1] - a[1]);
+      };
+      const tres = calc([bm25, denso, splade]);
+      const dois = calc([bm25, denso]);
+      document.getElementById('py-out').textContent =
+        '[' + tres.map(p => "('" + p[0] + "', " + p[1].toFixed(4) + ')').join(', ') + ']';
+      document.getElementById('py-note').textContent =
+        '# com só [bm25, denso], D2 e D5 empatam em ' + dois[0][1].toFixed(4) + ': a 3a lista desempata';
+    }
+  };
+
+  Guia.ready(() => RRF.init());
+  Guia.onSlide(3, () => RRF.drawK());
+  window.addEventListener('resize', () => RRF.drawK());
+  </script>
+</body>
+</html>

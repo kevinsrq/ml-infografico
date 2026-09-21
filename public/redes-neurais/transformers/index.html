@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transformers</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/guia.css">
+  <script src="../../assets/guia.js"></script>
+
+  <style>
+    /* Estados das peças do diagrama. O resto do visual sai dos atributos SVG. */
+    .peca { cursor: pointer; }
+    .peca .caixa { transition: filter 160ms, stroke-width 160ms; }
+    .peca:hover .caixa,
+    .peca:focus-visible .caixa { filter: brightness(1.35); stroke-width: 2.5; }
+    .peca:focus-visible { outline: none; }
+    .peca.ativa .caixa { stroke-width: 3; filter: brightness(1.4); }
+    .peca.pendente .caixa { opacity: .8; }
+    .peca.pendente .rotulo { opacity: .8; }
+  </style>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Transformers"
+      data-badge="Seção 2.1"
+      data-subtitle="A arquitetura completa, peça por peça (Vaswani et al., 2017)"
+      data-icon="fa-diagram-project"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <nav class="text-xs text-slate-500 mb-6 flex items-center gap-2 flex-wrap">
+      <a href="../../index.html" class="hover:text-slate-300 transition">Guia Técnico</a>
+      <i class="fa-solid fa-chevron-right text-[8px]"></i>
+      <a href="../index.html" class="hover:text-slate-300 transition">2. Redes Neurais</a>
+      <i class="fa-solid fa-chevron-right text-[8px]"></i>
+      <span class="text-slate-300"><strong class="font-mono text-brand-400">2.1</strong> Transformers</span>
+    </nav>
+
+    <div class="mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-4">
+        <i class="fa-solid fa-diagram-project"></i> Seção 2.1 • Arquitetura
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+        O mapa da arquitetura — <span class="bg-gradient-to-r from-brand-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">clique em qualquer peça</span>
+      </h2>
+      <p class="text-slate-400 mt-3 max-w-3xl text-sm sm:text-base leading-relaxed">
+        O diagrama abaixo é a arquitetura encoder-decoder do paper original. Cada bloco é um tópico
+        desta seção: passe o mouse para ver o resumo ao lado e clique para abrir a página inteira.
+
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-10">
+
+      <!-- Diagrama -->
+      <div class="xl:col-span-3 rounded-2xl bg-surface-900 border border-slate-800 p-4 sm:p-5">
+        <div class="overflow-x-auto">
+          <svg id="diagrama" viewBox="0 0 680 706" role="img"
+               aria-label="Arquitetura Transformer: codificador à esquerda, decodificador à direita"
+               class="w-full h-auto" style="min-width:560px">
+
+            <defs>
+              <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+              </marker>
+              <marker id="seta-brand" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#818cf8"/>
+              </marker>
+            </defs>
+
+            <!-- caixas tracejadas dos blocos repetidos (ficam atrás das peças) -->
+            <g fill="none" stroke-dasharray="6 4" stroke-width="1.6">
+              <rect id="dash-enc" x="100" y="220" width="200" height="254" rx="6" stroke="#475569"/>
+              <rect id="dash-dec" x="360" y="96" width="200" height="378" rx="6" stroke="#475569"/>
+            </g>
+
+            <!-- tronco vertical: a sequência sobe da entrada para a saída -->
+            <g stroke="#94a3b8" stroke-width="1.6" fill="none" marker-end="url(#seta)">
+              <path d="M 200 630 L 200 598"/>
+              <path d="M 200 558 L 200 531"/>
+              <path d="M 200 501 L 200 462"/>
+              <path d="M 200 422 L 200 400"/>
+              <path d="M 200 360 L 200 338"/>
+              <path d="M 200 298 L 200 276"/>
+
+              <path d="M 460 630 L 460 598"/>
+              <path d="M 460 558 L 460 531"/>
+              <path d="M 460 501 L 460 462"/>
+              <path d="M 460 422 L 460 400"/>
+              <path d="M 460 360 L 460 338"/>
+              <path d="M 460 298 L 460 276"/>
+              <path d="M 460 236 L 460 214"/>
+              <path d="M 460 174 L 460 152"/>
+              <path d="M 460 112 L 460 66"/>
+
+              <path d="M 104 514 L 183 514"/>
+              <path d="M 576 514 L 477 514"/>
+            </g>
+
+            <!-- conexões residuais: a entrada do sublayer contorna e entra no Add and norm -->
+            <g stroke="#64748b" stroke-width="1.4" fill="none" marker-end="url(#seta)">
+              <path d="M 200 468 L 112 468 L 112 378 L 126 378"/>
+              <path d="M 200 348 L 112 348 L 112 254 L 126 254"/>
+              <path d="M 460 468 L 548 468 L 548 378 L 534 378"/>
+              <path d="M 460 348 L 548 348 L 548 254 L 534 254"/>
+              <path d="M 460 224 L 548 224 L 548 130 L 534 130"/>
+            </g>
+
+            <!-- ligação codificador -> decodificador (cross-attention) -->
+            <path id="via-cross" d="M 245 220 L 245 196 L 330 196 L 330 316 L 384 316"
+                  stroke="#818cf8" stroke-width="2" fill="none" marker-end="url(#seta-brand)"/>
+
+            <!-- rótulos fixos -->
+            <g font-family="Inter, sans-serif" fill="#94a3b8" font-size="13">
+              <text x="170" y="210" text-anchor="middle" fill="#cbd5e1" font-weight="600" font-size="14">Encoder</text>
+              <text x="460" y="16" text-anchor="middle" fill="#cbd5e1" font-weight="600" font-size="14">Decoder</text>
+              <text x="200" y="650" text-anchor="middle">Sources</text>
+              <text x="460" y="650" text-anchor="middle">Targets</text>
+            </g>
+
+            <!-- exemplo concreto: a tarefa do paper original é tradução automática -->
+            <g font-family="JetBrains Mono, monospace" font-size="11.5">
+              <text x="200" y="676" text-anchor="middle" fill="#22d3ee">O livro está sobre a mesa</text>
+              <text id="ex-target" x="460" y="676" text-anchor="middle" fill="#34d399">⟨bos⟩ The book is on the</text>
+              <text x="460" y="694" text-anchor="middle" fill="#64748b" font-size="10">deslocado à direita: só o que já foi gerado</text>
+              <text x="546" y="40" text-anchor="start" fill="#34d399" font-size="11">próximo token:</text>
+              <text id="ex-proximo" x="546" y="56" text-anchor="start" fill="#34d399" font-size="12" font-weight="600">table</text>
+              <text x="90" y="352" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="12" fill="#64748b">n ×</text>
+              <text x="570" y="290" text-anchor="start" font-family="JetBrains Mono, monospace" font-size="12" fill="#64748b">× n</text>
+            </g>
+
+            <!-- somas posicionais -->
+            <g id="somas"></g>
+
+            <!-- peças clicáveis (geradas por JS) -->
+            <g id="pecas"></g>
+          </svg>
+        </div>
+
+
+        <div class="mt-4 pt-4 border-t border-slate-800">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-language text-cyan-400"></i> O exemplo do diagrama: tradução
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            A tarefa em que o Transformer foi apresentado é <strong class="text-slate-300">tradução automática</strong>
+            (Vaswani et al., 2017, avaliado em WMT 2014 inglês→alemão e inglês→francês; os autores eram do Google,
+            que já usava tradução neural com atenção em produção). <strong class="text-slate-300">Sources</strong> é a
+            frase a traduzir; <strong class="text-slate-300">Targets</strong> é a tradução — com uma ressalva que o
+            diagrama esconde.
+          </p>
+          <div class="rounded-xl bg-amber-500/5 border border-amber-500/25 p-3 mb-3">
+            <p class="text-xs text-amber-200/90 leading-relaxed">
+              <strong>Targets não é a tradução inteira.</strong> É a tradução <em>deslocada à direita</em>: começa em
+              <code class="font-mono text-[11px] bg-surface-950 px-1 rounded">⟨bos⟩</code> e, a cada passo, contém só o
+              que já foi produzido. A saída do FC é sempre o <em>próximo</em> token. No treino o prefixo correto é
+              entregue de uma vez (<em>teacher forcing</em>); na inferência o modelo se alimenta da própria saída.
+            </p>
+          </div>
+          <p class="text-[11px] text-slate-500 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-play text-[9px] text-emerald-500/70"></i>
+            O <strong class="text-slate-400">Targets</strong> do diagrama roda esse laço sozinho, um token por passo.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-500">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:#1e3a8a;border:1.5px solid #60a5fa"></span> Atenção</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:#0c4a6e;border:1.5px solid #38bdf8"></span> Rede feed-forward</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:#0f172a;border:1.5px solid #64748b"></span> Normalização e entrada</span>
+          <span class="flex items-center gap-1.5"><span class="font-mono" style="color:#22d3ee">abc</span> Exemplo de dado</span>
+        </div>
+      </div>
+
+      <!-- Painel lateral -->
+      <div class="xl:col-span-2">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 xl:sticky xl:top-24">
+          <div id="painel-vazio">
+            <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 mb-3">
+              <i class="fa-solid fa-hand-pointer"></i>
+            </div>
+            <h3 class="font-bold text-white text-sm">Escolha uma peça</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Passe o mouse sobre qualquer bloco do diagrama — ou navegue com <kbd class="px-1 py-0.5 rounded bg-surface-950 border border-slate-700 font-mono text-[10px]">Tab</kbd> —
+              para ver o que ele faz e para onde ele leva.
+            </p>
+          </div>
+
+          <div id="painel" class="hidden">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="min-w-0">
+                <span id="p-num" class="font-mono text-[10px] text-slate-500"></span>
+                <h3 id="p-titulo" class="font-bold text-white text-base leading-tight"></h3>
+              </div>
+              <span id="p-icone" class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-sm"></span>
+            </div>
+            <p id="p-resumo" class="text-xs text-slate-400 leading-relaxed mb-4"></p>
+            <div id="p-acao"></div>
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-slate-800">
+            <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Tópicos desta seção</p>
+            <ul id="lista-topicos" class="space-y-1"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Como ler o diagrama -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+        <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+          <i class="fa-solid fa-arrow-up text-cyan-400"></i> Sobe da entrada para a saída
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Os tokens entram embaixo, viram vetores no <strong class="text-slate-300">Embedding</strong>, recebem a posição
+          no <strong class="text-slate-300">⊕</strong> e atravessam a pilha. A seta que contorna cada sublayer é a
+          conexão residual: a entrada é somada à saída antes da normalização.
+        </p>
+      </div>
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+        <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+          <i class="fa-solid fa-repeat text-emerald-400"></i> O <span class="font-mono">n ×</span> é literal
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          A caixa tracejada é <em>um</em> bloco, empilhado $n$ vezes — 6 no paper original. Todos têm a mesma
+          forma e pesos independentes. É por isso que entender um bloco é entender a arquitetura inteira.
+        </p>
+      </div>
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+        <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+          <i class="fa-solid fa-arrow-right-arrow-left text-brand-400"></i> A seta roxa é a ponte
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          A saída do codificador entra no meio de cada bloco do decodificador como chave e valor —
+          é a <strong class="text-slate-300">cross-attention</strong>, o único ponto em que os dois lados se falam.
+        </p>
+      </div>
+    </div>
+
+    <!-- Relação com o capítulo 1 -->
+    <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-slate-800 p-5 sm:p-6 text-xs text-slate-400 leading-relaxed">
+      <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-circle-info text-brand-400"></i> Já vi Transformer no capítulo 1. Qual a diferença?
+      </h3>
+      <p>
+        A página <a href="../../ir/densos/transformer/index.html" class="text-brand-400 hover:underline">1.2.4 Arquitetura Transformer</a>
+        olha o Transformer <em>de fora</em>, pelo que interessa à busca: como uma frase vira vetores contextuais e quais
+        são as três saídas que um motor de recuperação consome. Esta seção olha <em>de dentro</em>: cada peça do
+        diagrama, a matemática dela e por que ela existe. Se seu objetivo é montar um retriever, 1.2.4 basta.
+        Se é entender ou modificar a arquitetura, comece por aqui.
+      </p>
+    </div>
+
+  </main>
+
+  <script>
+    // Cada peça: posição no viewBox, rótulo em até 2 linhas, tipo (cor) e destino.
+    // href null = página ainda não escrita: a peça vira botão e avisa em vez de navegar.
+    const W = 140, H = 36, ENC = 200, DEC = 460;
+
+    const PECAS = [
+      { id: 'fc', x: DEC, y: 26, l: ['FC'], tipo: 'ffn', n: '2.1.5', icone: 'fa-square-poll-vertical',
+        titulo: 'Camada de Saída (FC)', href: 'fc/index.html', pendente: false,
+        resumo: 'Projeta o vetor de cada posição para o tamanho do vocabulário, produzindo os logits do próximo token. Cada coluna da matriz é o vetor de uma palavra: o logit é um produto escalar.' },
+
+      { id: 'an-dec-3', x: DEC, y: 112, l: ['Add & norm'], tipo: 'norm', n: '2.1.2.2', icone: 'fa-layer-group',
+        titulo: 'Add & Norm', href: 'bloco/add-norm/index.html', pendente: false,
+        resumo: 'Soma a entrada do sublayer à saída dele (conexão residual) e normaliza. É o que permite empilhar dezenas de blocos sem o gradiente sumir — e o ponto onde pré-norma e pós-norma mudam a estabilidade do treino.' },
+
+      { id: 'ffn-dec', x: DEC, y: 174, l: ['Positionwise', 'FFN'], tipo: 'ffn', n: '2.1.2.3', icone: 'fa-arrows-left-right-to-line',
+        titulo: 'Positionwise FFN', href: 'bloco/ffn/index.html', pendente: false,
+        resumo: 'Duas camadas densas aplicadas a cada posição de forma independente, com expansão no meio. É onde mora a maior parte dos parâmetros do modelo — a atenção mistura posições, a FFN processa cada uma.' },
+
+      { id: 'an-dec-2', x: DEC, y: 236, l: ['Add & norm'], tipo: 'norm', n: '2.1.2.2', icone: 'fa-layer-group',
+        titulo: 'Add & Norm', href: 'bloco/add-norm/index.html', pendente: false,
+        resumo: 'Mesmo bloco de normalização, agora depois da cross-attention.' },
+
+      { id: 'cross', x: DEC, y: 298, l: ['Multi-head', 'attention'], tipo: 'attn', n: '2.1.3.1', icone: 'fa-arrow-right-arrow-left',
+        titulo: 'Cross-attention', href: 'encoder/cross-attention/index.html', pendente: false,
+        resumo: 'A única ponte entre os dois lados: as consultas vêm do decodificador, as chaves e os valores vêm da saída do codificador. É aqui que a tradução "olha" para a frase de origem.' },
+
+      { id: 'an-dec-1', x: DEC, y: 360, l: ['Add & norm'], tipo: 'norm', n: '2.1.2.2', icone: 'fa-layer-group',
+        titulo: 'Add & Norm', href: 'bloco/add-norm/index.html', pendente: false,
+        resumo: 'Normalização logo após a atenção mascarada.' },
+
+      { id: 'masked', x: DEC, y: 422, l: ['Masked', 'multi-head attention'], tipo: 'attn', n: '2.1.4.1', icone: 'fa-eye-slash',
+        titulo: 'Masked Multi-head Attention', href: 'decoder/masked-attention/index.html', pendente: false,
+        resumo: 'Igual à atenção normal, com uma máscara triangular que zera tudo à frente: a posição $t$ só enxerga até $t$. Sem isso o modelo veria a resposta durante o treino e colapsaria na inferência.' },
+
+      { id: 'an-enc-2', x: ENC, y: 236, l: ['Add & norm'], tipo: 'norm', n: '2.1.2.2', icone: 'fa-layer-group',
+        titulo: 'Add & Norm', href: 'bloco/add-norm/index.html', pendente: false,
+        resumo: 'Residual mais normalização, depois da FFN do codificador.' },
+
+      { id: 'ffn-enc', x: ENC, y: 298, l: ['Positionwise', 'FFN'], tipo: 'ffn', n: '2.1.2.3', icone: 'fa-arrows-left-right-to-line',
+        titulo: 'Positionwise FFN', href: 'bloco/ffn/index.html', pendente: false,
+        resumo: 'A mesma rede feed-forward por posição, no lado do codificador.' },
+
+      { id: 'an-enc-1', x: ENC, y: 360, l: ['Add & norm'], tipo: 'norm', n: '2.1.2.2', icone: 'fa-layer-group',
+        titulo: 'Add & Norm', href: 'bloco/add-norm/index.html', pendente: false,
+        resumo: 'Residual mais normalização, depois da multi-head attention.' },
+
+      { id: 'mha-enc', x: ENC, y: 422, l: ['Multi-head', 'attention'], tipo: 'attn', n: '2.1.2.1', icone: 'fa-network-wired',
+        titulo: 'Multi-head Attention', href: 'bloco/multi-head-attention/index.html', pendente: false,
+        resumo: 'O coração da arquitetura: cada token consulta todos os outros por meio de $Q$, $K$ e $V$, em várias cabeças paralelas que aprendem relações diferentes.' },
+
+      { id: 'pe-enc', x: 52, y: 494, w: 104, h: 40, l: ['Positional', 'encoding'], tipo: 'norm', n: '2.1.1', icone: 'fa-wave-square',
+        titulo: 'Positional Encoding', href: 'positional-encoding/index.html', pendente: false,
+        resumo: 'A atenção é cega à ordem: sem esta peça, "o cão mordeu o homem" e "o homem mordeu o cão" produzem exatamente a mesma saída. Senos e cossenos de frequências diferentes injetam a posição no vetor.' },
+
+      { id: 'pe-dec', x: 628, y: 494, w: 104, h: 40, l: ['Positional', 'encoding'], tipo: 'norm', n: '2.1.1', icone: 'fa-wave-square',
+        titulo: 'Positional Encoding', href: 'positional-encoding/index.html', pendente: false,
+        resumo: 'A mesma codificação de posição, aplicada à sequência de destino.' },
+
+      { id: 'emb-enc', x: ENC, y: 558, l: ['Embedding'], tipo: 'norm', n: '1.2.1', icone: 'fa-vector-square',
+        titulo: 'Embedding', href: '../../ir/densos/embeddings/index.html', pendente: false,
+        resumo: 'Converte cada token em um vetor denso treinável. É o mesmo conceito da seção 1.2.1, no capítulo de recuperação de informação — abre naquela página.' },
+
+      { id: 'emb-dec', x: DEC, y: 558, l: ['Embedding'], tipo: 'norm', n: '1.2.1', icone: 'fa-vector-square',
+        titulo: 'Embedding', href: '../../ir/densos/embeddings/index.html', pendente: false,
+        resumo: 'Mesma tabela de embeddings, aplicada aos tokens já gerados.' },
+
+      { id: 'dash-enc', caixaExistente: 'dash-enc', n: '2.1.3', icone: 'fa-right-to-bracket',
+        titulo: 'Encoder', href: 'encoder/index.html', pendente: false,
+        resumo: 'A pilha completa do lado da entrada: $n$ blocos idênticos que transformam a sequência de origem em vetores contextuais, lidos depois pela cross-attention.' },
+
+      { id: 'dash-dec', caixaExistente: 'dash-dec', n: '2.1.4', icone: 'fa-right-from-bracket',
+        titulo: 'Decoder', href: 'decoder/index.html', pendente: false,
+        resumo: 'A pilha do lado da saída: gera um token por vez, olhando só para o passado (atenção mascarada) e para a saída do codificador (cross-attention).' },
+    ];
+
+    const CORES = {
+      attn: { fill: '#1e3a8a', stroke: '#60a5fa', texto: '#e0e7ff', chip: 'bg-blue-500/15 border-blue-500/30 text-blue-300' },
+      ffn:  { fill: '#0c4a6e', stroke: '#38bdf8', texto: '#e0f2fe', chip: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300' },
+      norm: { fill: '#0f172a', stroke: '#64748b', texto: '#e2e8f0', chip: 'bg-slate-500/15 border-slate-500/30 text-slate-300' },
+    };
+
+    const porId = id => PECAS.find(p => p.id === id);
+    let ativa = null;
+
+    function esc(t) {
+      return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    }
+
+    function svgEl(nome, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', nome);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      return el;
+    }
+
+    function montarSomas() {
+      const g = document.getElementById('somas');
+      [ENC, DEC].forEach(cx => {
+        g.appendChild(svgEl('circle', { cx, cy: 514, r: 13, fill: '#0f172a', stroke: '#94a3b8', 'stroke-width': 1.6 }));
+        g.appendChild(svgEl('path', { d: `M ${cx - 6} 514 H ${cx + 6} M ${cx} 508 V 520`, stroke: '#94a3b8', 'stroke-width': 1.6 }));
+      });
+    }
+
+    function montarPecas() {
+      const g = document.getElementById('pecas');
+
+      PECAS.forEach(p => {
+        const grupo = svgEl('g', {
+          class: 'peca' + (p.pendente ? ' pendente' : ''),
+          'data-id': p.id, tabindex: '0', role: 'button',
+          'aria-label': `${p.titulo}${p.pendente ? ' (página ainda não escrita)' : ''}`,
+        });
+
+        if (p.caixaExistente) {
+          // As caixas tracejadas Encoder/Decoder já estão no SVG: só viram alvo de clique,
+          // com um retângulo transparente por cima da borda para não cobrir o conteúdo.
+          const r = document.getElementById(p.caixaExistente);
+          r.classList.add('caixa');
+          const x = +r.getAttribute('x'), y = +r.getAttribute('y');
+          const w = +r.getAttribute('width'), h = +r.getAttribute('height');
+          const T = 8;
+          grupo.appendChild(svgEl('rect', { x: x - T, y: y - T, width: w + 2 * T, height: T, fill: 'transparent' }));
+          grupo.appendChild(svgEl('rect', { x: x - T, y: y + h, width: w + 2 * T, height: T, fill: 'transparent' }));
+          grupo.appendChild(svgEl('rect', { x: x - T, y, width: T, height: h, fill: 'transparent' }));
+          grupo.appendChild(svgEl('rect', { x: x + w, y, width: T, height: h, fill: 'transparent' }));
+        } else {
+          const w = p.w || W, h = p.h || H;
+          const c = CORES[p.tipo];
+          grupo.appendChild(svgEl('rect', {
+            class: 'caixa', x: p.x - w / 2, y: p.y, width: w, height: h, rx: 6,
+            fill: c.fill, stroke: c.stroke, 'stroke-width': 1.5,
+          }));
+          const meio = p.y + h / 2;
+          const ys = p.l.length === 1 ? [meio + 4] : [meio - 3, meio + 12];
+          p.l.forEach((linha, i) => {
+            const t = svgEl('text', {
+              class: 'rotulo', x: p.x, y: ys[i], 'text-anchor': 'middle',
+              'font-family': 'Inter, sans-serif', 'font-size': p.l.length === 1 ? 12.5 : 11.5,
+              'font-weight': 600, fill: c.texto, 'pointer-events': 'none',
+            });
+            t.textContent = linha;
+            grupo.appendChild(t);
+          });
+          if (p.pendente) {
+            const b = svgEl('circle', { cx: p.x + w / 2 - 8, cy: p.y + 8, r: 3, fill: '#f59e0b' });
+            grupo.appendChild(b);
+          }
+        }
+
+        grupo.addEventListener('mouseenter', () => mostrar(p.id));
+        grupo.addEventListener('focus', () => mostrar(p.id));
+        grupo.addEventListener('click', () => acionar(p.id));
+        grupo.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); acionar(p.id); }
+        });
+        g.appendChild(grupo);
+      });
+    }
+
+    function mostrar(id) {
+      const p = porId(id);
+      if (!p) return;
+      ativa = id;
+      document.querySelectorAll('#diagrama .peca').forEach(el => {
+        el.classList.toggle('ativa', el.dataset.id === id);
+      });
+
+      document.getElementById('painel-vazio').classList.add('hidden');
+      document.getElementById('painel').classList.remove('hidden');
+      document.getElementById('p-num').textContent = p.n ? `Tópico ${p.n}` : 'Peça de contexto';
+      document.getElementById('p-titulo').textContent = p.titulo;
+
+      const chip = CORES[p.tipo || 'norm'].chip;
+      const ico = document.getElementById('p-icone');
+      ico.className = `w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-sm border ${chip}`;
+      ico.innerHTML = `<i class="fa-solid ${p.icone}"></i>`;
+
+      const resumo = document.getElementById('p-resumo');
+      resumo.innerHTML = p.resumo;
+      Guia.renderMath(resumo);
+
+      document.getElementById('p-acao').innerHTML = p.href
+        ? `<a href="${esc(p.href)}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition">
+             Abrir ${p.n ? esc(p.n) : ''} <i class="fa-solid fa-arrow-right text-[10px]"></i></a>`
+        : (p.pendente
+            ? `<span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+                 <i class="fa-solid fa-clock text-[10px]"></i> Em breve</span>`
+            : `<span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-950 border border-slate-800 text-slate-500 text-xs">
+                 <i class="fa-solid fa-circle-info text-[10px]"></i> Sem página própria</span>`);
+    }
+
+    function acionar(id) {
+      const p = porId(id);
+      if (!p) return;
+      mostrar(id);
+      if (p.href) { window.location.href = p.href; return; }
+      if (p.pendente) {
+        Guia.toast(`${p.n} · ${p.titulo} — ainda não escrito.`, 'fa-clock');
+      } else {
+        Guia.toast(`${p.titulo} não tem página própria nesta seção.`, 'fa-circle-info');
+      }
+    }
+
+
+    // Geração autoregressiva do exemplo, animada em laço no próprio diagrama.
+    // Sem controles de propósito: é ilustração de apoio, não um simulador —
+    // a interatividade da página é o clique nas peças.
+    const TRADUCAO = ['The', 'book', 'is', 'on', 'the', 'table', '⟨eos⟩'];
+
+    function pintarPasso(i) {
+      const prefixo = ['⟨bos⟩', ...TRADUCAO.slice(0, i)];
+      const anteriores = prefixo.slice(0, -1).join(' ');
+      const ultimo = prefixo[prefixo.length - 1];
+      document.getElementById('ex-target').innerHTML =
+        (anteriores ? `<tspan fill="#34d399">${anteriores} </tspan>` : '') +
+        `<tspan fill="#a7f3d0" font-weight="600">${ultimo}</tspan>`;
+      document.getElementById('ex-proximo').textContent = TRADUCAO[i];
+    }
+
+    function animarTraducao() {
+      // Um setInterval não é alcançado pelo prefers-reduced-motion do CSS:
+      // com o ajuste ligado, mostra a sequência completa e não anima.
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        pintarPasso(TRADUCAO.length - 1);
+        return;
+      }
+      let i = 0;
+      const passo = () => {
+        pintarPasso(i);
+        const fim = i === TRADUCAO.length - 1;
+        i = fim ? 0 : i + 1;
+        setTimeout(passo, fim ? 2400 : 1100);
+      };
+      passo();
+    }
+
+    function montarLista() {
+      const TOPICOS = [
+        { n: '2.1.1', nome: 'Positional Encoding', id: 'pe-enc' },
+        { n: '2.1.2', nome: 'Bloco Transformer', id: null, href: 'bloco/index.html' },
+        { n: '2.1.2.1', nome: 'Multi-head Attention', id: 'mha-enc', filho: true },
+        { n: '2.1.2.2', nome: 'Add & Norm', id: 'an-enc-1', filho: true },
+        { n: '2.1.2.3', nome: 'Positionwise FFN', id: 'ffn-enc', filho: true },
+        { n: '2.1.3', nome: 'Encoder', id: 'dash-enc' },
+        { n: '2.1.3.1', nome: 'Cross-attention', id: 'cross', filho: true },
+        { n: '2.1.4', nome: 'Decoder', id: 'dash-dec' },
+        { n: '2.1.4.1', nome: 'Masked Multi-head Attention', id: 'masked', filho: true },
+        { n: '2.1.5', nome: 'Camada de Saída (FC)', id: 'fc' },
+      ];
+      document.getElementById('lista-topicos').innerHTML = TOPICOS.map(t => {
+        const p = t.id ? porId(t.id) : null;
+        // 2.1.2 não tem peça no diagrama (o bloco É a caixa tracejada), então leva href próprio.
+        const destino = t.href || (p && p.href);
+        const acao = t.id
+          ? `onmouseenter="mostrar('${t.id}')" onclick="acionar('${t.id}')"`
+          : (destino ? `onclick="window.location.href='${esc(destino)}'"` : '');
+        return `<li class="${t.filho ? 'ml-3' : ''}">
+          <button ${acao} class="w-full text-left px-2 py-1.5 rounded-lg flex items-center gap-2 transition ${
+            acao ? 'hover:bg-surface-800' : 'cursor-default opacity-60'}">
+            <span class="font-mono text-[10px] ${destino ? 'text-brand-400' : 'text-slate-600'} w-12 shrink-0">${t.n}</span>
+            <span class="text-xs ${destino ? 'text-slate-200' : 'text-slate-500'} truncate">${esc(t.nome)}</span>
+            ${destino ? '' : '<i class="fa-solid fa-clock text-[9px] text-amber-500/70 ml-auto shrink-0"></i>'}
+          </button></li>`;
+      }).join('');
+    }
+
+    Guia.ready(() => {
+      montarSomas();
+      montarPecas();
+      montarLista();
+      animarTraducao();
+      document.getElementById('diagrama').addEventListener('mouseleave', () => {
+        document.querySelectorAll('#diagrama .peca').forEach(el => el.classList.remove('ativa'));
+      });
+    });
+  </script>
+</body>
+</html>

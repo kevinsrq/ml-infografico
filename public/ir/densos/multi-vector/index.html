@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Vector (ColBERT): Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Multi-Vector (ColBERT)"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Interação tardia com um vetor por token (Khattab &amp; Zaharia, 2020)"
+      data-icon="fa-layer-group"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ============================ MÓDULO 01 ============================ -->
+    <section class="slide-section" data-nav="O meio-termo" data-icon="fa-scale-balanced">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Entre comprimir demais e não guardar nada:
+          <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">a interação tardia</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O Bi-Encoder comprime o documento inteiro em um único ponto e perde detalhe. O Cross-Encoder lê consulta e documento
+          juntos, mas não guarda nada reaproveitável. O <strong class="text-slate-200">ColBERT</strong> (Khattab &amp; Zaharia, SIGIR 2020)
+          propôs o meio-termo: guardar <strong class="text-slate-200">um vetor por token</strong> do documento no índice e só comparar
+          na hora da consulta — a <em>late interaction</em>.
+        </p>
+      </div>
+
+      <!-- Os três regimes -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 text-[11px] font-mono font-semibold border border-cyan-500/30 flex items-center gap-1.5">
+              <i class="fa-solid fa-compress"></i> Bi-Encoder
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">1 vetor / doc</span>
+          </div>
+          <h3 class="text-base font-bold text-white mb-1.5">Encontro tardio, mas 1 × 1</h3>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1">
+            Consulta e documento viram um vetor cada. A comparação é <strong>uma célula só</strong>: $\cos(\vec{q}, \vec{d})$.
+            Barato e indexável em ANN, mas o <em>pooling</em> é uma média — "glicemia" e "8 horas" viram um borrão.
+          </p>
+          <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] text-rose-400 font-mono">
+            <i class="fa-solid fa-xmark mr-1"></i> Detalhe token a token: perdido
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 text-[11px] font-mono font-semibold border border-rose-500/30 flex items-center gap-1.5">
+              <i class="fa-solid fa-fire"></i> Cross-Encoder
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">0 vetores / doc</span>
+          </div>
+          <h3 class="text-base font-bold text-white mb-1.5">Encontro cedo, dentro do modelo</h3>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1">
+            O par $[q\,;\,d]$ entra junto no Transformer e a atenção cruzada vê <strong>toda a grade</strong> token × token.
+            Precisão máxima — e nada pré-computado: cada consulta reprocessa cada documento.
+          </p>
+          <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] text-rose-400 font-mono">
+            <i class="fa-solid fa-xmark mr-1"></i> Custo cresce linearmente com $N$
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/40 p-5 flex flex-col glow-emerald relative overflow-hidden">
+          <div class="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="flex items-center justify-between mb-3 relative z-10">
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-[11px] font-mono font-semibold border border-emerald-500/30 flex items-center gap-1.5">
+              <i class="fa-solid fa-layer-group"></i> Multi-Vector
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">$n$ vetores / doc</span>
+          </div>
+          <h3 class="text-base font-bold text-white mb-1.5 relative z-10">Encontro tardio, linha a linha</h3>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1 relative z-10">
+            O documento é codificado uma vez e guardado como <strong>uma matriz de vetores</strong>. Na consulta, a grade
+            token × token é reconstruída <em>fora</em> do modelo, com produtos escalares baratos.
+          </p>
+          <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] text-emerald-400 font-mono relative z-10">
+            <i class="fa-solid fa-check mr-1"></i> Índice reaproveitável + comparação fina
+          </div>
+        </div>
+      </div>
+
+      <!-- Linha do tempo: onde os dois lados se encontram -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-8">
+        <h3 class="text-base font-bold text-white flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-timeline text-brand-400"></i> Quando os dois lados se encontram
+        </h3>
+        <p class="text-xs text-slate-400 mb-4 max-w-3xl">
+          Os três usam o mesmo Transformer. O que muda é <strong class="text-slate-200">em que momento</strong> consulta e documento
+          se veem — e quanto da grade token × token sobrevive até lá.
+        </p>
+        <div class="overflow-x-auto">
+          <div id="mv-timeline" class="min-w-[640px]"></div>
+        </div>
+        <div class="mt-4 p-3 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+          O <strong class="text-rose-400">Cross-Encoder</strong> é a grade inteira dentro do modelo; o
+          <strong class="text-emerald-400">Multi-Vector</strong> é a grade fora do modelo, linha por linha; o
+          <strong class="text-cyan-400">Bi-Encoder</strong> é a grade reduzida a uma única célula.
+        </div>
+      </div>
+
+      <!-- O problema concreto: o empate do Bi-Encoder -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-4 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> O empate que o vetor único produz
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Acervo de 5 laudos. Troque a consulta e veja a margem do 1º para o 2º encolher.</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-slate-400 font-medium">Consulta:</span>
+            <button onclick="setQuery(0)" class="q-pick px-3 py-1.5 rounded-lg text-xs font-mono transition border" data-qidx="0">"açúcar no sangue em jejum"</button>
+            <button onclick="setQuery(1)" class="q-pick px-3 py-1.5 rounded-lg text-xs font-mono transition border" data-qidx="1">"hemograma sem jejum"</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-2">Ranking Bi-Encoder (1 vetor por doc, ilustrativo)</div>
+            <div id="bi-rank" class="space-y-1.5"></div>
+            <div id="bi-gap" class="mt-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300"></div>
+          </div>
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-2">Acervo indexado</div>
+            <div id="mv-corpus" class="space-y-2"></div>
+          </div>
+        </div>
+        <div id="bi-note" class="mt-4 p-3 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed"></div>
+      </div>
+    </section>
+
+    <!-- ============================ MÓDULO 02 ============================ -->
+    <section class="slide-section" data-nav="Um vetor por token" data-icon="fa-vector-square">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-vector-square"></i> Módulo 02 • Mecanismo de Codificação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Um vetor por token:
+          <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">nada é jogado fora</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O mesmo Transformer roda sobre o documento, mas em vez de tirar a média das saídas, o ColBERT
+          <strong class="text-slate-200">guarda a saída de cada token</strong>, projetada em uma dimensão pequena e normalizada.
+          Isso acontece na indexação — uma vez só.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 mb-5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-slate-400 font-medium">Documento:</span>
+            <span id="enc-docbtns" class="inline-flex gap-1.5 flex-wrap"></span>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <label for="enc-dim" class="text-slate-400 font-medium">Dimensão por token ($d$):</label>
+            <input id="enc-dim" type="range" min="32" max="256" step="32" value="128" class="w-28 sm:w-40" oninput="renderEncode()">
+            <span id="enc-dim-out" class="px-2 py-1 rounded bg-surface-950 border border-slate-800 text-cyan-400 font-mono font-bold">d = 128</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div class="lg:col-span-3 min-w-0">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-2">
+              Matriz do documento &mdash; <span id="enc-shape" class="text-cyan-400"></span>
+            </div>
+            <div class="bg-surface-950 rounded-xl border border-slate-800 p-3 sm:p-4">
+              <div id="enc-rows" class="space-y-2"></div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">
+              Cada barra é um vetor de $d$ dimensões (ilustrado com 8 células). Todos normalizados: $\lVert E_{d_j} \rVert = 1$,
+              então o produto escalar <em>é</em> o cosseno.
+            </p>
+          </div>
+
+          <div class="lg:col-span-2 space-y-4 min-w-0">
+            <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="text-sm font-bold text-white flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-scale-unbalanced text-amber-400"></i> Custo de armazenamento
+              </div>
+              <div id="enc-cost" class="space-y-2 text-xs"></div>
+            </div>
+            <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+              <div class="text-slate-200 font-semibold mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-flask text-brand-400"></i> Por que projetar para $d = 128$?
+              </div>
+              O BERT devolve 768 dimensões por token. O ColBERT acrescenta uma camada linear que projeta para 128 antes de
+              normalizar: 6× menos bytes por token, com perda desprezível na tarefa de ranking. O índice só é viável por causa
+              dessa projeção — mexa no slider e acompanhe o total.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-tag text-brand-400"></i> Tokens especiais <span class="font-mono">[Q]</span> e <span class="font-mono">[D]</span>
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            O documento entra como <code class="font-mono text-cyan-300">[D] glicemia de jejum …</code> e a consulta como
+            <code class="font-mono text-brand-300">[Q] açúcar no sangue em jejum …</code>. O mesmo Transformer sabe qual lado
+            está codificando, e as saídas de cada lado ficam levemente especializadas — encoder compartilhado, papéis distintos.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Query augmentation com <span class="font-mono">[MASK]</span>
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A consulta é preenchida com <code class="font-mono text-purple-300">[MASK]</code> até um tamanho fixo (tipicamente 32 tokens).
+            Esses <em>slots</em> recebem vetores contextuais e agem como termos extras aprendidos: é assim que o ColBERT expande a
+            consulta <strong>sem dicionário de sinônimos</strong>. Nos simuladores desta página mostramos só os tokens de conteúdo.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <h3 class="text-base font-bold text-white flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-code text-emerald-400"></i> Como usar na prática
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">
+          Desde a versão 6.0 o <code class="font-mono text-slate-300">sentence-transformers</code> traz o
+          <code class="font-mono text-slate-300">MultiVectorEncoder</code> como quarto tipo de modelo, ao lado de
+          <code class="font-mono text-slate-300">SentenceTransformer</code>, <code class="font-mono text-slate-300">CrossEncoder</code>
+          e <code class="font-mono text-slate-300">SparseEncoder</code>. Ele carrega checkpoints nativos, do PyLate e do ColBERT original.
+        </p>
+        <div class="overflow-x-auto rounded-xl border border-slate-800 bg-surface-950 mb-4">
+<pre class="p-4 text-[11px] sm:text-xs font-mono text-slate-300 leading-relaxed"><code><span class="text-purple-400">from</span> sentence_transformers <span class="text-purple-400">import</span> MultiVectorEncoder
+
+<span class="text-slate-500"># 1 vetor por token; aceita checkpoints nativos, PyLate e Stanford ColBERT</span>
+model = MultiVectorEncoder(<span class="text-emerald-400">"lightonai/GTE-ModernColBERT-v1"</span>)
+
+documentos = [
+    <span class="text-emerald-400">"hemograma completo sem jejum"</span>,
+    <span class="text-emerald-400">"glicemia de jejum exige jejum de 8 horas"</span>,
+    <span class="text-emerald-400">"colesterol total e frações com jejum de 12 horas"</span>,
+    <span class="text-emerald-400">"exame de urina primeira urina da manhã"</span>,
+    <span class="text-emerald-400">"tabela de jejum jejum de 8 horas jejum de 12 horas"</span>,
+]
+
+<span class="text-slate-500"># Indexação (uma vez): lista de tensores (n_tokens, 128), um por documento</span>
+doc_emb = model.encode_document(documentos)
+
+<span class="text-slate-500"># Consulta: [Q] + query augmentation; similarity() já aplica o MaxSim</span>
+q_emb  = model.encode_query([<span class="text-emerald-400">"açúcar no sangue em jejum"</span>])
+scores = model.similarity(q_emb, doc_emb)[<span class="text-cyan-400">0</span>]
+
+ranking = <span class="text-cyan-400">sorted</span>(<span class="text-cyan-400">zip</span>([<span class="text-emerald-400">"D1"</span>, <span class="text-emerald-400">"D2"</span>, <span class="text-emerald-400">"D3"</span>, <span class="text-emerald-400">"D4"</span>, <span class="text-emerald-400">"D5"</span>], scores), key=<span class="text-purple-400">lambda</span> x: -x[<span class="text-cyan-400">1</span>])
+<span class="text-purple-400">for</span> doc_id, score <span class="text-purple-400">in</span> ranking:
+    <span class="text-cyan-400">print</span>(doc_id, <span class="text-cyan-400">round</span>(<span class="text-cyan-400">float</span>(score), <span class="text-cyan-400">2</span>))
+
+<span class="text-slate-500"># D2 2.34 · D5 1.98 · D3 1.80 · D1 1.73 · D4 0.87</span>
+<span class="text-slate-500"># score = soma dos MaxSim dos tokens da consulta (a escala NAO e um cosseno 0..1)</span></code></pre>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+            <div class="text-slate-200 font-semibold mb-1.5">Alternativa multilíngue — <span class="font-mono">bge-m3</span></div>
+            <code class="font-mono text-[11px] text-cyan-300 block mb-1">model.encode(docs, return_colbert_vecs=True)</code>
+            devolve <em>dense</em>, <em>sparse</em> e <code class="font-mono">colbert_vecs</code> na mesma chamada, com MaxSim em
+            <code class="font-mono">model.colbert_score(q, d)</code>. Boa opção para português.
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+            <div class="text-slate-200 font-semibold mb-1.5">Onde indexar</div>
+            Bancos vetoriais com suporte nativo a multi-vector: <strong class="text-slate-300">Qdrant, Vespa, Weaviate e Milvus</strong>.
+            A biblioteca <code class="font-mono">pylate</code> traz os índices Voyager e PLAID prontos.
+            <span class="block mt-2 text-amber-400/90"><i class="fa-solid fa-circle-info mr-1"></i>Nomes de modelo são exemplos: confira a versão da lib antes de copiar.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ MÓDULO 03 ============================ -->
+    <section class="slide-section" data-nav="MaxSim" data-icon="fa-table-cells">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-table-cells"></i> Módulo 03 • Matemática da Interação Tardia
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          MaxSim passo a passo:
+          <span class="bg-gradient-to-r from-brand-400 to-emerald-400 bg-clip-text text-transparent">cada linha fica com o seu melhor par</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Na consulta, cada token $q_i$ é comparado com cada token $d_j$ do documento: uma grade de cossenos.
+          Cada <strong class="text-slate-200">linha</strong> guarda apenas o seu máximo; o score é a soma desses máximos.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 sm:p-6 mb-6">
+        <div class="text-center text-sm sm:text-base text-slate-200 overflow-x-auto">
+          $$S_{q,d} \;=\; \sum_{i=1}^{|q|} \; \max_{j=1,\dots,|d|} \; E_{q_i}^{\top} E_{d_j}$$
+        </div>
+        <p class="text-[11px] sm:text-xs text-slate-400 text-center mt-2 max-w-2xl mx-auto leading-relaxed">
+          $E_{q_i}$ e $E_{d_j}$ são vetores normalizados, logo $E_{q_i}^{\top} E_{d_j} = \cos(q_i, d_j) \in [-1, 1]$.
+          O operador $\max_j$ é o que dá nome ao método: <strong class="text-brand-300">MaxSim</strong>.
+        </p>
+      </div>
+
+      <!-- SIMULADOR: Matriz MaxSim ao vivo -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-grip text-brand-400"></i> Simulador: Matriz MaxSim ao vivo
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Troque a consulta, troque o documento, ligue e desligue tokens da consulta. Cada número abaixo é recalculado em JavaScript.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-slate-400 font-medium">Consulta:</span>
+            <button onclick="setQuery(0)" class="q-pick px-3 py-1.5 rounded-lg text-xs font-mono transition border" data-qidx="0">"açúcar no sangue em jejum"</button>
+            <button onclick="setQuery(1)" class="q-pick px-3 py-1.5 rounded-lg text-xs font-mono transition border" data-qidx="1">"hemograma sem jejum"</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 mb-5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-slate-400 font-medium">Documento:</span>
+            <span id="mx-docbtns" class="inline-flex gap-1.5 flex-wrap"></span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-slate-400 font-medium">Tokens ativos da consulta:</span>
+            <span id="mx-tokbtns" class="inline-flex gap-1.5 flex-wrap"></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div class="lg:col-span-3 min-w-0">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-2">
+              Grade de cossenos <span id="mx-shape" class="text-brand-400"></span> &mdash; o máximo de cada linha ganha anel verde
+            </div>
+            <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800 p-3">
+              <div id="mx-grid" class="min-w-[340px]"></div>
+            </div>
+            <div id="mx-cellinfo" aria-live="polite" class="mt-3 p-2.5 rounded-lg bg-brand-500/10 border border-brand-500/30 text-xs text-slate-200 font-mono"></div>
+            <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">
+              <i class="fa-solid fa-circle-info mr-1 text-amber-400"></i>
+              Cossenos ilustrativos. Repare que o mesmo token ("jejum") recebe valores diferentes em cada documento:
+              os vetores são <strong>contextuais</strong>, não um dicionário fixo.
+            </p>
+          </div>
+
+          <div class="lg:col-span-2 space-y-4 min-w-0">
+            <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+              <div class="text-[11px] uppercase tracking-wider text-emerald-400 font-mono mb-2">Máximo por linha</div>
+              <div id="mx-rows" class="space-y-1"></div>
+              <div id="mx-total" class="mt-3 pt-3 border-t border-slate-800"></div>
+            </div>
+            <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-2">Ranking dos 5 laudos (Σ MaxSim)</div>
+              <div id="mx-rank" class="space-y-1.5"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="mx-insight" class="mt-5 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="text-sm font-bold text-white flex items-center gap-2 mb-1.5"><i class="fa-solid fa-arrow-down-short-wide text-cyan-400"></i> Por que $\max$ e não média?</div>
+          <p class="text-xs text-slate-400 leading-relaxed">A média puniria documentos longos: quanto mais tokens irrelevantes, menor o valor. O $\max$ pergunta apenas "existe <em>alguma</em> evidência deste termo aqui?".</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="text-sm font-bold text-white flex items-center gap-2 mb-1.5"><i class="fa-solid fa-equals text-amber-400"></i> Nenhuma linha zera</div>
+          <p class="text-xs text-slate-400 leading-relaxed">Mesmo um token sem par forte contribui com o melhor que encontrou. Por isso o score cresce com $|q|$ e <strong>não é comparável entre consultas diferentes</strong> — só a ordem dentro de uma consulta importa.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="text-sm font-bold text-white flex items-center gap-2 mb-1.5"><i class="fa-solid fa-magnifying-glass text-emerald-400"></i> Interpretável de graça</div>
+          <p class="text-xs text-slate-400 leading-relaxed">O par vencedor de cada linha já é uma explicação: dá para mostrar ao usuário <em>qual palavra do documento</em> respondeu a <em>qual palavra da pergunta</em>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ MÓDULO 04 ============================ -->
+    <section class="slide-section" data-nav="Custo &amp; PLAID" data-icon="fa-database">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-database"></i> Módulo 04 • Custo, Índice e Compressão
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A conta do índice:
+          <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">o preço da interação tardia</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Guardar dezenas de vetores por documento tem um custo muito concreto. Foi ele que quase inviabilizou o ColBERT v1 —
+          e foi a <strong class="text-slate-200">compressão de resíduos do ColBERTv2/PLAID</strong> que o tornou prático.
+        </p>
+      </div>
+
+      <!-- Calculadora de compressão -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <h3 class="text-base font-bold text-white flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-compress text-emerald-400"></i> Calculadora de compressão por documento
+        </h3>
+        <p class="text-xs text-slate-400 mb-5">Mexa nos três controles: os bytes por documento e o fator de compressão são calculados na hora.</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <label for="cmp-tok" class="text-slate-400 font-medium">Tokens por documento</label>
+                <span id="cmp-tok-out" class="font-mono text-cyan-400 font-bold">120</span>
+              </div>
+              <input id="cmp-tok" type="range" min="16" max="512" step="8" value="120" class="w-full" oninput="renderCost()">
+            </div>
+            <div>
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <label for="cmp-dim" class="text-slate-400 font-medium">Dimensão do vetor de token</label>
+                <span id="cmp-dim-out" class="font-mono text-cyan-400 font-bold">128</span>
+              </div>
+              <input id="cmp-dim" type="range" min="32" max="256" step="32" value="128" class="w-full" oninput="renderCost()">
+            </div>
+            <div>
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <label for="cmp-bits" class="text-slate-400 font-medium">Precisão por dimensão</label>
+                <span id="cmp-bits-out" class="font-mono text-emerald-400 font-bold">2 bits — PLAID</span>
+              </div>
+              <input id="cmp-bits" type="range" min="0" max="4" step="1" value="3" class="w-full" oninput="renderCost()">
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                <span>f32</span><span>f16</span><span>8 bits</span><span>2 bits</span><span>1 bit</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div id="cmp-out" class="p-4 rounded-xl bg-surface-950 border border-slate-800 space-y-2 text-xs"></div>
+            <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
+              <strong class="text-slate-200">Como o PLAID chega a ~2 bits/dim:</strong> cada vetor de token é aproximado por
+              um <em>centroide</em> de um codebook aprendido (um id de 4 bytes) mais um <em>resíduo</em> quantizado em 1–2 bits
+              por dimensão. Os centroides também servem de filtro: o PLAID poda candidatos comparando só com eles, antes de
+              rodar o MaxSim completo nos sobreviventes.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recibo de custo -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-receipt text-amber-400"></i> Recibo: o que se paga na indexação e o que se paga na consulta
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">O tamanho do índice do Multi-Vector vem da calculadora acima.</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[10px] font-mono uppercase tracking-wider">ilustrativo — extrapolação, não benchmark</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-2">Na indexação (uma vez, offline)</div>
+            <div id="cost-idx" class="space-y-1"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-2">Na consulta (a cada pergunta)</div>
+            <div id="cost-qry" class="space-y-1"></div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 text-xs mb-4">
+          <label for="cost-n" class="text-slate-400 font-medium whitespace-nowrap">Documentos na base ($N$):</label>
+          <input id="cost-n" type="range" min="1" max="7" step="0.1" value="3" class="flex-1 min-w-[140px]" oninput="renderCost()">
+          <span id="cost-n-out" class="px-2.5 py-1 rounded bg-surface-950 border border-slate-800 text-amber-400 font-mono font-bold whitespace-nowrap">1 000 docs</span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-xs min-w-[560px]">
+            <thead>
+              <tr class="bg-surface-950 text-slate-400 text-left">
+                <th class="px-3 py-2 font-medium">Método</th>
+                <th class="px-3 py-2 font-medium">Índice (tamanho)</th>
+                <th class="px-3 py-2 font-medium">Latência por consulta</th>
+                <th class="px-3 py-2 font-medium">Reaproveita o doc?</th>
+              </tr>
+            </thead>
+            <tbody id="cost-body"></tbody>
+          </table>
+        </div>
+
+        <div class="mt-5">
+          <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-2">Latência × N (escala log-log)</div>
+          <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800 p-2">
+            <div id="cost-chart" class="min-w-[520px]"></div>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+          <strong class="text-slate-100">O que observar:</strong> arraste $N$ até 10 milhões. A linha do
+          <strong class="text-rose-400">Cross-Encoder</strong> sobe em reta (ele relê cada documento junto da consulta);
+          <strong class="text-cyan-400">Bi-Encoder</strong> e <strong class="text-slate-200">Sparse Encoder</strong> ficam quase planos;
+          o <strong class="text-emerald-400">Multi-Vector</strong> fica plano em latência, mas o índice incha — é o preço de guardar
+          dezenas de vetores por documento.
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-diagram-project text-cyan-400"></i> ANN por token + re-score
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Em produção ninguém roda MaxSim contra a base inteira. Cada token da consulta busca seus vizinhos mais próximos
+            (ANN) entre <em>todos</em> os vetores de token do índice; os documentos que aparecem viram candidatos;
+            e só esses recebem o MaxSim completo. É um funil de três estágios dentro do próprio método.
+          </p>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-gauge-high text-emerald-400"></i> Dois papéis possíveis
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Com PLAID e ANN por token, o multi-vector serve como <strong class="text-slate-200">primeiro estágio</strong>,
+            substituindo o Bi-Encoder. Sem essa infraestrutura, o uso mais barato é como
+            <strong class="text-slate-200">re-ranker dos top-k</strong>: quase a precisão do Cross-Encoder, com o documento
+            já codificado no índice.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ MÓDULO 05 ============================ -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-flag-checkered">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-flag-checkered"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Os cinco motores lado a lado:
+          <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">quando usar cada um</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Fechamento da seção: os cinco motores de busca vistos até aqui, contra os mesmos critérios.
+          Nenhum vence em tudo — por isso o pipeline padrão combina vários.
+        </p>
+      </div>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-800 mb-6">
+        <table class="w-full text-xs min-w-[760px]">
+          <thead>
+            <tr class="bg-surface-950 text-slate-300 text-left">
+              <th class="px-3 py-2.5 font-semibold">Critério</th>
+              <th class="px-3 py-2.5 font-semibold">BM25</th>
+              <th class="px-3 py-2.5 font-semibold">Bi-Encoder</th>
+              <th class="px-3 py-2.5 font-semibold">Cross-Encoder</th>
+              <th class="px-3 py-2.5 font-semibold">Sparse Encoder</th>
+              <th class="px-3 py-2.5 font-semibold text-emerald-300">Multi-Vector</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-400">
+            <tr class="border-t border-slate-800 bg-surface-900">
+              <td class="px-3 py-2.5 font-semibold text-slate-200">Sinônimos / paráfrase</td>
+              <td class="px-3 py-2.5 text-rose-400">Falha (precisa da mesma palavra)</td>
+              <td class="px-3 py-2.5 text-emerald-400">Excelente</td>
+              <td class="px-3 py-2.5 text-emerald-400">Excelente</td>
+              <td class="px-3 py-2.5">Bom (expande termos aprendidos)</td>
+              <td class="px-3 py-2.5 text-emerald-400">Excelente (token contextual)</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-slate-200">Siglas e códigos exatos</td>
+              <td class="px-3 py-2.5 text-emerald-400">Excelente</td>
+              <td class="px-3 py-2.5 text-rose-400">Pobre (dilui no vetor único)</td>
+              <td class="px-3 py-2.5">Bom, mas só no re-rank</td>
+              <td class="px-3 py-2.5 text-emerald-400">Excelente (peso no termo literal)</td>
+              <td class="px-3 py-2.5 text-emerald-400">Bom (o token exato casa quase 1,0)</td>
+            </tr>
+            <tr class="border-t border-slate-800 bg-surface-900">
+              <td class="px-3 py-2.5 font-semibold text-slate-200">Negação / ordem das palavras</td>
+              <td class="px-3 py-2.5 text-rose-400">Ignora</td>
+              <td class="px-3 py-2.5 text-rose-400">Parcial ("sem jejum" ≈ "jejum")</td>
+              <td class="px-3 py-2.5 text-emerald-400">Excelente (atenção cruzada)</td>
+              <td class="px-3 py-2.5 text-rose-400">Ignora (saco de termos)</td>
+              <td class="px-3 py-2.5 text-amber-400">Médio ("sem" vira vetor próprio, mas não cruza com o doc)</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-slate-200">Precisão de ranking</td>
+              <td class="px-3 py-2.5">Média</td>
+              <td class="px-3 py-2.5">Média</td>
+              <td class="px-3 py-2.5 text-emerald-400">A mais alta</td>
+              <td class="px-3 py-2.5">Média-alta</td>
+              <td class="px-3 py-2.5 text-emerald-400">Alta (próxima do Cross)</td>
+            </tr>
+            <tr class="border-t border-slate-800 bg-surface-900">
+              <td class="px-3 py-2.5 font-semibold text-slate-200">Latência em base grande</td>
+              <td class="px-3 py-2.5 text-emerald-400">ms (índice invertido)</td>
+              <td class="px-3 py-2.5 text-emerald-400">ms (ANN)</td>
+              <td class="px-3 py-2.5 text-rose-400">Cresce com $N$ (1 passagem por par)</td>
+              <td class="px-3 py-2.5 text-emerald-400">ms (índice invertido)</td>
+              <td class="px-3 py-2.5 text-amber-400">Dezenas de ms (ANN por token + MaxSim)</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-slate-200">Tamanho do índice</td>
+              <td class="px-3 py-2.5 text-emerald-400">Pequeno</td>
+              <td class="px-3 py-2.5">1 vetor por doc</td>
+              <td class="px-3 py-2.5">Nenhum (nada pré-computado)</td>
+              <td class="px-3 py-2.5 text-emerald-400">Pequeno (termos com peso)</td>
+              <td class="px-3 py-2.5 text-rose-400">Grande ($n$ vetores por doc; PLAID comprime)</td>
+            </tr>
+            <tr class="border-t border-slate-800 bg-surface-900">
+              <td class="px-3 py-2.5 font-semibold text-slate-200">Reaproveita a representação do doc?</td>
+              <td class="px-3 py-2.5 text-emerald-400">Sim</td>
+              <td class="px-3 py-2.5 text-emerald-400">Sim</td>
+              <td class="px-3 py-2.5 text-rose-400">Não</td>
+              <td class="px-3 py-2.5 text-emerald-400">Sim</td>
+              <td class="px-3 py-2.5 text-emerald-400">Sim</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-slate-200">Papel típico no pipeline</td>
+              <td class="px-3 py-2.5 text-slate-300">1º estágio / híbrido</td>
+              <td class="px-3 py-2.5 text-slate-300">1º estágio / híbrido</td>
+              <td class="px-3 py-2.5 text-slate-300">Re-ranker dos top-k</td>
+              <td class="px-3 py-2.5 text-slate-300">1º estágio / híbrido (substitui BM25)</td>
+              <td class="px-3 py-2.5 text-slate-300">Re-ranker ou 1º estágio (com PLAID)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-brand-500/30">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-utensils text-brand-400"></i> Receita padrão do capítulo
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Primeiro estágio em paralelo: <strong class="text-slate-200">BM25 ou Sparse Encoder</strong> (termos exatos, siglas)
+            + <strong class="text-slate-200">Bi-Encoder</strong> (sinônimos, intenção) → funde os dois rankings com
+            <strong class="text-slate-200">RRF</strong> → passa só os top-k (20 a 100) por um
+            <strong class="text-slate-200">Cross-Encoder</strong> (precisão máxima) ou por um
+            <strong class="text-emerald-300">Multi-Vector</strong> (quase a mesma precisão, índice reaproveitável, latência menor).
+            O que chega ao LLM no RAG é o resultado desse funil.
+          </p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-surface-900 border border-rose-500/30">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-circle-exclamation text-rose-400"></i> Limitações do multi-vector
+          </h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-1.5 list-disc pl-4">
+            <li><strong class="text-slate-300">Índice grande:</strong> dezenas a centenas de vetores por documento. Sem quantização agressiva (PLAID), o armazenamento inviabiliza bases grandes.</li>
+            <li><strong class="text-slate-300">Negação e ordem só em parte:</strong> "sem" ganha vetor próprio, mas nunca cruza com o documento dentro do modelo — quem resolve isso de verdade é o Cross-Encoder.</li>
+            <li><strong class="text-slate-300">Score não comparável:</strong> $S_{q,d}$ é uma soma que cresce com $|q|$; não serve como limiar absoluto nem como probabilidade.</li>
+            <li><strong class="text-slate-300">Infra especializada:</strong> exige banco vetorial com suporte a multi-vector e MaxSim; um índice ANN comum não serve.</li>
+            <li><strong class="text-slate-300">Sensível à tokenização:</strong> em português, subpalavras mal segmentadas viram vetores de token sem significado claro.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-5 sm:p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2 mb-1">
+            <i class="fa-solid fa-code-merge text-brand-400"></i> Próximo tópico: juntar os motores em um pipeline só
+          </h3>
+          <p class="text-xs text-slate-400 max-w-2xl">
+            A página seguinte mostra como fundir os rankings de BM25, Sparse Encoder, Bi-Encoder e Multi-Vector com
+            <strong class="text-slate-200">Reciprocal Rank Fusion</strong> antes do re-ranker.
+          </p>
+        </div>
+        <a href="../../rrf/index.html" class="shrink-0 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg shadow-brand-600/30 whitespace-nowrap">
+          Busca Híbrida e RRF <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação Conceitual
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre interação tardia, MaxSim e o custo do índice.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">1</span>
+              O que significa, exatamente, "interação tardia" (<em>late interaction</em>)?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Isso descreve o Cross-Encoder: nele consulta e documento entram juntos no modelo, ou seja, a interação é precoce.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Consulta e documento entram juntos no Transformer e a atenção cruzada compara tudo.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Os vetores do documento já estavam no índice; a comparação token a token só acontece na hora da consulta, fora do modelo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Cada lado é codificado separadamente e a comparação token a token acontece depois, fora do modelo.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Adiar a indexação não muda o método: o ponto é onde a comparação acontece, não quando o índice é construído.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) A indexação dos documentos é adiada para depois da primeira consulta.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O pooling é justamente o que o multi-vector evita: ele guarda a saída de cada token em vez de tirar a média.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) O <em>pooling</em> médio é aplicado no fim da rede, e não no começo.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">2</span>
+              No MaxSim, por que se toma o <strong>máximo</strong> de cada linha em vez da média da linha?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O custo da grade é o mesmo: todos os pares precisam ser calculados antes de tirar o máximo ou a média.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque o máximo evita calcular a grade token × token inteira.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Com a média, cada token irrelevante do documento puxaria o score para baixo; o máximo só pergunta se existe alguma evidência daquele termo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque a média puniria documentos longos; o máximo busca a melhor evidência de cada termo da consulta.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A normalização dos vetores acontece na codificação e independe de máximo ou média; a soma dos máximos nem fica entre 0 e 1.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque só o máximo garante que o score final fique entre 0 e 1.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Stopwords são tratadas na tokenização; o operador max não descarta linha nenhuma — nenhuma linha zera.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque o máximo descarta automaticamente as stopwords da consulta.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">3</span>
+              Qual é o principal preço a pagar pelo multi-vector em comparação com um Bi-Encoder?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A latência cresce, mas segue quase plana em N graças ao ANN por token — nada parecido com o Cross-Encoder.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) A latência passa a crescer linearmente com o número de documentos da base.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Pelo contrário: o documento é codificado uma vez e reaproveitado — é essa a vantagem sobre o Cross-Encoder.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O documento precisa ser recodificado a cada consulta.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'São dezenas a centenas de vetores por documento em vez de um; sem a quantização de resíduos do PLAID o índice fica impraticável.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) O índice cresce muito: são $n$ vetores por documento, o que exige compressão tipo PLAID.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Sinônimos e paráfrase continuam funcionando muito bem: os vetores de token são contextuais, não literais.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Ele perde a capacidade de casar sinônimos e paráfrases.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  /* ============ Acervo: os mesmos 5 laudos das páginas anteriores do capítulo ============ */
+  const DOCS = [
+    { id: "D1", title: "Hemograma",       text: "hemograma completo sem jejum",                       toks: ["hemograma","completo","sem","jejum"] },
+    { id: "D2", title: "Glicemia",        text: "glicemia de jejum exige jejum de 8 horas",           toks: ["glicemia","jejum","exige","jejum","8","horas"] },
+    { id: "D3", title: "Colesterol",      text: "colesterol total e frações com jejum de 12 horas",   toks: ["colesterol","total","frações","jejum","12","horas","antes","coleta"] },
+    { id: "D4", title: "Urina",           text: "exame de urina primeira urina da manhã",             toks: ["exame","urina","primeira","urina","manhã"] },
+    { id: "D5", title: "Tabela de jejum", text: "tabela de jejum jejum de 8 horas jejum de 12 horas", toks: ["tabela","jejum","jejum","8","horas","jejum","12","horas"] }
+  ];
+  const DOC_BY = Object.fromEntries(DOCS.map(d => [d.id, d]));
+
+  /* Cossenos ILUSTRATIVOS por consulta: matriz (tokens da consulta) x (tokens do doc).
+     O mesmo token ("jejum") recebe valores diferentes em cada doc: os vetores sao contextuais. */
+  const QUERIES = [
+    {
+      text: "açúcar no sangue em jejum",
+      toks: ["açúcar","sangue","jejum"],
+      stops: ["no","em"],
+      sims: {
+        D1: [[0.20,0.12,0.08,0.22],[0.71,0.18,0.10,0.24],[0.22,0.14,0.30,0.80]],
+        D2: [[0.82,0.30,0.10,0.28,0.12,0.09],[0.55,0.26,0.08,0.24,0.10,0.11],[0.25,0.97,0.15,0.95,0.20,0.28]],
+        D3: [[0.40,0.12,0.15,0.30,0.10,0.09,0.08,0.18],[0.44,0.14,0.16,0.28,0.09,0.10,0.10,0.45],[0.22,0.10,0.12,0.95,0.18,0.26,0.24,0.20]],
+        D4: [[0.20,0.22,0.06,0.20,0.10],[0.35,0.28,0.08,0.26,0.12],[0.24,0.12,0.14,0.10,0.30]],
+        D5: [[0.12,0.48,0.42,0.14,0.10,0.40,0.11,0.09],[0.14,0.53,0.46,0.12,0.12,0.44,0.10,0.11],[0.24,0.97,0.94,0.20,0.28,0.93,0.18,0.26]]
+      },
+      bi: [["D2",0.68],["D5",0.66],["D3",0.52],["D1",0.36],["D4",0.13]],
+      biNote: "No Bi-Encoder, D2 e D5 quase empatam: a média dos tokens de D2 dilui \"glicemia\" entre \"exige\", \"8\" e \"horas\", e D5 — que é só uma tabela cheia de \"jejum\" — encosta. Um ruído do modelo e a tabela genérica passa o laudo certo.",
+      mvNote: "Com MaxSim, \"açúcar\" encontra \"glicemia\" em D2 com 0,82 — o par forte que o vetor único havia dissolvido. D5 repete \"jejum\", mas não tem nada que responda a \"açúcar\": aquela linha fica fraca e a soma cai."
+    },
+    {
+      text: "hemograma sem jejum",
+      toks: ["hemograma","sem","jejum"],
+      stops: [],
+      sims: {
+        D1: [[0.96,0.30,0.12,0.22],[0.14,0.10,0.93,0.30],[0.20,0.12,0.28,0.95]],
+        D2: [[0.38,0.20,0.12,0.18,0.08,0.10],[0.10,0.30,0.24,0.28,0.08,0.12],[0.24,0.97,0.16,0.95,0.20,0.28]],
+        D3: [[0.36,0.14,0.18,0.20,0.08,0.10,0.10,0.34],[0.10,0.08,0.10,0.28,0.06,0.10,0.28,0.12],[0.22,0.10,0.12,0.95,0.18,0.26,0.24,0.20]],
+        D4: [[0.44,0.30,0.10,0.28,0.12],[0.10,0.08,0.15,0.08,0.10],[0.24,0.12,0.14,0.10,0.30]],
+        D5: [[0.36,0.22,0.20,0.10,0.12,0.20,0.10,0.12],[0.14,0.36,0.32,0.08,0.25,0.30,0.08,0.22],[0.24,0.97,0.94,0.20,0.28,0.93,0.18,0.26]]
+      },
+      bi: [["D5",0.71],["D1",0.69],["D2",0.50],["D3",0.44],["D4",0.15]],
+      biNote: "No Bi-Encoder, D5 passa D1: o vetor único de D1 mistura \"sem\" com \"jejum\" e a negação some; D5 repete \"jejum\" três vezes e vence — errado.",
+      mvNote: "Com MaxSim, o token \"sem\" encontra o \"sem\" literal de D1 com 0,93 e desempata o que o Bi-Encoder confundia. Atenção: isso funciona porque a palavra existe no documento — o multi-vector casa o token, ainda não modela a negação."
+    }
+  ];
+
+  /* ============ Estado dos simuladores ============ */
+  const MV = { qidx: 0, doc: "D2", cell: null, off: new Set(), encDoc: "D2" };
+
+  const num = (v, d = 2) => v.toFixed(d).replace(".", ",");
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const milhar = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+  function fmtBytes(b) {
+    if (b < 1024) return milhar(b) + " B";
+    if (b < 1048576) return num(b / 1024, 1) + " KB";
+    if (b < 1073741824) return num(b / 1048576, 1) + " MB";
+    if (b < 1099511627776) return num(b / 1073741824, 2) + " GB";
+    return num(b / 1099511627776, 2) + " TB";
+  }
+  function fmtMs(ms) {
+    if (ms < 1000) return milhar(ms) + " ms";
+    if (ms < 60000) return num(ms / 1000, 1) + " s";
+    if (ms < 3600000) return num(ms / 60000, 1) + " min";
+    return num(ms / 3600000, 1) + " h";
+  }
+
+  /* Indices das linhas ativas (os tokens desligados saem da soma) */
+  const activeIdx = q => q.toks.map((_, i) => i).filter(i => !MV.off.has(i));
+
+  /* MaxSim: para cada linha ativa, o indice e o valor do maximo; a soma e o score */
+  function maxsim(q, docId) {
+    const m = q.sims[docId];
+    const rows = activeIdx(q).map(i => {
+      let best = 0;
+      for (let j = 1; j < m[i].length; j++) if (m[i][j] > m[i][best]) best = j;
+      return { i: i, j: best, val: m[i][best] };
+    });
+    return { rows: rows, score: rows.reduce((s, r) => s + r.val, 0) };
+  }
+
+  function rankingMulti(q) {
+    return DOCS
+      .map(d => { const ms = maxsim(q, d.id); return { d: d, rows: ms.rows, score: ms.score }; })
+      .sort((a, b) => b.score - a.score);
+  }
+
+  /* Cor da celula: slate-800 -> brand-600 -> cyan-300, proporcional ao cosseno */
+  function heat(t) {
+    const c0 = [30, 41, 59], c1 = [79, 70, 229], c2 = [103, 232, 249];
+    const a = t < 0.5 ? c0 : c1, b = t < 0.5 ? c1 : c2, u = t < 0.5 ? t / 0.5 : (t - 0.5) / 0.5;
+    const mix = k => Math.round(a[k] + (b[k] - a[k]) * u);
+    return "rgb(" + mix(0) + "," + mix(1) + "," + mix(2) + ")";
+  }
+
+  /* Barra de 8 celulas, deterministica a partir de uma semente textual (ilustra um vetor de d dims) */
+  function vecBar(seed, color) {
+    let cells = "";
+    for (let i = 0; i < 8; i++) {
+      let h = 0;
+      for (let k = 0; k < seed.length; k++) h = (h * 31 + seed.charCodeAt(k) + i * 17) % 97;
+      const pct = 25 + (h % 70);
+      cells += '<div class="flex-1 h-3.5 rounded-sm bg-slate-800 overflow-hidden"><div class="h-full rounded-sm" style="width:' + pct + '%;background:' + color + '"></div></div>';
+    }
+    return '<div class="flex gap-0.5 items-center flex-1 min-w-0">' + cells + "</div>";
+  }
+
+  function btnHTML(label, active, onclick) {
+    const cls = active
+      ? "px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold border bg-brand-600 border-brand-400 text-white transition"
+      : "px-2.5 py-1 rounded-lg text-[11px] font-mono border bg-surface-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-600 transition";
+    return '<button type="button" onclick="' + onclick + '" aria-pressed="' + active + '" class="' + cls + '">' + esc(label) + "</button>";
+  }
+
+  /* ============ Módulo 01 — linha do tempo e empate do Bi-Encoder ============ */
+  function timelineSVG() {
+    const W = 760, H = 270, split = 380;
+    const box = (x, y, w, h, label, stroke) =>
+      '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="5" fill="#090d16" stroke="' + stroke + '"/>' +
+      '<text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 4) + '" text-anchor="middle" font-size="11" fill="#cbd5e1">' + label + "</text>";
+    const arrow = (x1, y, x2, col) =>
+      '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" stroke="' + col + '" stroke-width="1.5" marker-end="url(#mv-arr)"/>';
+    const grid = (x, y, rows, cols, size, col, mode) => {
+      let s = "";
+      for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) {
+        const on = mode === "all" || (mode === "row" && j === (i * 2) % cols);
+        s += '<rect x="' + (x + j * (size + 2)) + '" y="' + (y + i * (size + 2)) + '" width="' + size + '" height="' + size + '" rx="1" fill="' + (on ? col : "#1e293b") + '"/>';
+      }
+      return s;
+    };
+    const vecs = (x, y, n, w, col) => {
+      let s = "";
+      for (let i = 0; i < n; i++) s += '<rect x="' + x + '" y="' + (y + i * 7) + '" width="' + w + '" height="5" rx="1" fill="' + col + '"/>';
+      return s;
+    };
+
+    let s = '<svg viewBox="0 0 ' + W + " " + H + '" class="w-full h-auto" role="img" aria-label="Linha do tempo: em que momento consulta e documento se encontram no Bi-Encoder, no Cross-Encoder e no Multi-Vector">' +
+      '<defs><marker id="mv-arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker></defs>' +
+      '<text x="' + (split / 2 + 50) + '" y="18" text-anchor="middle" font-size="12" fill="#818cf8" font-weight="bold">INDEXAÇÃO (uma vez, offline)</text>' +
+      '<text x="' + (split + (W - split) / 2) + '" y="18" text-anchor="middle" font-size="12" fill="#818cf8" font-weight="bold">CONSULTA (a cada pergunta)</text>' +
+      '<line x1="' + split + '" y1="26" x2="' + split + '" y2="' + (H - 6) + '" stroke="#4f46e5" stroke-dasharray="5 4"/>';
+
+    const lanes = [
+      { name: "Bi-Encoder", y: 60, col: "#22d3ee" },
+      { name: "Cross-Encoder", y: 140, col: "#fb7185" },
+      { name: "Multi-Vector", y: 220, col: "#34d399" }
+    ];
+
+    lanes.forEach((l, i) => {
+      const y = l.y;
+      s += '<text x="8" y="' + (y + 4) + '" font-size="12" fill="' + l.col + '" font-weight="bold">' + l.name + "</text>";
+      if (i) s += '<line x1="0" y1="' + (y - 40) + '" x2="' + W + '" y2="' + (y - 40) + '" stroke="#1e293b"/>';
+
+      if (l.name === "Bi-Encoder") {
+        s += box(118, y - 14, 44, 28, "doc", "#334155") + arrow(164, y, 200, l.col) + box(202, y - 14, 60, 28, "modelo", "#334155") +
+             arrow(264, y, 300, l.col) + vecs(304, y - 3, 1, 50, l.col) +
+             '<text x="304" y="' + (y + 16) + '" font-size="10" fill="#64748b">1 vetor → índice</text>';
+        s += box(398, y - 14, 44, 28, "q", "#334155") + arrow(444, y, 480, l.col) + vecs(484, y - 3, 1, 50, l.col) +
+             '<text x="484" y="' + (y + 16) + '" font-size="10" fill="#64748b">1 vetor</text>';
+        s += '<text x="560" y="' + (y + 4) + '" font-size="14" fill="#64748b">×</text>' + grid(590, y - 6, 1, 1, 12, l.col, "all") +
+             '<text x="610" y="' + (y + 4) + '" font-size="11" fill="#cbd5e1">tardio, 1 × 1</text>';
+      } else if (l.name === "Cross-Encoder") {
+        s += '<rect x="118" y="' + (y - 14) + '" width="236" height="28" rx="5" fill="none" stroke="#334155" stroke-dasharray="4 3"/>' +
+             '<text x="236" y="' + (y + 4) + '" text-anchor="middle" font-size="11" fill="#64748b">nada: o doc não é pré-computado</text>';
+        s += box(398, y - 14, 70, 28, "[q ; doc]", "#334155") + arrow(470, y, 506, l.col) +
+             '<rect x="508" y="' + (y - 22) + '" width="120" height="44" rx="5" fill="#1f0d14" stroke="' + l.col + '"/>' +
+             grid(516, y - 16, 3, 6, 8, l.col, "all") +
+             '<text x="582" y="' + (y - 6) + '" font-size="10" fill="' + l.col + '">Transformer</text>' +
+             '<text x="582" y="' + (y + 8) + '" font-size="10" fill="#cbd5e1">grade inteira</text>';
+        s += '<text x="636" y="' + (y + 4) + '" font-size="11" fill="#cbd5e1">cedo, dentro</text>';
+      } else {
+        s += box(118, y - 14, 44, 28, "doc", "#334155") + arrow(164, y, 200, l.col) + box(202, y - 14, 60, 28, "modelo", "#334155") +
+             arrow(264, y, 300, l.col) + vecs(304, y - 20, 6, 50, l.col) +
+             '<text x="304" y="' + (y + 34) + '" font-size="10" fill="#64748b">n vetores → índice</text>';
+        s += box(398, y - 14, 44, 28, "q", "#334155") + arrow(444, y, 480, l.col) + vecs(484, y - 10, 3, 50, l.col) +
+             '<text x="484" y="' + (y + 24) + '" font-size="10" fill="#64748b">3 vetores</text>';
+        s += '<text x="560" y="' + (y + 4) + '" font-size="14" fill="#64748b">×</text>' + grid(590, y - 16, 3, 6, 8, l.col, "row") +
+             '<text x="650" y="' + (y + 4) + '" font-size="11" fill="#cbd5e1">tardio, linha a linha</text>';
+      }
+    });
+    return s + "</svg>";
+  }
+
+  function renderModulo1() {
+    const q = QUERIES[MV.qidx];
+    const topo = q.bi[0][1];
+    const gap = q.bi[0][1] - q.bi[1][1];
+
+    document.getElementById("bi-rank").innerHTML = q.bi.map((par, i) => {
+      const id = par[0], score = par[1];
+      const tight = i < 2 && gap < 0.03;
+      const pct = (score / topo * 100).toFixed(1);
+      return '<div class="grid grid-cols-[22px_32px_minmax(0,1fr)_44px] gap-2 items-center text-xs">' +
+        '<span class="text-slate-500 font-mono">' + (i + 1) + 'º</span>' +
+        '<span class="font-mono font-bold ' + (tight ? "text-amber-400" : "text-slate-300") + '">' + id + "</span>" +
+        '<div class="h-4 rounded bg-slate-800 overflow-hidden"><div class="h-full rounded transition-all duration-300" style="width:' + pct + '%;background:' + (tight ? "#f59e0b" : "#334155") + '"></div></div>' +
+        '<span class="text-right font-mono ' + (tight ? "text-amber-400" : "text-slate-500") + '">' + num(score) + "</span></div>";
+    }).join("");
+
+    document.getElementById("bi-gap").innerHTML =
+      'Margem do 1º (<span class="font-mono font-bold">' + q.bi[0][0] + '</span>) para o 2º (<span class="font-mono font-bold">' + q.bi[1][0] + '</span>): ' +
+      '<span class="font-mono font-bold">' + num(gap) + "</span> — " +
+      (gap < 0.03 ? "empate técnico, decidido por ruído." : "margem confortável.");
+
+    document.getElementById("mv-corpus").innerHTML = DOCS.map(d =>
+      '<div class="p-2.5 rounded-lg bg-surface-950 border border-slate-800">' +
+        '<div class="flex items-baseline gap-2">' +
+          '<span class="font-mono text-xs font-bold text-brand-400">' + d.id + "</span>" +
+          '<span class="text-[11px] text-slate-500">' + esc(d.title) + "</span>" +
+          '<span class="ml-auto text-[10px] font-mono text-slate-600">' + d.toks.length + " tokens</span>" +
+        "</div>" +
+        '<div class="text-[11px] text-slate-400 mt-0.5">' + esc(d.text) + "</div></div>").join("");
+
+    document.getElementById("bi-note").innerHTML =
+      '<i class="fa-solid fa-lightbulb text-amber-400 mr-1.5"></i>' + esc(q.biNote);
+  }
+
+  /* ============ Módulo 02 — codificação token a token ============ */
+  function setEncDoc(id) { MV.encDoc = id; renderEncode(); }
+
+  function renderEncode() {
+    const d = DOC_BY[MV.encDoc];
+    const dim = Number(document.getElementById("enc-dim").value);
+
+    document.getElementById("enc-dim-out").textContent = "d = " + dim;
+    document.getElementById("enc-docbtns").innerHTML =
+      DOCS.map(x => btnHTML(x.id, x.id === MV.encDoc, "setEncDoc('" + x.id + "')")).join("");
+    document.getElementById("enc-shape").textContent = "E_" + d.id + " tem forma (" + d.toks.length + " x " + dim + ")";
+
+    document.getElementById("enc-rows").innerHTML = d.toks.map((t, i) =>
+      '<div class="grid grid-cols-[76px_minmax(0,1fr)] sm:grid-cols-[92px_minmax(0,1fr)] gap-2 items-center">' +
+        '<span class="px-2 py-1 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-[11px] text-center truncate">' + esc(t) + "</span>" +
+        vecBar(d.id + t + i, "#22d3ee") + "</div>").join("");
+
+    const multiBytes = d.toks.length * dim * 2;  // float16, sem compressao
+    const biBytes = 384 * 4;                     // 1 vetor de 384 dims em float32
+    document.getElementById("enc-cost").innerHTML =
+      '<div class="flex justify-between gap-2"><span class="text-slate-400">Multi-Vector (' + d.toks.length + " × " + dim + ', float16)</span><span class="font-mono text-amber-400 font-bold">' + fmtBytes(multiBytes) + "</span></div>" +
+      '<div class="flex justify-between gap-2"><span class="text-slate-400">Bi-Encoder (1 × 384, float32)</span><span class="font-mono text-cyan-400 font-bold">' + fmtBytes(biBytes) + "</span></div>" +
+      '<div class="flex justify-between gap-2 pt-2 border-t border-slate-800"><span class="text-slate-300 font-semibold">Fator</span><span class="font-mono text-rose-400 font-bold">' + num(multiBytes / biBytes, 1) + "× maior</span></div>" +
+      '<div class="text-[11px] text-slate-500 pt-1">Por documento, antes de qualquer quantização. O módulo 04 mostra como o PLAID derruba esse número.</div>';
+  }
+
+  /* ============ Módulo 03 — Simulador: Matriz MaxSim ao vivo ============ */
+  function setQuery(i) {
+    MV.qidx = i;
+    MV.cell = null;
+    MV.off.clear();
+    document.querySelectorAll(".q-pick").forEach(b => {
+      const on = Number(b.dataset.qidx) === i;
+      b.className = "q-pick px-3 py-1.5 rounded-lg text-xs font-mono transition border " +
+        (on ? "bg-brand-600 border-brand-400 text-white font-bold"
+            : "bg-surface-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-600");
+      b.setAttribute("aria-pressed", on);
+    });
+    renderModulo1();
+    renderMatrix();
+  }
+
+  function setDoc(id) { MV.doc = id; MV.cell = null; renderMatrix(); }
+
+  function toggleTok(i) {
+    if (MV.off.has(i)) {
+      MV.off.delete(i);
+    } else if (MV.off.size + 1 >= QUERIES[MV.qidx].toks.length) {
+      Guia.toast("Pelo menos um token da consulta precisa ficar ativo.", "fa-triangle-exclamation");
+      return;
+    } else {
+      MV.off.add(i);
+    }
+    MV.cell = null;
+    renderMatrix();
+  }
+
+  function pickCell(i, j) {
+    MV.cell = { i: i, j: j };
+    const q = QUERIES[MV.qidx], d = DOC_BY[MV.doc];
+    document.getElementById("mx-cellinfo").innerHTML =
+      'cos(<span class="text-brand-300">' + esc(q.toks[i]) + '</span>, <span class="text-cyan-300">' + esc(d.toks[j]) + "</span>) = " +
+      '<strong class="text-white">' + num(q.sims[d.id][i][j]) + "</strong>";
+    document.querySelectorAll("#mx-grid [data-cell]").forEach(b =>
+      b.setAttribute("aria-pressed", b.dataset.cell === i + "," + j));
+  }
+
+  function renderMatrix() {
+    const q = QUERIES[MV.qidx], d = DOC_BY[MV.doc];
+    const ms = maxsim(q, d.id);
+    const maxOf = {};
+    ms.rows.forEach(r => { maxOf[r.i] = r.j; });
+
+    document.getElementById("mx-docbtns").innerHTML =
+      DOCS.map(x => btnHTML(x.id, x.id === MV.doc, "setDoc('" + x.id + "')")).join("");
+    document.getElementById("mx-tokbtns").innerHTML =
+      q.toks.map((t, i) => btnHTML(t, !MV.off.has(i), "toggleTok(" + i + ")")).join("");
+    document.getElementById("mx-shape").textContent = "(" + ms.rows.length + " × " + d.toks.length + ")";
+
+    let g = '<div class="grid gap-1" style="grid-template-columns:72px repeat(' + d.toks.length + ', minmax(40px, 1fr))">';
+    g += "<span></span>" + d.toks.map(t =>
+      '<span class="text-[10px] text-slate-500 font-mono text-center truncate px-0.5" title="' + esc(t) + '">' + esc(t) + "</span>").join("");
+
+    q.toks.forEach((qt, i) => {
+      const off = MV.off.has(i);
+      g += '<span class="text-[11px] font-mono font-bold text-right pr-1.5 truncate ' +
+        (off ? "text-slate-600 line-through" : "text-brand-300") + '" title="' + esc(qt) + '">' + esc(qt) + "</span>";
+      q.sims[d.id][i].forEach((val, j) => {
+        const isMax = !off && maxOf[i] === j;
+        const ring = isMax ? "outline outline-2 -outline-offset-2 outline-emerald-400 font-bold" : "";
+        const fade = off ? "opacity-20" : (isMax ? "" : "opacity-60");
+        g += '<button type="button" data-cell="' + i + "," + j + '" onclick="pickCell(' + i + "," + j + ')" aria-pressed="false"' +
+          ' aria-label="cosseno entre ' + esc(qt) + " e " + esc(d.toks[j]) + ": " + num(val) + '"' +
+          ' class="rounded text-[11px] font-mono min-h-[30px] transition ' + ring + " " + fade + '"' +
+          ' style="background:' + heat(val) + ";color:" + (val > 0.62 ? "#020617" : "#cbd5e1") + '">' + num(val) + "</button>";
+      });
+    });
+    g += "</div>";
+    document.getElementById("mx-grid").innerHTML = g;
+
+    if (!MV.cell) {
+      document.getElementById("mx-cellinfo").innerHTML =
+        '<span class="text-slate-400">Clique em qualquer célula para ler o cosseno daquele par de tokens.</span>';
+    }
+
+    document.getElementById("mx-rows").innerHTML = ms.rows.map(r =>
+      '<div class="flex justify-between items-baseline gap-2 text-[11px] py-1 border-b border-slate-800/70">' +
+        '<span class="text-slate-300 truncate"><span class="text-brand-300 font-mono">' + esc(q.toks[r.i]) +
+        '</span> → <span class="text-emerald-400 font-mono font-bold">' + esc(d.toks[r.j]) + "</span></span>" +
+        '<span class="font-mono text-slate-200 font-bold">' + num(r.val) + "</span></div>").join("");
+
+    const teto = ms.rows.length;
+    document.getElementById("mx-total").innerHTML =
+      '<div class="flex justify-between items-baseline">' +
+        '<span class="text-xs text-slate-300 font-semibold">Σ MaxSim (' + d.id + ")</span>" +
+        '<span class="font-mono text-lg text-emerald-400 font-bold">' + num(ms.score) + "</span></div>" +
+      '<div class="h-1.5 rounded-full bg-slate-800 overflow-hidden mt-2">' +
+        '<div class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width:' + (ms.score / teto * 100).toFixed(1) + '%"></div></div>' +
+      '<div class="text-[10px] text-slate-500 font-mono mt-1">teto teórico com ' + teto + " token(s) ativo(s): " + num(teto) + "</div>";
+
+    const rank = rankingMulti(q);
+    const topo = rank[0].score || 1;
+    document.getElementById("mx-rank").innerHTML = rank.map((r, i) => {
+      const cur = r.d.id === MV.doc;
+      const cor = i === 0 ? "#34d399" : (cur ? "#6366f1" : "#334155");
+      return '<div class="grid grid-cols-[18px_30px_minmax(0,1fr)_40px] gap-2 items-center text-[11px]">' +
+        '<span class="text-slate-500 font-mono">' + (i + 1) + 'º</span>' +
+        '<span class="font-mono font-bold ' + (cur ? "text-brand-300" : "text-slate-400") + '">' + r.d.id + "</span>" +
+        '<div class="h-3.5 rounded bg-slate-800 overflow-hidden"><div class="h-full rounded transition-all duration-300" style="width:' +
+          (r.score / topo * 100).toFixed(1) + "%;background:" + cor + '"></div></div>' +
+        '<span class="text-right font-mono ' + (i === 0 ? "text-emerald-400 font-bold" : "text-slate-400") + '">' + num(r.score) + "</span></div>";
+    }).join("");
+
+    const bi1 = q.bi[0][0];
+    const mudou = rank[0].d.id !== bi1;
+    document.getElementById("mx-insight").innerHTML =
+      '<i class="fa-solid ' + (mudou ? "fa-arrow-right-arrow-left text-emerald-400" : "fa-check text-emerald-400") + ' mr-1.5"></i>' +
+      "Com os tokens ativos, o multi-vector coloca " +
+      '<strong class="text-emerald-300 font-mono">' + rank[0].d.id + "</strong> (" + esc(rank[0].d.title) + ") em 1º com " +
+      '<span class="font-mono">' + num(rank[0].score) + "</span>, enquanto o Bi-Encoder apontava " +
+      '<strong class="font-mono text-amber-400">' + bi1 + "</strong>. " + esc(q.mvNote);
+  }
+
+  /* ============ Módulo 04 — custo de índice e compressão ============ */
+  const BITS = [
+    { bits: 32, label: "float32 — sem compressão",     centro: 0 },
+    { bits: 16, label: "float16 — padrão do ColBERTv1", centro: 0 },
+    { bits: 8,  label: "8 bits — quantização escalar",  centro: 4 },
+    { bits: 2,  label: "2 bits — PLAID",                centro: 4 },
+    { bits: 1,  label: "1 bit — PLAID agressivo",       centro: 4 }
+  ];
+
+  function cmpParams() {
+    return {
+      toks: Number(document.getElementById("cmp-tok").value),
+      dim: Number(document.getElementById("cmp-dim").value),
+      q: BITS[Number(document.getElementById("cmp-bits").value)]
+    };
+  }
+  /* bytes por documento do multi-vector: (dim x bits/8) por token, mais o id do centroide no PLAID */
+  function bytesMulti() {
+    const p = cmpParams();
+    return p.toks * (p.dim * p.q.bits / 8 + p.q.centro);
+  }
+
+  const METHODS = [
+    { id: "bi",     nome: "Bi-Encoder",     rotulo: "Bi-Encoder (denso)",      idx: "1 vetor de 384 dims por doc, grafo HNSW",       qry: "codifica a consulta (1×) + busca ANN",              reuse: "sim", bytes: function () { return 384 * 4; }, ms: function (n) { return 8 + 0.9 * Math.log10(n); } },
+    { id: "sparse", nome: "Sparse Encoder", rotulo: "Sparse Encoder (SPLADE)", idx: "~30 termos com peso por doc, índice invertido", qry: "codifica a consulta (1×) + índice invertido",       reuse: "sim", bytes: function () { return 30 * 6; },  ms: function (n) { return 9 + 1.6 * Math.log10(n); } },
+    { id: "multi",  nome: "Multi-Vector",   rotulo: "Multi-Vector (ColBERT)",  idx: "n vetores por doc, ANN por token + PLAID",      qry: "codifica a consulta (1×) + ANN por token + MaxSim", reuse: "sim", bytes: bytesMulti,                     ms: function (n) { return 18 + 3.5 * Math.log10(n); } },
+    { id: "cross",  nome: "Cross-Encoder",  rotulo: "Cross-Encoder",           idx: "nada — não existe representação do doc",        qry: "1 passagem do Transformer por PAR (consulta, doc)", reuse: "não", bytes: function () { return 0; },      ms: function (n) { return 12 * n; } }
+  ];
+
+  function renderCost() {
+    const p = cmpParams();
+    document.getElementById("cmp-tok-out").textContent = p.toks;
+    document.getElementById("cmp-dim-out").textContent = p.dim;
+    document.getElementById("cmp-bits-out").textContent = p.q.label;
+
+    const bruto = p.toks * p.dim * 4;   // float32, sem compressao
+    const comprimido = bytesMulti();
+    document.getElementById("cmp-out").innerHTML =
+      '<div class="flex justify-between gap-2"><span class="text-slate-400">Sem compressão (' + p.toks + " × " + p.dim + ' × float32)</span><span class="font-mono text-rose-400 font-bold">' + fmtBytes(bruto) + "</span></div>" +
+      '<div class="flex justify-between gap-2"><span class="text-slate-400">Com ' + p.q.bits + " bit(s)/dim" + (p.q.centro ? " + id de centroide" : "") + '</span><span class="font-mono text-emerald-400 font-bold">' + fmtBytes(comprimido) + "</span></div>" +
+      '<div class="flex justify-between gap-2 pt-2 border-t border-slate-800"><span class="text-slate-200 font-semibold">Fator de compressão</span><span class="font-mono text-emerald-400 font-bold text-base">' + num(bruto / comprimido, 1) + "×</span></div>" +
+      '<div class="flex justify-between gap-2"><span class="text-slate-400">Bytes por token</span><span class="font-mono text-slate-300">' + num(comprimido / p.toks, 1) + " B</span></div>" +
+      '<div class="flex justify-between gap-2"><span class="text-slate-400">Vezes um Bi-Encoder (1 536 B/doc)</span><span class="font-mono ' + (comprimido > 1536 ? "text-amber-400" : "text-emerald-400") + '">' + num(comprimido / 1536, 1) + "×</span></div>";
+
+    const linha = (m, txt) =>
+      '<div class="flex justify-between items-baseline gap-3 text-[11px] py-1 border-b border-slate-800/70 last:border-0">' +
+      '<span class="font-mono font-semibold shrink-0 ' + (m.id === "multi" ? "text-emerald-400" : "text-slate-500") + '">' + m.nome + "</span>" +
+      '<span class="text-slate-400 text-right">' + txt + "</span></div>";
+    document.getElementById("cost-idx").innerHTML = METHODS.map(m => linha(m, m.idx)).join("");
+    document.getElementById("cost-qry").innerHTML = METHODS.map(m => linha(m, m.qry)).join("");
+
+    const n = Math.pow(10, Number(document.getElementById("cost-n").value));
+    document.getElementById("cost-n-out").textContent = milhar(n) + " docs";
+
+    document.getElementById("cost-body").innerHTML = METHODS.map(m => {
+      const ms = m.ms(n), b = m.bytes() * n, cur = m.id === "multi";
+      return '<tr class="border-t border-slate-800 ' + (cur ? "bg-brand-500/10" : "") + '">' +
+        '<td class="px-3 py-2 ' + (cur ? "text-emerald-300 font-semibold" : "text-slate-300") + '">' + m.rotulo + "</td>" +
+        '<td class="px-3 py-2 font-mono text-slate-400">' + (b ? fmtBytes(b) : "0 B") + "</td>" +
+        '<td class="px-3 py-2 font-mono ' + (ms > 5000 ? "text-rose-400" : "text-emerald-400") + '">' + fmtMs(ms) + "</td>" +
+        '<td class="px-3 py-2 text-slate-400">' + m.reuse + "</td></tr>";
+    }).join("");
+
+    document.getElementById("cost-chart").innerHTML = costChart(n);
+  }
+
+  function costChart(n) {
+    const W = 760, H = 230, L = 62, R = 14, T = 14, B = 34;
+    const xs = e => L + (e - 1) / 6 * (W - L - R);
+    const maxLog = Math.log10(12e7);
+    const ys = ms => T + (1 - Math.log10(Math.max(ms, 1)) / maxLog) * (H - T - B);
+
+    let s = '<svg viewBox="0 0 ' + W + " " + H + '" class="w-full h-auto" role="img" aria-label="Latência ilustrativa por consulta em função do número de documentos, escala log-log">';
+    [1, 100, 10000, 1000000, 100000000].forEach(t => {
+      const y = ys(t);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="#1e293b"/>' +
+           '<text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#64748b">' + fmtMs(t) + "</text>";
+    });
+    for (let e = 1; e <= 7; e++) {
+      const x = xs(e);
+      s += '<line x1="' + x + '" x2="' + x + '" y1="' + T + '" y2="' + (H - B) + '" stroke="#1e293b"/>' +
+           '<text x="' + x + '" y="' + (H - B + 14) + '" text-anchor="middle" font-size="10" fill="#64748b">10' + "⁰¹²³⁴⁵⁶⁷".charAt(e) + "</text>";
+    }
+    s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="10" fill="#64748b">documentos na base (N)</text>';
+
+    const cores = { bi: "#22d3ee", sparse: "#94a3b8", multi: "#34d399", cross: "#fb7185" };
+    METHODS.forEach(m => {
+      const pts = [];
+      for (let k = 1; k <= 7; k += 0.25) pts.push(xs(k).toFixed(1) + "," + ys(m.ms(Math.pow(10, k))).toFixed(1));
+      const cur = m.id === "multi";
+      s += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + cores[m.id] + '" stroke-width="' + (cur ? 3 : 1.5) + '" opacity="' + (cur ? 1 : 0.75) + '"/>';
+      const ly = Math.min(Math.max(ys(m.ms(1e7)), T + 8), H - B - 2);
+      s += '<text x="' + (W - R - 2) + '" y="' + (ly + 4) + '" text-anchor="end" font-size="10" fill="' + cores[m.id] + '" font-weight="' + (cur ? "bold" : "normal") + '">' + m.nome + "</text>";
+    });
+
+    const cx = xs(Math.log10(n));
+    return s + '<line x1="' + cx + '" x2="' + cx + '" y1="' + T + '" y2="' + (H - B) + '" stroke="#818cf8" stroke-dasharray="4 3"/></svg>';
+  }
+
+  /* ============ Inicialização ============ */
+  Guia.ready(() => {
+    document.getElementById("mv-timeline").innerHTML = timelineSVG();
+    setQuery(0);
+    renderEncode();
+    renderCost();
+  });
+
+  Guia.onSlide(0, () => { document.getElementById("mv-timeline").innerHTML = timelineSVG(); });
+  Guia.onSlide(2, renderMatrix);
+  Guia.onSlide(3, renderCost);
+  </script>
+</body>
+</html>

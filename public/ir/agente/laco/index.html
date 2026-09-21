@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>O laço do agente: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="O laço do agente"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Quando buscar, quando reescrever, quando buscar de novo e quando desistir"
+      data-icon="fa-rotate"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ================= MÓDULO 1 ================= -->
+    <section class="slide-section" data-nav="O laço" data-icon="fa-rotate">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-rotate"></i> Módulo 01 • Anatomia do laço
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O agente é um laço, <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">não uma função</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          No RAG clássico, recuperar é uma etapa: uma busca, um contexto, uma resposta. O agente quebra
+          essa linha reta — ele pode decidir que o que recuperou não basta e rodar tudo de novo com
+          outra query. Tudo do <a href="../../index.html" class="text-cyan-400 hover:underline">capítulo 1</a>
+          continua valendo: o laço não substitui o retriever, ele o chama várias vezes.
+        </p>
+      </div>
+
+      <!-- Comparação: pipeline x laço -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="px-3 py-1 rounded-lg bg-slate-500/10 text-slate-400 text-xs font-mono border border-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-right-long"></i> RAG de uma passada
+            </span>
+          </div>
+          <div class="space-y-2 font-mono text-[11px]">
+            <div class="p-2.5 rounded-lg bg-surface-950 border border-slate-800 text-slate-300">pergunta do usuário</div>
+            <div class="text-center text-slate-700"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="p-2.5 rounded-lg bg-surface-950 border border-slate-800 text-slate-300">retriever (BM25 + denso + RRF)</div>
+            <div class="text-center text-slate-700"><i class="fa-solid fa-arrow-down"></i></div>
+            <div class="p-2.5 rounded-lg bg-surface-950 border border-slate-800 text-slate-300">gerador escreve a resposta</div>
+          </div>
+          <p class="text-xs text-slate-400 mt-4 leading-relaxed">
+            Barato e previsível: exatamente 1 busca e 1 geração. Funciona quando a pergunta já vem
+            escrita com as palavras do documento e a resposta cabe em um trecho só.
+          </p>
+          <div class="mt-3 p-3 rounded-xl bg-rose-950/20 border border-rose-500/20 text-[11px] text-rose-200 leading-relaxed">
+            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>
+            Se o trecho certo não vier na única tentativa, o gerador recebe contexto ruim e responde
+            mesmo assim. É o cenário descrito em
+            <a href="../alucinacao/index.html" class="underline hover:text-rose-100">1.4.1</a>.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-6 relative overflow-hidden">
+          <div class="absolute -top-12 -right-12 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="relative z-10">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-300 text-xs font-mono border border-cyan-500/30 flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate"></i> Laço agêntico
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+              Clique em cada estágio. O laço só sai pela avaliação de suficiência — nunca por ter
+              "terminado as etapas".
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="estagios-grid"></div>
+            <div id="estagio-detalhe" class="mt-4 p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed min-h-[96px]"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- O que muda para a confiabilidade -->
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-slate-800 p-6">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-cyan-400"></i> Por que o laço reduz invenção
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <p class="font-semibold text-cyan-300 mb-1.5"><i class="fa-solid fa-magnifying-glass-arrow-right mr-1.5"></i>Segunda chance de recall</p>
+            <p class="text-slate-400 leading-relaxed">Uma busca ruim deixa de ser fatal. O que o
+            <a href="../../rrf/index.html" class="text-cyan-400 hover:underline">RRF</a> faz no espaço
+            dos rankings, o laço faz no tempo: mais uma tentativa com outra formulação.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <p class="font-semibold text-emerald-300 mb-1.5"><i class="fa-solid fa-circle-question mr-1.5"></i>Existe a opção "não sei"</p>
+            <p class="text-slate-400 leading-relaxed">Um pipeline linear sempre entrega um texto. Um laço
+            com critério de parada tem um desfecho a mais: desistir e encaminhar para um humano.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <p class="font-semibold text-purple-300 mb-1.5"><i class="fa-solid fa-list-check mr-1.5"></i>Rastro auditável</p>
+            <p class="text-slate-400 leading-relaxed">Cada volta registra query, trechos e decisão.
+            Quando a resposta sai errada, dá para apontar em qual volta a coisa desandou — tema de
+            <a href="../avaliacao/index.html" class="text-purple-300 hover:underline">1.4.4</a>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MÓDULO 2 ================= -->
+    <section class="slide-section" data-nav="Reescrita" data-icon="fa-pen-to-square">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-pen-to-square"></i> Módulo 02 • Reescrita de query
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A pergunta do usuário quase nunca é <span class="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">a query da busca</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Gente pergunta com as palavras do dia a dia; documento é escrito com o jargão da área.
+          "Posso comer antes do exame de açúcar no sangue?" e "A glicemia de jejum exige 8 horas sem
+          alimentação" falam da mesma coisa sem compartilhar um único termo relevante.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-cyan-400"></i> As quatro operações
+          </h3>
+          <div class="space-y-3 text-xs">
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <p class="font-semibold text-cyan-300 mb-1">1. Reescrita (rewriting)</p>
+              <p class="text-slate-400 leading-relaxed">Troca o vocabulário do usuário pelo do corpus.
+              <span class="font-mono text-slate-300">"açúcar no sangue" → "glicemia"</span>. É o que salva
+              o <a href="../../esparsos/bm25/index.html" class="text-cyan-400 hover:underline">BM25</a>,
+              que só casa o que está escrito. O denso perdoa mais, mas também erra quando o jargão é raro.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <p class="font-semibold text-cyan-300 mb-1">2. Expansão</p>
+              <p class="text-slate-400 leading-relaxed">Acrescenta termos irmãos em vez de substituir:
+              <span class="font-mono text-slate-300">"férias" + "banco de horas" + "abono"</span>.
+              Aumenta recall e degrada precisão — depois disso, um
+              <a href="../../densos/cross-encoder/index.html" class="text-cyan-400 hover:underline">cross-encoder</a>
+              para limpar o topo vira quase obrigatório.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <p class="font-semibold text-cyan-300 mb-1">3. Decomposição</p>
+              <p class="text-slate-400 leading-relaxed">Uma pergunta, várias buscas:
+              <span class="font-mono text-slate-300">"Comparar o preparo da ultrassonografia e do hemograma"</span>
+              vira duas sub-perguntas independentes, cada uma com seu top-k.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <p class="font-semibold text-cyan-300 mb-1">4. Resolução de referência</p>
+              <p class="text-slate-400 leading-relaxed">"E no caso dele?" não é buscável. O agente
+              reescreve usando o histórico da conversa até a query ficar autossuficiente — porque o
+              índice não conhece o turno anterior.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-flask-vial text-cyan-400"></i> Teste a reescrita no índice real da página
+          </h3>
+          <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+            Os 8 documentos do simulador são indexados de verdade. Digite uma pergunta e compare os
+            scores antes e depois da reescrita. O score é
+            $\;\mathrm{score}(q,d)=\dfrac{\sum_{t \in q \cap d} \mathrm{idf}(t)}{\sum_{t \in q} \mathrm{idf}(t)}$,
+            com $\mathrm{idf}(t)=\ln\!\left(1+\frac{N}{\max(\mathrm{df}(t),1)}\right)$ — um BM25 enxuto, sem saturação de TF.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-2 mb-4">
+            <input id="rw-input" type="text" value="Posso comer antes do exame de açúcar no sangue?"
+                   class="flex-1 min-w-0 px-3 py-2 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-200 focus:border-cyan-500/50 focus:outline-none">
+            <button id="rw-btn" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition flex items-center gap-2 justify-center">
+              <i class="fa-solid fa-play text-[10px]"></i> Comparar
+            </button>
+          </div>
+          <div id="rw-saida" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-amber-950/20 border border-amber-500/30 p-5 text-xs text-amber-100 leading-relaxed">
+        <p class="font-semibold text-amber-300 mb-1.5"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Reescrever também estraga</p>
+        <p class="text-amber-100/80">
+          Uma reescrita agressiva pode jogar fora justamente o termo que identificava o documento — um
+          código de exame, uma sigla de convênio, o nome de uma unidade. Esses tokens raros são o que o
+          <a href="../../esparsos/sparse-encoder/index.html" class="underline hover:text-amber-50">sparse encoder</a>
+          e o <a href="../../esparsos/bm25/index.html" class="underline hover:text-amber-50">BM25</a> fazem de melhor.
+          Na prática vale rodar as duas queries (original e reescrita) e fundir os rankings com
+          <a href="../../rrf/index.html" class="underline hover:text-amber-50">RRF</a>, em vez de apostar na reescrita.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= MÓDULO 3 ================= -->
+    <section class="slide-section" data-nav="Multi-hop" data-icon="fa-diagram-project">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-diagram-project"></i> Módulo 03 • Multi-hop
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Quando a resposta mora em <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">dois documentos que não se citam</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Nenhum ajuste de retriever resolve isto: o trecho que responde a pergunta não existe. Ele
+          precisa ser montado a partir de dois documentos que nunca se mencionam — e o segundo só pode
+          ser buscado depois que o primeiro foi lido.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Pergunta do beneficiário</p>
+        <p class="text-lg text-white font-medium mb-6">"Preciso de preparo para o exame que eles pedem?"
+          <span class="block text-xs text-slate-500 font-normal mt-1">— dois turnos antes, ele havia dito: "vou operar bariátrica pelo Saúde Prime"</span>
+        </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 items-stretch">
+          <div class="rounded-xl bg-surface-950 border border-cyan-500/30 p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono text-cyan-400 uppercase tracking-widest">Salto 1</span>
+              <span class="text-[10px] font-mono text-slate-600">D2</span>
+            </div>
+            <p class="text-[11px] font-mono text-cyan-300 mb-2">query: saúde prime · bariátrica · preparo</p>
+            <p class="text-xs text-slate-300 leading-relaxed">"O convênio Saúde Prime só autoriza cirurgia
+            bariátrica após avaliação endocrinológica que inclua <span class="text-cyan-300 font-semibold">glicemia de jejum</span> e hemograma."</p>
+            <p class="text-[11px] text-slate-500 mt-2">Responde <em>qual</em> exame. Não diz nada sobre preparo.</p>
+          </div>
+
+          <div class="flex lg:flex-col items-center justify-center gap-2 text-slate-600">
+            <i class="fa-solid fa-arrow-right lg:hidden"></i>
+            <i class="fa-solid fa-arrow-down hidden lg:block"></i>
+            <span class="text-[10px] font-mono text-cyan-500 whitespace-nowrap lg:[writing-mode:vertical-rl]">entidade extraída</span>
+          </div>
+
+          <div class="rounded-xl bg-surface-950 border border-emerald-500/30 p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono text-emerald-400 uppercase tracking-widest">Salto 2</span>
+              <span class="text-[10px] font-mono text-slate-600">D1</span>
+            </div>
+            <p class="text-[11px] font-mono text-emerald-300 mb-2">query: glicemia · jejum · horas · alimentação</p>
+            <p class="text-xs text-slate-300 leading-relaxed">"A glicemia de jejum exige
+            <span class="text-emerald-300 font-semibold">8 horas sem alimentação</span>. Água sem gás está liberada durante o período."</p>
+            <p class="text-[11px] text-slate-500 mt-2">Só era possível formular depois de ler D2.</p>
+          </div>
+        </div>
+
+        <div class="mt-5 p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30">
+          <p class="text-[10px] font-mono text-emerald-400 uppercase tracking-widest mb-1.5">Resposta costurada</p>
+          <p class="text-sm text-emerald-100 leading-relaxed">"O exame exigido pelo Saúde Prime é a glicemia
+          de jejum <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20">D2</span>, que
+          pede 8 horas sem alimentação — água sem gás liberada
+          <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20">D1</span>."</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-ban text-rose-400"></i> Por que top-k maior não resolve
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            É tentador pedir 50 trechos em vez de 5 e deixar o modelo achar a ligação. Dois problemas:
+          </p>
+          <ul class="text-xs text-slate-400 space-y-2 leading-relaxed">
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[4px] mt-1.5 text-rose-400"></i>
+              <span>D1 não está no top-50 da query original — ela não tem os termos "glicemia" nem "jejum".
+              Aumentar $k$ traz mais ruído, não o documento que falta.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle text-[4px] mt-1.5 text-rose-400"></i>
+              <span>Contexto longo dilui. Quanto mais trecho irrelevante entra, maior a chance de o gerador
+              costurar uma afirmação a partir de duas fontes que não conversam — inventando a ponte.</span></li>
+          </ul>
+          <p class="text-xs text-slate-400 leading-relaxed mt-3">
+            O salto precisa ser sequencial porque a segunda query <em>depende</em> do conteúdo da primeira.
+            Isso é dependência de dados, não falta de capacidade do retriever.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-scale-unbalanced text-amber-400"></i> O preço do salto
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs min-w-[380px]">
+              <thead>
+                <tr class="text-left border-b border-slate-800">
+                  <th class="py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Estratégia</th>
+                  <th class="py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Chamadas</th>
+                  <th class="py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Falha típica</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800 text-slate-400">
+                <tr><td class="py-2.5 text-slate-300">1 passada, $k=5$</td><td class="py-2.5 font-mono">2</td><td class="py-2.5">responde com meia informação</td></tr>
+                <tr><td class="py-2.5 text-slate-300">1 passada, $k=50$</td><td class="py-2.5 font-mono">2</td><td class="py-2.5">dilui e inventa a ponte</td></tr>
+                <tr><td class="py-2.5 text-cyan-300">2 saltos (laço)</td><td class="py-2.5 font-mono text-cyan-300">7</td><td class="py-2.5">custa 3,5× e pode não convergir</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+            As linhas de uma passada não avaliam suficiência: 1 busca + 1 geração. A linha do laço é a
+            contagem do simulador do módulo 4 — 2 chamadas de LLM (formular e avaliar) + 1 ao índice por
+            volta, mais 1 para redigir: $2\cdot 3 + 1 = 7$. Preço real depende do modelo e do contexto.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MÓDULO 4 ================= -->
+    <section class="slide-section" data-nav="Parada" data-icon="fa-hand">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-hand"></i> Módulo 04 • Autocrítica e critério de parada
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Saber quando parar — <span class="bg-gradient-to-r from-cyan-400 to-amber-400 bg-clip-text text-transparent">inclusive sem resposta</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Antes de redigir, o agente responde uma pergunta sobre si mesmo: <em>o que eu recuperei cobre
+          tudo que a pergunta exige?</em> A cobertura é medida sobre requisitos declarados —
+          $\;\mathrm{cobertura}=\frac{|S_{\text{cobertos}}|}{|S|}$ — e não sobre a impressão de que "tem bastante texto aqui".
+        </p>
+      </div>
+
+      <!-- ===== SIMULADOR ===== -->
+      <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-5 sm:p-6 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-rotate text-cyan-400"></i> Simulador do laço
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+              Índice real de 8 documentos, retriever lexical de verdade, decisão calculada a cada volta.
+              O número de voltas e o desfecho saem da lógica — mude o limiar ou o limite e o mesmo
+              caso termina diferente.
+            </p>
+          </div>
+        </div>
+
+        <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">1 · Escolha o caso</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5" id="sim-perguntas"></div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <label class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-2">
+              <span><i class="fa-solid fa-filter mr-1.5 text-cyan-400"></i>Limiar de relevância</span>
+              <span id="lb-limiar" class="text-cyan-300 font-bold"></span>
+            </label>
+            <input id="in-limiar" type="range" min="0.10" max="0.60" step="0.05" value="0.30" class="w-full accent-cyan-500">
+            <p class="text-[10px] text-slate-500 mt-1.5">Score mínimo para um trecho entrar no contexto.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <label class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-2">
+              <span><i class="fa-solid fa-stopwatch mr-1.5 text-amber-400"></i>Limite de voltas</span>
+              <span id="lb-voltas" class="text-amber-300 font-bold"></span>
+            </label>
+            <input id="in-voltas" type="range" min="1" max="4" step="1" value="3" class="w-full accent-amber-500">
+            <p class="text-[10px] text-slate-500 mt-1.5">Atingido o limite, o agente desiste com o que tem.</p>
+          </div>
+        </div>
+
+        <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">2 · Avance o laço</p>
+        <div class="flex flex-wrap gap-2 mb-5">
+          <button id="btn-passo" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition flex items-center gap-2">
+            <i class="fa-solid fa-forward-step text-[10px]"></i> Avançar uma volta
+          </button>
+          <button id="btn-fim" class="px-4 py-2 rounded-xl bg-surface-950 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-semibold transition flex items-center gap-2">
+            <i class="fa-solid fa-forward-fast text-[10px]"></i> Rodar até o desfecho
+          </button>
+          <button id="btn-reset" class="px-4 py-2 rounded-xl bg-surface-950 border border-slate-800 hover:border-slate-700 text-slate-400 text-xs font-semibold transition flex items-center gap-2">
+            <i class="fa-solid fa-arrow-rotate-left text-[10px]"></i> Reiniciar
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-5" id="sim-metricas"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2">
+            <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Histórico do laço</p>
+            <div id="sim-voltas" class="space-y-3"></div>
+            <div id="sim-desfecho" class="mt-3"></div>
+          </div>
+          <div>
+            <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Requisitos da resposta</p>
+            <div id="sim-slots" class="space-y-2 mb-4"></div>
+            <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Índice (8 documentos)</p>
+            <div id="sim-base" class="space-y-1.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custo -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-coins text-amber-400"></i> O custo de cada volta
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Com $n$ voltas, $c_{\text{llm}}$ chamadas de modelo por volta e uma busca por volta:
+          </p>
+          <p class="text-center text-slate-200 my-3">$$C(n) = n \cdot (c_{\text{llm}} + c_{\text{busca}}) + 1$$</p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            O $+1$ é a redação final, que só acontece se o agente decidir responder. Latência segue a
+            mesma conta e é o que o usuário sente: quatro voltas podem virar dezenas de segundos.
+          </p>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <div>
+              <label class="block text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-1">Perguntas por dia</label>
+              <input id="in-volume" type="number" min="1" step="100" value="2000" class="w-full px-3 py-2 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-200 font-mono focus:border-amber-500/50 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-1">R$ por chamada de LLM</label>
+              <input id="in-preco" type="number" min="0" step="0.001" value="0.012" class="w-full px-3 py-2 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-200 font-mono focus:border-amber-500/50 focus:outline-none">
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs min-w-[360px]">
+              <thead>
+                <tr class="text-left border-b border-slate-800">
+                  <th class="py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Voltas</th>
+                  <th class="py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Chamadas LLM</th>
+                  <th class="py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">Buscas</th>
+                  <th class="py-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">R$ / dia</th>
+                </tr>
+              </thead>
+              <tbody id="tab-custo" class="divide-y divide-slate-800 text-slate-400"></tbody>
+            </table>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-2">Preço por chamada é uma entrada sua; a tabela só multiplica.</p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-flag-checkered text-emerald-400"></i> Desistir explicitamente é uma resposta boa
+          </h3>
+          <div class="space-y-3 text-xs">
+            <div class="p-3 rounded-xl bg-rose-950/20 border border-rose-500/25">
+              <p class="font-semibold text-rose-300 mb-1">Responder mal</p>
+              <p class="text-rose-100/80 leading-relaxed">"O limite de reembolso para acupuntura é de
+              R$ 850 por sessão." Chega ao usuário indistinguível de uma resposta correta. O erro só
+              aparece quando alguém tiver prejuízo — e a confiança em <em>todas</em> as respostas cai junto.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/25">
+              <p class="font-semibold text-emerald-300 mb-1">Desistir com rastro</p>
+              <p class="text-emerald-100/80 leading-relaxed">"Não encontrei na base nada sobre limite de
+              reembolso para acupuntura. Busquei em 'reembolso' e 'cobertura de terapias' e achei só o prazo
+              de 30 dias. Vou abrir chamado para a equipe de benefícios."</p>
+            </div>
+            <p class="text-slate-400 leading-relaxed">
+              A segunda resposta entrega três coisas: o usuário sabe que precisa de outro caminho, o time
+              descobre uma lacuna concreta de conteúdo, e o registro de abstenção vira métrica — dá para
+              acompanhar a taxa de desistência ao longo do tempo
+              (<a href="../avaliacao/index.html" class="text-cyan-400 hover:underline">1.4.4</a>).
+            </p>
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <p class="font-semibold text-slate-200 mb-1"><i class="fa-solid fa-circle-half-stroke mr-1.5 text-amber-400"></i>O dial que ninguém escapa</p>
+              <p class="text-slate-400 leading-relaxed">Limiar alto e limite de voltas baixo: abstém
+              demais, vira um agente inútil que só diz "não sei". Limiar baixo e limite alto: responde com
+              contexto fraco e gasta caro. Não existe ponto ótimo universal — o ajuste é por domínio, e em
+              saúde ou jurídico erra-se para o lado de abster.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MÓDULO 5 ================= -->
+    <section class="slide-section" data-nav="Síntese" data-icon="fa-clipboard-check">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-clipboard-check"></i> Módulo 05 • Síntese e verificação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O laço em <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">uma página</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Quatro decisões, um critério de saída e um teto de custo. É isso que separa um agente que
+          consulta de um que improvisa.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <p class="font-semibold text-cyan-300 text-sm mb-2"><i class="fa-solid fa-1 mr-2"></i>Recuperar é um laço</p>
+          <p class="text-xs text-slate-400 leading-relaxed">A saída do laço é a avaliação de suficiência,
+          não o fim de uma lista de etapas. Uma busca ruim deixa de ser fatal.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <p class="font-semibold text-cyan-300 text-sm mb-2"><i class="fa-solid fa-2 mr-2"></i>A query é construída</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Reescrita, expansão, decomposição e resolução
+          de pronomes pelo histórico. O índice não conhece o turno anterior da conversa.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <p class="font-semibold text-cyan-300 text-sm mb-2"><i class="fa-solid fa-3 mr-2"></i>Multi-hop é dependência de dados</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Quando a segunda query depende do conteúdo da
+          primeira, aumentar $k$ não resolve: o salto precisa ser sequencial.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <p class="font-semibold text-cyan-300 text-sm mb-2"><i class="fa-solid fa-4 mr-2"></i>Parar é uma decisão de produto</p>
+          <p class="text-xs text-slate-400 leading-relaxed">Limiar, limite de voltas e teto de custo
+          definem o quanto o agente prefere abster-se a arriscar. Isso se calibra por domínio.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-rose-950/15 border border-rose-500/25 p-6 mb-8">
+        <h3 class="text-base font-bold text-rose-200 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Limitações do que esta página ensinou
+        </h3>
+        <ul class="text-xs text-rose-100/80 space-y-2.5 leading-relaxed">
+          <li class="flex gap-2"><i class="fa-solid fa-circle text-[4px] mt-1.5 text-rose-400"></i>
+            <span><strong class="text-rose-200">A autocrítica é feita pelo mesmo modelo que erra.</strong>
+            Perguntar ao LLM "o contexto basta?" usa o mesmo sistema que acabou de ser excessivamente
+            confiante. Ele tende a dizer que sim. Critérios verificáveis fora do modelo — um trecho citável
+            por afirmação, um requisito declarado, um score de retrieval — são mais confiáveis que a
+            autoavaliação em linguagem natural. É por isso que a
+            <a href="../grounding/index.html" class="underline hover:text-rose-50">verificação de grounding (1.4.2)</a>
+            não pode ser substituída por autocrítica.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-circle text-[4px] mt-1.5 text-rose-400"></i>
+            <span><strong class="text-rose-200">Os requisitos do simulador são declarados à mão.</strong>
+            Em um sistema real, ninguém sabe de antemão quais slots uma pergunta aberta exige — descobrir
+            isso é, ele próprio, um problema em aberto. Implementações usam o LLM para propor os requisitos,
+            o que reintroduz o problema do parágrafo anterior.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-circle text-[4px] mt-1.5 text-rose-400"></i>
+            <span><strong class="text-rose-200">O retriever aqui é lexical e minúsculo.</strong>
+            Oito documentos e um score de idf sem saturação de TF, escolhido para caber na tela e ser
+            auditável. Um sistema real usa o pipeline híbrido do
+            <a href="../../index.html" class="underline hover:text-rose-50">capítulo 1</a>, e os limiares
+            de um denso não têm a mesma escala nem a mesma interpretação dos daqui.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-circle text-[4px] mt-1.5 text-rose-400"></i>
+            <span><strong class="text-rose-200">Não há número de benchmark nesta página, de propósito.</strong>
+            Ganho de acurácia de laços agênticos sobre RAG de uma passada varia muito com dataset,
+            modelo e formulação do prompt; os resultados publicados não convergem para um número que valha
+            repetir. O que dá para afirmar com segurança é qualitativo: o laço cria um caminho para
+            recuperar do erro de recall e um lugar onde a abstenção pode acontecer.</span></li>
+        </ul>
+      </div>
+
+      <!-- Quiz -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-8">
+        <div class="flex items-center justify-between gap-3 mb-5 flex-wrap">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-circle-question text-purple-400"></i> Verificação de leitura
+          </h3>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que aumentar o top-$k$ não resolve uma pergunta multi-hop?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O problema não é ordenação: o documento do segundo salto não compartilha termos com a query original, então não está em ranking nenhum dela.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque o re-ranking sempre coloca o documento certo depois da posição 50.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A segunda query só pode ser formulada depois de ler o primeiro documento — é dependência de dados, não falta de recall.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o segundo documento só se torna buscável depois que o primeiro foi lido.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Custo de contexto é um efeito colateral real, mas mesmo com contexto infinito o documento do segundo salto continuaria fora do ranking da query original.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque a janela de contexto do modelo não comporta 50 trechos.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Embeddings ajudam no vocabulário, não na dependência sequencial entre as duas buscas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque o BM25 não aceita $k$ maior que 10.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              No simulador, o que acontece com o caso multi-hop quando o limite de voltas cai para 1?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O agente não emenda: com um requisito descoberto, a decisão calculada é desistir por limite, não responder.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Ele responde do mesmo jeito, só que mais rápido.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O limiar controla o que entra no contexto; o limite de voltas controla quantas vezes o laço roda. São dois botões diferentes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O limiar de relevância compensa automaticamente.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Ele descobre qual é o exame, mas nunca chega ao preparo: cobertura 1/2, desfecho de desistência por limite.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Ele para com um requisito coberto de dois e desiste por limite de iterações.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O laço termina sempre: o limite de voltas existe exatamente para garantir isso.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) O laço entra em loop infinito.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Qual é a principal fragilidade de usar o próprio LLM como juiz da suficiência do contexto?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Custo é um problema secundário; o problema central é a correlação entre o erro do gerador e o erro do juiz.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Custa uma chamada a mais por volta.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Latência incomoda, mas um juiz lento e correto seria aceitável. Um juiz rápido e cúmplice não é.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Aumenta a latência percebida pelo usuário.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O limiar do retriever é um critério externo ao modelo — justamente o tipo de sinal que ajuda aqui.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) O limiar de relevância deixa de funcionar.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'O juiz herda o viés do gerador: o mesmo sistema que se sentiu confiante para inventar tende a declarar o contexto suficiente. Critérios verificáveis fora do modelo são mais confiáveis.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) É o mesmo sistema que errou avaliando o próprio erro, e ele tende a se aprovar.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Próximo -->
+      <a href="../avaliacao/index.html" class="group block rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-amber-500/30 p-6 hover:border-amber-500/60 transition">
+        <div class="flex items-start gap-4">
+          <span class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg shrink-0">
+            <i class="fa-solid fa-ruler-combined"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">Próximo tópico · 1.4.4</span>
+            <h3 class="text-lg font-bold text-white group-hover:text-amber-200 transition">Medir se está funcionando</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed max-w-2xl">
+              Todo botão desta página — limiar, limite de voltas, agressividade da reescrita — é um
+              trade-off que só se calibra com medição. O próximo tópico separa a culpa entre recuperação e
+              geração: recall@k, MRR e nDCG de um lado; fidelidade e precisão de contexto do outro.
+            </p>
+            <span class="inline-flex items-center gap-2 text-xs text-amber-400 font-semibold mt-3">
+              Continuar <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+            </span>
+          </div>
+        </div>
+      </a>
+    </section>
+
+  </main>
+
+  <script>
+    /* =========================================================
+       Índice: 8 documentos de uma operadora de saúde + RH.
+       ========================================================= */
+    const BASE = [
+      { id: 'D1', tit: 'Preparo de exames · glicemia',      txt: 'A glicemia de jejum exige 8 horas sem alimentação. Água sem gás está liberada durante o período.' },
+      { id: 'D2', tit: 'Convênio Saúde Prime · bariátrica',  txt: 'O convênio Saúde Prime só autoriza cirurgia bariátrica após avaliação endocrinológica que inclua glicemia de jejum e hemograma.' },
+      { id: 'D3', tit: 'Reembolso de consultas',             txt: 'O pedido de reembolso deve ser enviado em até 30 dias corridos após o atendimento, pelo portal do beneficiário.' },
+      { id: 'D4', tit: 'Licença médica (RH)',                txt: 'O afastamento de até 15 dias é pago pela empresa; a partir do 16º dia o benefício passa para o INSS.' },
+      { id: 'D5', tit: 'Preparo de exames · ultrassonografia',txt: 'A ultrassonografia abdominal total exige 6 horas de jejum e bexiga cheia na chegada.' },
+      { id: 'D6', tit: 'Unidade Pinheiros · horários',        txt: 'A unidade Pinheiros faz coleta de sangue das 6h30 às 11h, de segunda a sábado.' },
+      { id: 'D7', tit: 'Preparo de exames · hemograma',       txt: 'O hemograma completo não exige jejum e pode ser coletado em qualquer horário do dia.' },
+      { id: 'D8', tit: 'Cobertura do plano · terapias',       txt: 'Sessões de fisioterapia e fonoaudiologia têm cobertura de 20 sessões por ano, mediante pedido médico.' },
+    ];
+
+    const STOP = new Set(['que','por','com','para','qual','quais','quanto','quantos','quantas','meu','minha','eles','elas','dele','dela','sao','ate','aos','pelo','pela','pelos','pelas','tem','posso','preciso','uma','uns','das','dos','nos','nas','ser','estar','esta','este','essa','esse','isso','num','numa','mais','menos','muito','todo','toda','dia','dias']);
+
+    const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const toks = s => norm(s).split(/[^a-z0-9]+/).filter(t => t.length > 2 && !STOP.has(t)).map(t => t.replace(/s$/, ''));
+
+    BASE.forEach(d => { d.toks = toks(d.txt); });
+
+    const N = BASE.length;
+    const DF = {};
+    BASE.forEach(d => new Set(d.toks).forEach(t => { DF[t] = (DF[t] || 0) + 1; }));
+    const idf = t => Math.log(1 + N / Math.max(DF[t] || 0, 1));
+
+    /* Retriever lexical: score normalizado em [0,1]. */
+    function buscar(termos, limiar, k = 3) {
+      const uniq = [...new Set(termos)];
+      if (!uniq.length) return [];
+      const denom = uniq.reduce((s, t) => s + idf(t), 0);
+      return BASE
+        .map(d => {
+          const casados = uniq.filter(t => d.toks.includes(t));
+          return { doc: d, score: casados.reduce((s, t) => s + idf(t), 0) / denom, casados };
+        })
+        .sort((a, b) => b.score - a.score)
+        .filter(r => r.score >= limiar)
+        .slice(0, k);
+    }
+
+    /* Reescrita: jargão do domínio + descarte de termos fora do vocabulário do índice. */
+    const JARGAO = {
+      acucar: 'glicemia', comer: 'alimentacao', comida: 'alimentacao', refeicao: 'alimentacao',
+      barriga: 'abdominal', operacao: 'cirurgia', plano: 'convenio', valor: 'cobertura',
+      limite: 'cobertura', teto: 'cobertura', atestado: 'afastamento', falta: 'afastamento',
+    };
+    function reescrever(termos) {
+      const mapeados = termos.map(t => JARGAO[t] || t);
+      const dentro = [...new Set(mapeados.filter(t => DF[t]))];
+      return dentro.length ? dentro : [...new Set(mapeados)];
+    }
+
+    /* =========================================================
+       Módulo 1 — estágios do laço
+       ========================================================= */
+    const ESTAGIOS = [
+      { id: 'decidir', rot: 'Decidir buscar', ico: 'fa-code-branch', cor: 'cyan',
+        txt: 'Nem toda mensagem merece uma busca. "Bom dia" e "resume o que você disse" se respondem com o histórico. Buscar sempre queima chamada e ainda injeta trechos irrelevantes no contexto — que é justamente o que faz o gerador misturar fontes.' },
+      { id: 'formular', rot: 'Formular a query', ico: 'fa-pen-to-square', cor: 'cyan',
+        txt: 'A pergunta vira query: pronomes resolvidos pelo histórico, jargão do domínio no lugar do coloquial, pergunta composta quebrada em sub-perguntas. É o módulo 2 desta página.' },
+      { id: 'recuperar', rot: 'Recuperar', ico: 'fa-magnifying-glass', cor: 'cyan',
+        txt: 'Aqui mora o capítulo 1 inteiro: esparso para os termos exatos, denso para o sentido, RRF para fundir, cross-encoder para reordenar o topo. O laço não substitui nada disso — ele chama esse pipeline de novo, com outra query.' },
+      { id: 'avaliar', rot: 'Avaliar suficiência', ico: 'fa-scale-balanced', cor: 'amber',
+        txt: 'O passo que quase todo protótipo pula. Pergunta explícita: os trechos recuperados cobrem cada requisito da resposta? Cobertura parcial é o sinal mais valioso do laço — indica exatamente o que ainda falta buscar.' },
+      { id: 'agir', rot: 'Responder ou repetir', ico: 'fa-rotate', cor: 'emerald',
+        txt: 'Quatro saídas possíveis: responder (cobertura completa), reformular (nada veio), buscar de novo (veio metade e a metade nova permite formular a próxima query) ou desistir (estourou o limite ou a base não cobre o assunto).' },
+    ];
+
+    let estagioAtivo = 'decidir';
+
+    function renderEstagios() {
+      document.getElementById('estagios-grid').innerHTML = ESTAGIOS.map((e, i) => {
+        const on = e.id === estagioAtivo;
+        return '<button data-estagio="' + e.id + '" class="est-btn text-left p-2.5 rounded-xl border text-[11px] font-medium transition flex items-center gap-2 ' +
+          (on ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-surface-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white') +
+          (i === ESTAGIOS.length - 1 ? ' sm:col-span-2' : '') + '">' +
+          '<span class="font-mono text-[9px] opacity-60">' + (i + 1) + '</span>' +
+          '<i class="fa-solid ' + e.ico + ' text-[10px]"></i> ' + e.rot + '</button>';
+      }).join('');
+
+      document.querySelectorAll('.est-btn').forEach(b => {
+        b.addEventListener('click', () => { estagioAtivo = b.dataset.estagio; renderEstagios(); });
+      });
+
+      const e = ESTAGIOS.find(x => x.id === estagioAtivo);
+      document.getElementById('estagio-detalhe').innerHTML =
+        '<p class="font-semibold text-' + e.cor + '-300 mb-1.5"><i class="fa-solid ' + e.ico + ' mr-1.5"></i>' + e.rot + '</p>' +
+        '<p class="text-slate-400 leading-relaxed">' + e.txt + '</p>';
+    }
+
+    /* =========================================================
+       Módulo 2 — comparador de reescrita
+       ========================================================= */
+    function chip(t, cor) {
+      return '<span class="inline-block px-1.5 py-0.5 rounded bg-' + cor + '-500/10 border border-' + cor + '-500/30 text-' + cor + '-300 font-mono text-[10px] mr-1 mb-1">' + t + '</span>';
+    }
+
+    function linhaResultado(r) {
+      const pct = (r.score * 100).toFixed(1);
+      return '<div class="flex items-center gap-2 text-[11px]">' +
+        '<span class="font-mono text-slate-500 w-7 shrink-0">' + r.doc.id + '</span>' +
+        '<div class="flex-1 min-w-0 h-1.5 rounded-full bg-surface-900 overflow-hidden">' +
+        '<div class="h-full bg-cyan-500" style="width:' + Math.min(100, r.score * 100) + '%"></div></div>' +
+        '<span class="font-mono text-cyan-300 w-12 text-right shrink-0">' + pct + '%</span></div>';
+    }
+
+    function compararReescrita() {
+      const txt = document.getElementById('rw-input').value || '';
+      const orig = toks(txt);
+      const reesc = reescrever(orig);
+      const limiar = 0.30;
+      const limiarPct = (limiar * 100).toFixed(0) + '%';
+      const rOrig = buscar(orig, 0, 3);
+      const rReesc = buscar(reesc, 0, 3);
+      const passaOrig = rOrig.filter(r => r.score >= limiar).length;
+      const passaReesc = rReesc.filter(r => r.score >= limiar).length;
+
+      const bloco = (rot, termos, res, passa, cor) =>
+        '<div class="p-3 rounded-xl bg-surface-950 border border-slate-800">' +
+        '<p class="text-[10px] font-mono text-' + cor + '-400 uppercase tracking-widest mb-1.5">' + rot + '</p>' +
+        '<div class="mb-2">' + (termos.length ? termos.map(t => chip(t, DF[t] ? cor : 'slate')).join('') : '<span class="text-[10px] text-slate-600">— nenhum termo útil —</span>') + '</div>' +
+        '<div class="space-y-1.5">' + (res.length ? res.map(linhaResultado).join('') : '<p class="text-[10px] text-slate-600">nada no índice</p>') + '</div>' +
+        '<p class="text-[10px] mt-2 ' + (passa ? 'text-emerald-400' : 'text-rose-400') + '">' +
+        (passa ? passa + (passa > 1 ? ' trechos acima' : ' trecho acima') + ' do limiar de ' + limiarPct
+               : 'nenhum trecho acima do limiar de ' + limiarPct + ' — o agente reformularia') + '</p></div>';
+
+      document.getElementById('rw-saida').innerHTML =
+        bloco('Query literal do usuário', orig, rOrig, passaOrig, 'slate') +
+        bloco('Depois da reescrita', reesc, rReesc, passaReesc, 'cyan') +
+        '<p class="text-[10px] text-slate-500 leading-relaxed">Termos em cinza não existem no índice (df = 0): não casam com nada e ainda diluem o denominador do score. A reescrita mapeia o que dá e descarta o resto.</p>';
+    }
+
+    /* =========================================================
+       Módulo 4 — simulador do laço
+       ========================================================= */
+    const PERGUNTAS = [
+      {
+        id: 'q1', tipo: 'Direta', cor: 'emerald', ico: 'fa-bolt',
+        texto: 'Até que horas a unidade Pinheiros coleta sangue?',
+        historico: [],
+        slots: [{ id: 'horario', rot: 'horário de coleta', re: /6h30|11h/i, busca: 'unidade coleta horário' }],
+        resposta: 'A unidade Pinheiros coleta sangue das 6h30 às 11h, de segunda a sábado.',
+      },
+      {
+        id: 'q2', tipo: 'Exige reescrita', cor: 'cyan', ico: 'fa-pen-to-square',
+        texto: 'Posso comer antes do exame de açúcar no sangue?',
+        historico: [],
+        slots: [{ id: 'jejum', rot: 'duração do jejum', re: /horas sem aliment/i, busca: 'glicemia jejum alimentação' }],
+        resposta: 'Não: a glicemia de jejum exige 8 horas sem alimentação. Água sem gás está liberada.',
+      },
+      {
+        id: 'q3', tipo: 'Multi-hop', cor: 'brand', ico: 'fa-diagram-project',
+        texto: 'Preciso de preparo para o exame que eles pedem?',
+        historico: [{ quem: 'Usuário (2 turnos atrás)', texto: 'vou operar bariátrica pelo Saúde Prime' }],
+        slots: [
+          { id: 'exame', rot: 'qual exame o convênio exige', re: /glicemia de jejum/i, semente: true, busca: 'convênio exige exame' },
+          { id: 'preparo', rot: 'preparo desse exame', re: /horas sem aliment/i, busca: 'jejum horas alimentação' },
+        ],
+        resposta: 'O exame exigido pelo Saúde Prime é a glicemia de jejum, que pede 8 horas sem alimentação — água sem gás liberada.',
+      },
+      {
+        id: 'q4', tipo: 'Sem resposta na base', cor: 'rose', ico: 'fa-ghost',
+        texto: 'Qual é o limite de reembolso para acupuntura?',
+        historico: [],
+        slots: [{ id: 'limite', rot: 'valor-limite para acupuntura', re: /(acupuntura)/i, busca: 'acupuntura cobertura reembolso' }],
+        resposta: null,
+      },
+    ];
+
+    const CUSTOS = { llm: 2, busca: 1, redacao: 1 };
+
+    const sim = {};
+
+    function resetSim(idPergunta) {
+      const p = PERGUNTAS.find(x => x.id === (idPergunta || sim.perguntaId || 'q1'));
+      sim.perguntaId = p.id;
+      sim.p = p;
+      sim.volta = 0;
+      sim.voltas = [];
+      sim.contexto = [];
+      sim.cobertos = new Set();
+      sim.sementes = [];
+      sim.reformulou = false;
+      sim.termos = [];
+      sim.ultima = null;
+      sim.fim = false;
+      sim.desfecho = null;
+      renderSim();
+    }
+
+    function limiar() { return parseFloat(document.getElementById('in-limiar').value); }
+    function maxVoltas() { return parseInt(document.getElementById('in-voltas').value, 10); }
+
+    function coberturaAtual() {
+      const texto = sim.contexto.map(d => d.txt).join(' ');
+      const novos = [];
+      sim.p.slots.forEach(s => {
+        if (!sim.cobertos.has(s.id) && s.re.test(texto)) { sim.cobertos.add(s.id); novos.push(s); }
+      });
+      return novos;
+    }
+
+    function passo() {
+      if (sim.fim) return;
+      const p = sim.p;
+      sim.volta++;
+
+      // --- formular a query efetiva ---
+      let termos, nota, comparacao = null;
+      if (sim.volta === 1) {
+        const crua = toks(p.texto);
+        const hist = p.historico.flatMap(h => toks(h.texto));
+        termos = [...new Set([...crua, ...hist])];
+        if (hist.length) {
+          const melhorCrua = buscar(crua, 0, 1)[0];
+          comparacao = 'Sem os termos do histórico, o melhor trecho marcaria ' +
+            ((melhorCrua ? melhorCrua.score : 0) * 100).toFixed(1) + '% — a query do usuário sozinha não é buscável.';
+          nota = 'referência resolvida pelo histórico da conversa';
+        } else {
+          nota = 'query literal do usuário, sem transformação';
+        }
+      } else if (sim.ultima === 'reformular') {
+        termos = reescrever(sim.termos);
+        sim.reformulou = true;
+        nota = 'reescrita: jargão do domínio + descarte de termos fora do índice';
+      } else {
+        const alvo = p.slots.find(s => !sim.cobertos.has(s.id)) || p.slots[p.slots.length - 1];
+        termos = [...new Set([...sim.sementes, ...toks(alvo.busca)])];
+        nota = 'sub-pergunta formulada a partir do fato descoberto na volta anterior';
+      }
+      sim.termos = termos;
+
+      // --- recuperar ---
+      const res = buscar(termos, limiar());
+      res.forEach(r => { if (!sim.contexto.includes(r.doc)) sim.contexto.push(r.doc); });
+
+      // --- avaliar suficiência ---
+      const novos = coberturaAtual();
+      novos.filter(s => s.semente).forEach(s => {
+        const m = sim.contexto.map(d => d.txt).join(' ').match(s.re);
+        if (m) sim.sementes.push(...toks(m[0]));
+      });
+
+      // --- decidir ---
+      let decisao;
+      if (sim.cobertos.size === p.slots.length) decisao = 'responder';
+      else if (sim.volta >= maxVoltas()) decisao = 'limite';
+      else if (novos.length) decisao = 'buscar';
+      else if (!sim.reformulou) decisao = 'reformular';
+      else decisao = 'desistir';
+
+      sim.ultima = decisao;
+      sim.voltas.push({ n: sim.volta, termos, nota, comparacao, res, novos, decisao, cobertos: sim.cobertos.size });
+      if (decisao !== 'reformular' && decisao !== 'buscar') { sim.fim = true; sim.desfecho = decisao; }
+
+      renderSim();
+    }
+
+    function rodarAteFim() {
+      let guarda = 0;
+      while (!sim.fim && guarda++ < 12) passo();
+    }
+
+    function custoAtual() {
+      const llm = sim.volta * CUSTOS.llm + (sim.desfecho === 'responder' ? CUSTOS.redacao : 0);
+      const buscas = sim.volta * CUSTOS.busca;
+      return { llm, buscas, total: llm + buscas };
+    }
+
+    const DECISAO = {
+      responder:  { rot: 'Responder',        cor: 'emerald', ico: 'fa-circle-check' },
+      reformular: { rot: 'Reformular query', cor: 'cyan',    ico: 'fa-pen-to-square' },
+      buscar:     { rot: 'Buscar de novo',   cor: 'brand',   ico: 'fa-diagram-project' },
+      limite:     { rot: 'Desistir (limite de voltas)', cor: 'amber', ico: 'fa-stopwatch' },
+      desistir:   { rot: 'Desistir (base não cobre)',   cor: 'rose',  ico: 'fa-hand' },
+    };
+
+    function renderSim() {
+      const p = sim.p;
+
+      document.getElementById('sim-perguntas').innerHTML = PERGUNTAS.map(x => {
+        const on = x.id === sim.perguntaId;
+        return '<button data-pergunta="' + x.id + '" class="perg-btn text-left p-3 rounded-xl border text-xs transition ' +
+          (on ? 'bg-' + x.cor + '-600/20 border-' + x.cor + '-500/60' : 'bg-surface-950 border-slate-800 hover:border-slate-700') + '">' +
+          '<span class="font-mono text-[9px] uppercase tracking-widest text-' + x.cor + '-400"><i class="fa-solid ' + x.ico + ' mr-1"></i>' + x.tipo + '</span>' +
+          '<p class="mt-1 ' + (on ? 'text-white' : 'text-slate-400') + '">"' + x.texto + '"</p>' +
+          (x.historico.length ? '<p class="mt-1 text-[10px] text-slate-600 italic">histórico: "' + x.historico[0].texto + '"</p>' : '') +
+          '</button>';
+      }).join('');
+      document.querySelectorAll('.perg-btn').forEach(b => b.addEventListener('click', () => resetSim(b.dataset.pergunta)));
+
+      document.getElementById('lb-limiar').textContent = (limiar() * 100).toFixed(0) + '%';
+      document.getElementById('lb-voltas').textContent = maxVoltas() + (maxVoltas() > 1 ? ' voltas' : ' volta');
+
+      const c = custoAtual();
+      const met = (ico, rot, val, cor) =>
+        '<div class="rounded-xl bg-surface-950 border border-slate-800 p-2.5">' +
+        '<p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1"><i class="fa-solid ' + ico + ' mr-1"></i>' + rot + '</p>' +
+        '<p class="text-sm font-mono font-bold text-' + cor + '-300">' + val + '</p></div>';
+      document.getElementById('sim-metricas').innerHTML =
+        met('fa-rotate', 'Voltas', sim.volta + ' / ' + maxVoltas(), 'cyan') +
+        met('fa-list-check', 'Cobertura', sim.cobertos.size + ' / ' + p.slots.length, sim.cobertos.size === p.slots.length ? 'emerald' : 'amber') +
+        met('fa-microchip', 'Chamadas de LLM', c.llm, 'brand') +
+        met('fa-database', 'Buscas no índice', c.buscas, 'purple');
+
+      document.getElementById('sim-slots').innerHTML = p.slots.map(s => {
+        const ok = sim.cobertos.has(s.id);
+        return '<div class="p-2.5 rounded-xl border text-[11px] ' + (ok ? 'bg-emerald-950/25 border-emerald-500/30 text-emerald-200' : 'bg-surface-950 border-slate-800 text-slate-500') + '">' +
+          '<i class="fa-solid ' + (ok ? 'fa-circle-check text-emerald-400' : 'fa-circle text-[8px] text-slate-700') + ' mr-1.5"></i>' + s.rot + '</div>';
+      }).join('');
+
+      document.getElementById('sim-base').innerHTML = BASE.map(d => {
+        const dentro = sim.contexto.includes(d);
+        return '<div class="px-2.5 py-1.5 rounded-lg border text-[10px] leading-snug ' +
+          (dentro ? 'bg-cyan-950/25 border-cyan-500/30 text-cyan-200' : 'bg-surface-950 border-slate-800 text-slate-600') + '">' +
+          '<span class="font-mono">' + d.id + '</span> · ' + d.tit + '</div>';
+      }).join('');
+
+      document.getElementById('sim-voltas').innerHTML = sim.voltas.length
+        ? sim.voltas.map(v => {
+            const d = DECISAO[v.decisao];
+            return '<div class="rounded-xl bg-surface-950 border border-slate-800 p-3.5">' +
+              '<div class="flex items-center justify-between gap-2 mb-2 flex-wrap">' +
+                '<span class="text-[10px] font-mono uppercase tracking-widest text-slate-500">Volta ' + v.n + '</span>' +
+                '<span class="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-' + d.cor + '-500/15 border border-' + d.cor + '-500/40 text-' + d.cor + '-300">' +
+                  '<i class="fa-solid ' + d.ico + ' mr-1"></i>' + d.rot + '</span></div>' +
+              '<p class="text-[10px] text-slate-500 mb-1">query efetiva · <span class="italic">' + v.nota + '</span></p>' +
+              '<div class="mb-2">' + v.termos.map(t => chip(t, DF[t] ? 'cyan' : 'slate')).join('') + '</div>' +
+              (v.comparacao ? '<p class="text-[10px] text-amber-400/80 mb-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i>' + v.comparacao + '</p>' : '') +
+              '<p class="text-[10px] text-slate-500 mb-1.5">trechos acima do limiar</p>' +
+              (v.res.length
+                ? '<div class="space-y-1.5 mb-2">' + v.res.map(r =>
+                    '<div class="text-[11px]">' + linhaResultado(r) +
+                    '<p class="text-slate-400 leading-snug mt-0.5 pl-9">' + r.doc.txt + '</p></div>').join('') + '</div>'
+                : '<p class="text-[11px] text-rose-400 mb-2">nenhum — todos os documentos ficaram abaixo do limiar</p>') +
+              '<p class="text-[10px] ' + (v.novos.length ? 'text-emerald-400' : 'text-slate-500') + '">' +
+                (v.novos.length ? 'requisito coberto nesta volta: ' + v.novos.map(s => s.rot).join(', ') : 'nenhum requisito novo coberto') +
+                ' · cobertura ' + v.cobertos + '/' + sim.p.slots.length + '</p></div>';
+          }).join('')
+        : '<p class="text-xs text-slate-600 p-4 rounded-xl bg-surface-950 border border-slate-800 border-dashed">Clique em "Avançar uma volta" para começar. Nada aqui é roteiro: query, scores e decisão saem do índice e dos controles acima.</p>';
+
+      const cf = custoAtual();
+      let desf = '';
+      if (sim.desfecho === 'responder') {
+        desf = '<div class="rounded-xl bg-emerald-950/25 border border-emerald-500/40 p-4">' +
+          '<p class="text-[10px] font-mono uppercase tracking-widest text-emerald-400 mb-1.5">Resposta entregue</p>' +
+          '<p class="text-sm text-emerald-100 leading-relaxed">' + p.resposta + '</p>' +
+          '<p class="text-[10px] text-emerald-400/70 mt-2">fontes: ' + sim.contexto.map(d => d.id).join(', ') +
+          ' · ' + cf.total + ' chamadas no total (' + cf.llm + ' de LLM + ' + cf.buscas + ' ao índice)</p></div>';
+      } else if (sim.desfecho === 'limite') {
+        const faltam = p.slots.filter(s => !sim.cobertos.has(s.id)).map(s => s.rot).join(', ');
+        desf = '<div class="rounded-xl bg-amber-950/25 border border-amber-500/40 p-4">' +
+          '<p class="text-[10px] font-mono uppercase tracking-widest text-amber-400 mb-1.5">Parou no limite de voltas</p>' +
+          '<p class="text-sm text-amber-100 leading-relaxed">"Consegui só parte da informação e atingi o limite de tentativas. Falta: ' + faltam + '. Prefiro não completar por dedução — encaminhando para atendimento humano."</p>' +
+          '<p class="text-[10px] text-amber-400/70 mt-2">cobertura ' + sim.cobertos.size + '/' + p.slots.length +
+          ' · ' + cf.total + ' chamadas · aumente o limite de voltas e rode de novo</p></div>';
+      } else if (sim.desfecho === 'desistir') {
+        desf = '<div class="rounded-xl bg-rose-950/25 border border-rose-500/40 p-4">' +
+          '<p class="text-[10px] font-mono uppercase tracking-widest text-rose-400 mb-1.5">Abstenção</p>' +
+          '<p class="text-sm text-rose-100 leading-relaxed">"Não encontrei na base nada que responda isso. Reformulei a query uma vez e continuei sem trecho que cubra: ' +
+          p.slots.filter(s => !sim.cobertos.has(s.id)).map(s => s.rot).join(', ') + '. Vou abrir chamado em vez de arriscar um número."</p>' +
+          '<p class="text-[10px] text-rose-400/70 mt-2">' + cf.total + ' chamadas gastas · lacuna de conteúdo registrada para o time</p></div>';
+      }
+      document.getElementById('sim-desfecho').innerHTML = desf;
+
+      const bp = document.getElementById('btn-passo');
+      bp.disabled = sim.fim;
+      bp.className = 'px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ' +
+        (sim.fim ? 'bg-surface-950 border border-slate-800 text-slate-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500 text-white');
+      bp.innerHTML = '<i class="fa-solid fa-forward-step text-[10px]"></i> ' + (sim.fim ? 'Laço encerrado' : 'Avançar uma volta');
+    }
+
+    /* =========================================================
+       Módulo 4 — tabela de custo
+       ========================================================= */
+    function renderCusto() {
+      const vol = Math.max(0, parseFloat(document.getElementById('in-volume').value) || 0);
+      const preco = Math.max(0, parseFloat(document.getElementById('in-preco').value) || 0);
+      const linhas = [1, 2, 3, 4].map(n => {
+        const llm = n * CUSTOS.llm + CUSTOS.redacao;
+        const buscas = n * CUSTOS.busca;
+        const rs = llm * preco * vol;
+        return '<tr><td class="py-2.5 text-slate-300 font-mono">' + n + '</td>' +
+          '<td class="py-2.5 font-mono">' + llm + '</td>' +
+          '<td class="py-2.5 font-mono">' + buscas + '</td>' +
+          '<td class="py-2.5 font-mono text-amber-300">' + rs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td></tr>';
+      }).join('');
+      document.getElementById('tab-custo').innerHTML = linhas;
+    }
+
+    /* ========================================================= */
+    Guia.ready(() => {
+      renderEstagios();
+
+      document.getElementById('rw-btn').addEventListener('click', compararReescrita);
+      document.getElementById('rw-input').addEventListener('keydown', e => { if (e.key === 'Enter') compararReescrita(); });
+      compararReescrita();
+
+      document.getElementById('in-limiar').addEventListener('input', () => resetSim());
+      document.getElementById('in-voltas').addEventListener('input', () => resetSim());
+      document.getElementById('btn-passo').addEventListener('click', () => {
+        if (sim.fim) { Guia.toast('O laço já terminou. Reinicie ou mude os controles.', 'fa-circle-info'); return; }
+        passo();
+      });
+      document.getElementById('btn-fim').addEventListener('click', () => {
+        if (sim.fim) { Guia.toast('O laço já terminou nesta configuração.', 'fa-circle-info'); return; }
+        rodarAteFim();
+        Guia.toast('Desfecho: ' + DECISAO[sim.desfecho].rot + ' em ' + sim.volta + ' volta(s).', DECISAO[sim.desfecho].ico);
+      });
+      document.getElementById('btn-reset').addEventListener('click', () => resetSim());
+      resetSim('q1');
+
+      document.getElementById('in-volume').addEventListener('input', renderCusto);
+      document.getElementById('in-preco').addEventListener('input', renderCusto);
+      renderCusto();
+    });
+  </script>
+</body>
+</html>

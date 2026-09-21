@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Positional Encoding: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Positional Encoding"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Por que a atenção é cega à ordem e como a posição entra no vetor (Vaswani et al., 2017)"
+      data-icon="fa-wave-square"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — O PROBLEMA ══════════════ -->
+    <section class="slide-section" data-nav="Atenção é cega" data-icon="fa-eye-slash">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-eye-slash"></i> Módulo 01 • O Problema
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Self-attention opera sobre um <span class="bg-gradient-to-r from-rose-400 to-cyan-400 bg-clip-text text-transparent">conjunto, não sobre uma sequência</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A atenção compara cada token com todos os outros por produto escalar. Produto escalar não
+          sabe quem veio antes. Sem nenhuma informação de posição, <em>"o cão mordeu o homem"</em> e
+          <em>"o homem mordeu o cão"</em> produzem exatamente os mesmos vetores de saída — só que em
+          outra ordem. Isso tem nome: <strong class="text-rose-300">equivariância a permutação</strong>.
+        </p>
+      </div>
+
+      <!-- Formalização curta -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-rose-400"></i> A propriedade, em uma linha
+        </h3>
+        <p class="text-slate-400 text-xs leading-relaxed mb-3">
+          Seja $P$ uma matriz de permutação das linhas (dos tokens) e $X \in \mathbb{R}^{n \times d}$ a
+          matriz de entrada. Como $\mathrm{Attn}$ trata cada linha de forma idêntica e o softmax é
+          aplicado linha a linha:
+        </p>
+        <p class="text-center my-4">
+          $$\mathrm{Attn}(PX) = P\,\mathrm{Attn}(X)$$
+        </p>
+        <p class="text-slate-400 text-xs leading-relaxed">
+          Permutar a entrada permuta a saída <em>e nada mais</em>. O conteúdo de cada vetor de saída é
+          idêntico. Para o bloco de atenção, a frase é um saco de vetores.
+        </p>
+      </div>
+
+      <!-- SIMULADOR 0: permutação -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-shuffle text-cyan-400"></i> Demonstração: permute e compare
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Atenção real calculada no navegador ($Q=K=V=X$, $d=4$, escala $1/\sqrt{d}$), sem nenhum
+              sinal de posição. Escolha duas posições para trocar.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <label class="text-slate-400">Trocar</label>
+            <select id="perm-a" class="bg-surface-950 border border-slate-700 text-white text-xs rounded-lg px-2 py-1.5 font-mono focus:ring-1 focus:ring-cyan-500 focus:outline-none"></select>
+            <span class="text-slate-500 font-mono">↔</span>
+            <select id="perm-b" class="bg-surface-950 border border-slate-700 text-white text-xs rounded-lg px-2 py-1.5 font-mono focus:ring-1 focus:ring-cyan-500 focus:outline-none"></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-xs font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Frase original
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] font-mono">
+                <thead class="text-slate-500 border-b border-slate-800">
+                  <tr><th class="text-left py-1.5 pr-2">pos</th><th class="text-left pr-2">token</th><th class="text-left">saída da atenção</th></tr>
+                </thead>
+                <tbody id="perm-tbl-a" class="text-slate-300"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-xs font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span> Frase permutada
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] font-mono">
+                <thead class="text-slate-500 border-b border-slate-800">
+                  <tr><th class="text-left py-1.5 pr-2">pos</th><th class="text-left pr-2">token</th><th class="text-left">saída da atenção</th></tr>
+                </thead>
+                <tbody id="perm-tbl-b" class="text-slate-300"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="perm-verdict" class="mt-5 p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/25 text-xs text-slate-300"></div>
+      </div>
+
+      <!-- Contraste com RNN e CNN -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-rotate text-emerald-400"></i> RNN / LSTM
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A ordem está na <strong class="text-slate-200">própria mecânica</strong>: o estado
+            $h_t = f(h_{t-1}, x_t)$ só existe depois de $h_{t-1}$. Trocar dois tokens muda todo o
+            histórico. Posição é de graça — e o preço é a sequencialidade: nada paraleliza.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-grip-lines text-emerald-400"></i> CNN 1D
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            O kernel tem <strong class="text-slate-200">slots fixos</strong>: o peso que multiplica o
+            vizinho da esquerda não é o mesmo que multiplica o da direita. A ordem local está embutida
+            no formato do filtro — mas o alcance é limitado pelo tamanho do kernel.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-eye-slash text-rose-400"></i> Self-attention
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Todo token vê todo token em <strong class="text-slate-200">um passo</strong>, o que
+            paraleliza perfeitamente — e é exatamente por isso que a ordem some. O Transformer troca
+            a ordem embutida por ordem <em>injetada</em>: é aí que entra o positional encoding.
+          </p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-500 mt-5 leading-relaxed">
+        O ponto de vista de recuperação de informação está em
+        <a href="../../../ir/densos/transformer/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.4 Arquitetura Transformer</a>;
+        a origem dos vetores que entram aqui está em
+        <a href="../../../ir/densos/embeddings/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.1 Embeddings</a>.
+      </p>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — A CONSTRUÇÃO SENOIDAL ══════════════ -->
+    <section class="slide-section" data-nav="Construção senoidal" data-icon="fa-wave-square">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-wave-square"></i> Módulo 02 • A Construção
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Um <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">relógio de várias frequências</span> por posição
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Vaswani et al. (2017) não treinam nada aqui: a posição vira um vetor fechado, calculado por
+          senos e cossenos de frequências em progressão geométrica.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-6 glow-cyan">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-square-root-variable text-cyan-400"></i> A fórmula
+          </h3>
+          <p class="text-center my-4">
+            $$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/d}}\right)$$
+          </p>
+          <p class="text-center my-4">
+            $$PE_{(pos,\,2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d}}\right)$$
+          </p>
+          <div class="overflow-x-auto mt-5">
+            <table class="w-full text-[11px]">
+              <tbody class="divide-y divide-slate-800">
+                <tr><td class="py-2 pr-3 font-mono text-cyan-300 align-top">$pos$</td><td class="py-2 text-slate-400">índice do token na sequência: $0, 1, 2, \dots$ É o que queremos codificar.</td></tr>
+                <tr><td class="py-2 pr-3 font-mono text-cyan-300 align-top">$d$</td><td class="py-2 text-slate-400">dimensão do modelo — o mesmo $d$ do embedding de token, porque os dois serão somados.</td></tr>
+                <tr><td class="py-2 pr-3 font-mono text-cyan-300 align-top">$i$</td><td class="py-2 text-slate-400">índice do <strong class="text-slate-200">par</strong> de dimensões: $i = 0 \dots d/2-1$. Cada $i$ ocupa duas casas do vetor, $2i$ (seno) e $2i+1$ (cosseno).</td></tr>
+                <tr><td class="py-2 pr-3 font-mono text-cyan-300 align-top">$10000$</td><td class="py-2 text-slate-400">a <em>base</em>, escolhida empiricamente. Ela define a razão entre a frequência mais rápida e a mais lenta.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-clock text-brand-400"></i> A intuição do relógio binário
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            Escreva $5$ em binário: <span class="font-mono text-slate-200">101</span>. O bit menos
+            significativo alterna a cada incremento; o seguinte a cada dois; o próximo a cada quatro.
+            Poucos bits, em <strong class="text-slate-200">frequências que dobram</strong>, identificam
+            qualquer número.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            O PE faz o mesmo em versão contínua. A frequência do par $i$ é
+            $\omega_i = 1/\text{base}^{2i/d}$: em $i=0$ vale $1$ (gira rápido, o "bit" menos
+            significativo), e vai caindo geometricamente até $\approx 1/\text{base}$ no último par
+            (gira devagar, o bit mais significativo). Comprimentos de onda cobrem de $2\pi$ até
+            $\text{base}\cdot 2\pi$.
+          </p>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2">
+              <span>Frequências dos pares, com os controles abaixo</span>
+              <span class="font-mono text-cyan-400" id="freq-count"></span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] font-mono">
+                <thead class="text-slate-500 border-b border-slate-800">
+                  <tr><th class="text-left py-1.5 pr-3">par $i$</th><th class="text-left pr-3">dims</th><th class="text-right pr-3">$\omega_i$</th><th class="text-right">comprimento de onda</th></tr>
+                </thead>
+                <tbody id="freq-tbl" class="text-slate-300"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR A: heatmap -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-table-cells text-cyan-400"></i> Simulador A · Mapa de calor do $PE$
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Cada célula é o valor real de $\sin$ ou $\cos$ calculado na hora. Passe o mouse para
+              inspecionar $pos$, $i$ e o valor.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+            <span class="text-rose-400">−1</span>
+            <span class="w-24 h-2.5 rounded-full inline-block" style="background:linear-gradient(90deg,#f43f5e,#0b1220,#22d3ee)"></span>
+            <span class="text-cyan-400">+1</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Comprimento da sequência</span>
+              <span class="font-mono text-cyan-400" id="hm-len-out">48</span>
+            </label>
+            <input id="hm-len" type="range" min="8" max="96" step="4" value="48" class="w-full" aria-label="Comprimento da sequência">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Dimensão do modelo $d$</span>
+              <span class="font-mono text-cyan-400" id="hm-d-out">64</span>
+            </label>
+            <input id="hm-d" type="range" min="8" max="128" step="8" value="64" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Base</span>
+              <span class="font-mono text-cyan-400" id="hm-base-out">10000</span>
+            </label>
+            <input id="hm-base" type="range" min="10" max="60" step="1" value="40" class="w-full" aria-label="Base do encoding">
+          </div>
+        </div>
+
+        <div class="bg-surface-950 rounded-xl p-3 border border-slate-800 relative">
+          <canvas id="pe-canvas" class="w-full h-[360px] rounded-lg cursor-crosshair block"></canvas>
+          <div id="hm-tip" class="hidden absolute z-10 bg-surface-900/95 backdrop-blur px-3 py-2 rounded-lg border border-cyan-500/40 text-[11px] font-mono text-slate-200 shadow-xl pointer-events-none"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5 text-xs">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-slate-400">
+            <i class="fa-solid fa-arrow-right-long text-cyan-400 mr-1"></i>
+            <strong class="text-slate-200">Eixo horizontal (dimensão):</strong> à esquerda as listras
+            são finas — frequência alta, valor muda a cada posição. À direita viram faixas largas —
+            frequência baixa, o valor quase não muda entre posições vizinhas.
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-slate-400">
+            <i class="fa-solid fa-arrow-down-long text-cyan-400 mr-1"></i>
+            <strong class="text-slate-200">Eixo vertical (posição):</strong> cada linha é um vetor
+            $PE_{pos}$ completo. Duas linhas nunca são iguais dentro do alcance útil — é isso que dá
+            ao modelo uma assinatura por posição.
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3">
+          Baixe a base para $\approx 100$: as frequências ficam parecidas, as listras da direita
+          somem e posições distantes começam a colidir. Suba o $d$: mais pares, mais resolução.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — POR QUE SENO E COSSENO ══════════════ -->
+    <section class="slide-section" data-nav="Deslocamento" data-icon="fa-rotate">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-rotate"></i> Módulo 03 • A Propriedade que Justifica a Escolha
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Deslocar $k$ posições é <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">girar por um ângulo fixo</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Senos e cossenos não estão ali por estética. O par $(\sin, \cos)$ transforma "andar $k$
+          posições" em uma operação linear que <strong class="text-slate-200">não depende de onde
+          você está</strong> — só de $k$.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-square-root-variable text-brand-400"></i> A matriz de rotação do par $i$
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Pelas fórmulas de adição de arcos, com $\omega_i = 1/\text{base}^{2i/d}$:
+          </p>
+          <p class="text-center my-4">
+            $$\begin{bmatrix} \sin(\omega_i(pos{+}k)) \\ \cos(\omega_i(pos{+}k)) \end{bmatrix}
+            = \begin{bmatrix} \cos(\omega_i k) & \sin(\omega_i k) \\ -\sin(\omega_i k) & \cos(\omega_i k) \end{bmatrix}
+            \begin{bmatrix} \sin(\omega_i\,pos) \\ \cos(\omega_i\,pos) \end{bmatrix}$$
+          </p>
+          <div class="p-3.5 rounded-xl bg-brand-500/5 border border-brand-500/25 text-xs text-slate-300 leading-relaxed">
+            <i class="fa-solid fa-key text-brand-400 mr-1"></i>
+            A matriz contém <strong class="text-white">apenas $k$</strong>. Não há $pos$ nela. Existe,
+            portanto, uma transformação linear única $M_k$ — a mesma em qualquer ponto da sequência —
+            que leva $PE_{pos}$ em $PE_{pos+k}$. Como $Q$ e $K$ são projeções lineares da entrada,
+            o modelo consegue aprender pesos que reagem a "está $k$ tokens à frente" em vez de
+            "está na posição 37": é uma porta de entrada para <strong class="text-white">distância
+            relativa</strong>.
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+            Cuidado com o exagero comum: o encoding <em>viabiliza</em> a leitura relativa, não a
+            garante. O modelo ainda precisa aprender a usá-la, e na prática a atenção também mistura
+            o sinal posicional com o sinal de conteúdo.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-compass text-cyan-400"></i> A matriz, com números
+          </h3>
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+              <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+                <span>Deslocamento $k$</span><span class="font-mono text-cyan-400" id="rot-k-out">5</span>
+              </label>
+              <input id="rot-k" type="range" min="1" max="40" step="1" value="5" class="w-full" aria-label="Deslocamento k">
+            </div>
+            <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+              <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+                <span>Par $i$</span><span class="font-mono text-cyan-400" id="rot-i-out">0</span>
+              </label>
+              <input id="rot-i" type="range" min="0" max="31" step="1" value="0" class="w-full" aria-label="Índice do par i">
+            </div>
+          </div>
+          <div id="rot-matrix" class="bg-surface-950 rounded-xl border border-slate-800 p-4 font-mono text-xs text-slate-300"></div>
+          <div id="rot-check" class="mt-3 p-3 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400 leading-relaxed"></div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR B: similaridade entre posições -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-simple text-cyan-400"></i> Simulador B · Similaridade entre posições
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Cosseno entre $PE_{ref}$ e o $PE$ de todas as outras posições, calculado célula a célula.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="sim-metric" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white text-xs font-mono transition">
+              <i class="fa-solid fa-repeat mr-1"></i><span id="sim-metric-label">cosseno</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Posição de referência</span><span class="font-mono text-cyan-400" id="sim-ref-out">16</span>
+            </label>
+            <input id="sim-ref" type="range" min="0" max="47" step="1" value="16" class="w-full" aria-label="Posição de referência">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Posições exibidas</span><span class="font-mono text-cyan-400" id="sim-len-out">48</span>
+            </label>
+            <input id="sim-len" type="range" min="12" max="80" step="4" value="48" class="w-full" aria-label="Número de posições">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Dimensão $d$</span><span class="font-mono text-cyan-400" id="sim-d-out">64</span>
+            </label>
+            <input id="sim-d" type="range" min="8" max="128" step="8" value="64" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+        </div>
+
+        <div id="sim-bars" class="bg-surface-950 rounded-xl border border-slate-800 p-4 space-y-1 max-h-[420px] overflow-y-auto"></div>
+
+        <div id="sim-note" class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed"></div>
+      </div>
+
+      <!-- Extrapolação, com honestidade -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/25">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-infinity text-emerald-400"></i> O argumento da extrapolação
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Como o PE é uma função fechada, $PE_{5000}$ existe mesmo que o treino nunca tenha passado
+            de $512$ tokens — não há tabela para estourar. Era esse o argumento dos autores para
+            preferir a versão fixa à aprendida.
+          </p>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-amber-500/30">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> E o que realmente acontece
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Calcular $PE_{5000}$ é trivial; <em>usar bem</em> não é. As camadas acima foram treinadas
+            só com as combinações de fase vistas no treino, e além desse alcance a qualidade cai.
+            Por isso a extrapolação senoidal é considerada limitada na prática, e o campo migrou para
+            esquemas relativos e rotacionais — o assunto do próximo módulo.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — SOMAR, E AS ALTERNATIVAS ══════════════ -->
+    <section class="slide-section" data-nav="Somar & alternativas" data-icon="fa-plus">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-plus"></i> Módulo 04 • Integração & Alternativas
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Por que <span class="bg-gradient-to-r from-amber-400 to-cyan-400 bg-clip-text text-transparent">somar</span>, e não concatenar
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A entrada do primeiro bloco é $x_{pos} = E(\text{token}) + PE_{pos}$. Soma, não concatenação.
+          A escolha parece estranha — misturar significado e posição no mesmo vetor? — e tem uma
+          razão econômica bem concreta.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-calculator text-amber-400"></i> O custo de cada opção, em parâmetros
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">Mexa nos controles: toda contagem abaixo é aritmética feita na hora.</p>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d$</span><span class="font-mono text-amber-400" id="cost-d-out">768</span>
+            </label>
+            <input id="cost-d" type="range" min="128" max="2048" step="64" value="768" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Contexto máx.</span><span class="font-mono text-amber-400" id="cost-n-out">512</span>
+            </label>
+            <input id="cost-n" type="range" min="128" max="8192" step="128" value="512" class="w-full" aria-label="Contexto máximo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Camadas $L$</span><span class="font-mono text-amber-400" id="cost-l-out">12</span>
+            </label>
+            <input id="cost-l" type="range" min="2" max="48" step="1" value="12" class="w-full" aria-label="Número de camadas">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{pos}$ concat.</span><span class="font-mono text-amber-400" id="cost-dp-out">64</span>
+            </label>
+            <input id="cost-dp" type="range" min="8" max="256" step="8" value="64" class="w-full" aria-label="Dimensão posicional concatenada">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-xs font-semibold text-emerald-300 flex items-center gap-2 mb-2">
+              <i class="fa-solid fa-check"></i> Somar $PE$ senoidal
+            </div>
+            <div class="font-mono text-2xl font-bold text-white" id="cost-sin">0</div>
+            <p class="text-[11px] text-slate-400 mt-1.5">parâmetros novos. É função fechada: nada a treinar, nada a guardar, e o vetor continua com $d$ casas.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-xs font-semibold text-brand-300 flex items-center gap-2 mb-2">
+              <i class="fa-solid fa-table-list"></i> Somar $PE$ aprendido
+            </div>
+            <div class="font-mono text-2xl font-bold text-white" id="cost-learn">—</div>
+            <p class="text-[11px] text-slate-400 mt-1.5">uma tabela $n_{max} \times d$ treinada junto. Barata perto do modelo inteiro — mas o contexto vira um teto rígido.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-xs font-semibold text-rose-300 flex items-center gap-2 mb-2">
+              <i class="fa-solid fa-xmark"></i> Concatenar $d_{pos}$ casas
+            </div>
+            <div class="font-mono text-2xl font-bold text-white" id="cost-concat">—</div>
+            <p class="text-[11px] text-slate-400 mt-1.5" id="cost-concat-note"></p>
+          </div>
+        </div>
+
+        <div class="mt-5 p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/25 text-xs text-slate-300 leading-relaxed">
+          <i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i>
+          Concatenar é a opção "limpa": reserva casas exclusivas para posição e nada se mistura. Só que
+          cada casa extra atravessa <em>todas</em> as projeções de <em>todas</em> as camadas. Somar é a
+          opção barata — e funciona porque $d$ é grande: em espaço de alta dimensão sobra lugar para o
+          conteúdo viver aproximadamente em um subespaço e a posição em outro, e as projeções
+          $W_Q, W_K, W_V$ podem aprender a separá-los. Não é garantia, é capacidade.
+        </div>
+      </div>
+
+      <!-- Famílias -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-cyan-400 font-mono font-bold text-xs">2017</span>
+              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px]">absoluto fixo</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Senoidal</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Somado à entrada, zero parâmetro, deslocamento linear. O original do "Attention Is All You Need".</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">
+            <span class="text-rose-400">Limite:</span> extrapolação fraca na prática.
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-brand-400 font-mono font-bold text-xs">2018+</span>
+              <span class="px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 text-[10px]">BERT · GPT-2</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Aprendido (absoluto)</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Uma linha treinável por posição, somada igual. Simples e eficaz dentro do contexto de treino.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">
+            <span class="text-rose-400">Limite:</span> nada existe além de $n_{max}$.
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-emerald-400 font-mono font-bold text-xs">RoPE</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">rotacional</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Rotary (RoPE)</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Em vez de somar na entrada, <strong class="text-slate-200">gira</strong> os pares de $Q$ e $K$ por um ângulo proporcional à posição, dentro de cada camada. O produto $q \cdot k$ passa a depender da diferença de posições.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">
+            Mesma rotação do módulo 03, aplicada em outro lugar.
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-amber-400 font-mono font-bold text-xs">ALiBi</span>
+              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px]">viés relativo</span>
+            </div>
+            <h4 class="font-bold text-white text-sm">ALiBi</h4>
+            <p class="text-xs text-slate-400 mt-1.5">Nenhum vetor posicional: soma um <strong class="text-slate-200">viés negativo proporcional à distância</strong> direto nos scores de atenção, antes do softmax. Quanto mais longe, mais penalizado.</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-500">
+            Pensado para degradar suavemente em sequências longas.
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+        <i class="fa-solid fa-circle-info text-cyan-400 mr-1"></i>
+        O fio comum: <strong class="text-slate-200">absoluto</strong> responde "que posição é esta?";
+        <strong class="text-slate-200">relativo</strong> responde "a que distância está aquele token?".
+        A atenção quase sempre quer a segunda pergunta, e é por isso que as famílias relativas e
+        rotacionais dominaram os modelos recentes. Descrição qualitativa de propósito: comparações
+        numéricas entre esquemas dependem de modelo, tarefa e comprimento, e não cabem em uma tabela
+        única.
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese & Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que a posição <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">resolve, e o que fica em aberto</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Com $x_{pos} = E(\text{token}) + PE_{pos}$ pronto, a entrada do primeiro bloco Transformer
+          finalmente carrega ordem. Daqui o vetor segue para o bloco propriamente dito.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <div class="text-xs font-mono text-rose-400 mb-1">o problema</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Equivariância a permutação</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$\mathrm{Attn}(PX) = P\,\mathrm{Attn}(X)$. Sem posição, a frase é um conjunto e "cão mordeu homem" empata com "homem mordeu cão".</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-1">a construção</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Senos e cossenos geométricos</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$d/2$ pares de frequências caindo de $1$ até $\approx 1/\text{base}$. Assinatura única por posição, sem um parâmetro treinável.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1">a propriedade</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Deslocamento é rotação</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$PE_{pos+k} = M_k \, PE_{pos}$, com $M_k$ dependendo só de $k$. Abre caminho para o modelo ler distância relativa.</p>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Onde isso se encaixa
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          O vetor com posição somada entra no <strong class="text-slate-200">bloco Transformer</strong>
+          (2.1.2), onde passa por multi-head attention, Add &amp; Norm e a FFN position-wise; empilhado,
+          esse bloco forma o <strong class="text-slate-200">encoder</strong> e, com atenção mascarada,
+          o <strong class="text-slate-200">decoder</strong> — os próximos tópicos desta seção.
+          Para revisitar o quadro completo, volte a
+          <a href="../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1 Transformers</a>
+          ou ao capítulo
+          <a href="../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2. Redes Neurais</a>.
+          O uso do Transformer em recuperação está no
+          <a href="../../../ir/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">capítulo 1</a>.
+        </p>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que realmente sustenta a codificação de posição.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que uma RNN não precisa de positional encoding e a self-attention precisa?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A RNN também usa vetores densos; a diferença não é o tipo de representação.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque a RNN usa vetores esparsos, que já carregam o índice do token.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A recorrência impõe ordem na própria mecânica; a atenção trata a entrada como conjunto e é equivariante a permutação.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o estado $h_t$ depende de $h_{t-1}$, embutindo a ordem, enquanto a atenção é equivariante a permutação.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O softmax é aplicado linha a linha e não distingue posição alguma.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque o softmax da atenção já normaliza a posição de cada token.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O custo quadrático é sobre pares de tokens e nada tem a ver com codificar ordem.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque a atenção tem custo quadrático e precisa de um índice para economizar cálculo.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Qual é a consequência de $PE_{pos+k}$ ser uma rotação linear de $PE_{pos}$?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A norma do vetor não é o ponto: ela é praticamente constante justamente porque cada par (sin, cos) tem norma 1.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Que a norma de $PE_{pos}$ cresce com a posição, marcando o fim da sequência.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Posições distantes têm PE distintos; o que existe é decaimento aproximado da similaridade, não igualdade.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Que duas posições distantes acabam com o mesmo vetor, economizando memória.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A matriz de rotação contém apenas k, nunca pos — logo o mesmo mapa linear vale em qualquer ponto da sequência.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Que existe uma transformação linear que só depende de $k$ levando qualquer posição à posição $k$ passos adiante — uma base para distância relativa.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O encoding é fixo: não há nada sendo aprendido nele.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Que o gradiente do encoding senoidal é sempre nulo, acelerando o treino.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Por que o $PE$ é somado ao embedding em vez de concatenado?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Concatenar é perfeitamente possível — o problema é o custo que se propaga por todas as projeções e camadas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque concatenar vetores de dimensões diferentes é matematicamente impossível.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Somar mantém d e não toca em nenhuma matriz de projeção; concatenar aumentaria a entrada de todas as camadas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque a soma preserva a dimensão $d$ e não acrescenta parâmetro nenhum, enquanto casas extras atravessariam todas as projeções de todas as camadas.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A soma não apaga o conteúdo: em alta dimensão as projeções podem separar os dois sinais aproximadamente.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque somar apaga o embedding de token, deixando só a posição, que é o que a atenção usa.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A LayerNorm normaliza a soma, mas não é a razão da escolha.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque a LayerNorm só aceita entradas que sejam somas de dois vetores.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════ núcleo: o positional encoding senoidal ═══════════ */
+    function peOmega(i, d, base) { return 1 / Math.pow(base, (2 * i) / d); }
+
+    /* j é o índice da dimensão (0..d-1); pares (2i, 2i+1) compartilham a frequência de i. */
+    function peValue(pos, j, d, base) {
+      const ang = pos * peOmega(Math.floor(j / 2), d, base);
+      return (j % 2 === 0) ? Math.sin(ang) : Math.cos(ang);
+    }
+
+    function peVec(pos, d, base) {
+      const v = new Array(d);
+      for (let j = 0; j < d; j++) v[j] = peValue(pos, j, d, base);
+      return v;
+    }
+
+    function dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+    function norm(a) { return Math.sqrt(dot(a, a)); }
+    function br(n) { return n.toLocaleString('pt-BR'); }
+
+    Guia.ready(() => {
+      initPermutacao();
+      initHeatmap();
+      initRotacao();
+      initSimilaridade();
+      initCusto();
+    });
+    /* Canvas só tem largura depois que o módulo 02 aparece. */
+    Guia.onSlide(1, redesenharHeatmap);
+
+    /* ═══════════ módulo 01 — equivariância a permutação ═══════════ */
+    const FRASE = ['o', 'cão', 'mordeu', 'o', 'homem'];
+    const EMB = {
+      'o':      [0.10, -0.20, 0.30, 0.05],
+      'cão':    [0.80, 0.10, -0.40, 0.20],
+      'mordeu': [-0.30, 0.70, 0.20, -0.10],
+      'homem':  [0.20, -0.50, 0.60, 0.40]
+    };
+
+    /* Self-attention de brinquedo: Q = K = V = X, escala 1/sqrt(d), sem posição. */
+    function atencao(tokens) {
+      const X = tokens.map(t => EMB[t]);
+      const n = X.length, d = X[0].length, esc = Math.sqrt(d);
+      return X.map(q => {
+        const scores = X.map(k => dot(q, k) / esc);
+        const m = Math.max(...scores);
+        const exps = scores.map(s => Math.exp(s - m));
+        const soma = exps.reduce((a, b) => a + b, 0);
+        const out = new Array(d).fill(0);
+        for (let j = 0; j < n; j++) {
+          const w = exps[j] / soma;
+          for (let c = 0; c < d; c++) out[c] += w * X[j][c];
+        }
+        return out;
+      });
+    }
+
+    function initPermutacao() {
+      const selA = document.getElementById('perm-a');
+      const selB = document.getElementById('perm-b');
+      if (!selA || !selB) return;
+      FRASE.forEach((t, i) => {
+        const o = `<option value="${i}">${i} · ${t}</option>`;
+        selA.insertAdjacentHTML('beforeend', o);
+        selB.insertAdjacentHTML('beforeend', o);
+      });
+      selA.value = '1';
+      selB.value = '4';
+      selA.addEventListener('change', renderPermutacao);
+      selB.addEventListener('change', renderPermutacao);
+      renderPermutacao();
+    }
+
+    function renderPermutacao() {
+      const a = parseInt(document.getElementById('perm-a').value, 10);
+      const b = parseInt(document.getElementById('perm-b').value, 10);
+      const orig = FRASE.slice();
+      const perm = FRASE.slice();
+      perm[a] = FRASE[b];
+      perm[b] = FRASE[a];
+
+      const outA = atencao(orig);
+      const outB = atencao(perm);
+
+      const linhas = (toks, saidas, destaque) => toks.map((t, i) => {
+        const hl = (i === a || i === b) ? destaque : 'text-slate-300';
+        const vec = saidas[i].map(v => (v >= 0 ? '+' : '') + v.toFixed(3)).join(', ');
+        return `<tr class="border-b border-slate-800/60">
+          <td class="py-1.5 pr-2 text-slate-500">${i}</td>
+          <td class="pr-2 ${hl} font-semibold">${t}</td>
+          <td class="text-slate-400 whitespace-nowrap">[${vec}]</td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('perm-tbl-a').innerHTML = linhas(orig, outA, 'text-cyan-300');
+      document.getElementById('perm-tbl-b').innerHTML = linhas(perm, outB, 'text-rose-300');
+
+      /* A saída da posição a na frase original deve reaparecer intacta na posição b da permutada. */
+      let maxDif = 0;
+      for (let i = 0; i < orig.length; i++) {
+        const j = (i === a) ? b : (i === b) ? a : i;
+        for (let c = 0; c < outA[i].length; c++) {
+          maxDif = Math.max(maxDif, Math.abs(outA[i][c] - outB[j][c]));
+        }
+      }
+
+      const igual = a !== b;
+      document.getElementById('perm-verdict').innerHTML = igual
+        ? `<i class="fa-solid fa-equals text-rose-400 mr-1"></i>
+           Maior diferença entre a saída de cada token na frase original e a saída do
+           <em>mesmo</em> token na frase permutada:
+           <span class="font-mono text-rose-300 font-bold">${maxDif.toExponential(2)}</span>
+           — zero, a menos de erro de ponto flutuante. Trocar "${FRASE[a]}" de lugar com
+           "${FRASE[b]}" só trocou as linhas de lugar. Nenhum vetor mudou de conteúdo.`
+        : `<i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>
+           Escolha duas posições diferentes para ver a permutação.`;
+    }
+
+    /* ═══════════ módulo 02 — mapa de calor ═══════════ */
+    let hmCanvas, hmCtx, hmCell = null;
+    const HM_ML = 46, HM_MR = 10, HM_MT = 10, HM_MB = 28, HM_H = 360;
+
+    function hmParams() {
+      return {
+        n: parseInt(document.getElementById('hm-len').value, 10),
+        d: parseInt(document.getElementById('hm-d').value, 10),
+        /* slider em décimos de década: 10 => base 10, 40 => base 10000. */
+        base: Math.pow(10, parseInt(document.getElementById('hm-base').value, 10) / 10)
+      };
+    }
+
+    function initHeatmap() {
+      hmCanvas = document.getElementById('pe-canvas');
+      if (!hmCanvas) return;
+      hmCtx = hmCanvas.getContext('2d');
+
+      ['hm-len', 'hm-d', 'hm-base'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          atualizarRotulosHeatmap();
+          renderFrequencias();
+          redesenharHeatmap();
+        });
+      });
+
+      hmCanvas.addEventListener('mousemove', (e) => {
+        const rect = hmCanvas.getBoundingClientRect();
+        /* getBoundingClientRect devolve pixels CSS: o hit-test também precisa ser em CSS,
+           por isso width/height saem de canvas.width / dpr, nunca de canvas.width. */
+        const dpr = window.devicePixelRatio || 1;
+        const w = hmCanvas.width / dpr, h = hmCanvas.height / dpr;
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const pw = w - HM_ML - HM_MR, ph = h - HM_MT - HM_MB;
+        const p = hmParams();
+
+        if (mx < HM_ML || mx > HM_ML + pw || my < HM_MT || my > HM_MT + ph) {
+          if (hmCell) { hmCell = null; document.getElementById('hm-tip').classList.add('hidden'); desenharHeatmap(); }
+          return;
+        }
+        const col = Math.min(p.d - 1, Math.floor((mx - HM_ML) / (pw / p.d)));
+        const row = Math.min(p.n - 1, Math.floor((my - HM_MT) / (ph / p.n)));
+        const mudou = !hmCell || hmCell.col !== col || hmCell.row !== row;
+        hmCell = { col, row };
+        if (mudou) {
+          const val = peValue(row, col, p.d, p.base);
+          const i = Math.floor(col / 2);
+          const fn = (col % 2 === 0) ? 'sin' : 'cos';
+          const tip = document.getElementById('hm-tip');
+          tip.innerHTML = `pos = <span class="text-cyan-300">${row}</span> · dim = <span class="text-cyan-300">${col}</span>`
+            + ` (par i = ${i}, ${fn})<br>ω<sub>i</sub> = ${peOmega(i, p.d, p.base).toExponential(3)}`
+            + `<br>valor = <span class="${val >= 0 ? 'text-cyan-300' : 'text-rose-300'}">${val.toFixed(4)}</span>`;
+          /* hm-tip é absolute no contêiner com padding: mx/my são relativos ao canvas,
+             então somar o offset do canvas dentro do contêiner (senão erra pelo padding). */
+          const offX = hmCanvas.offsetLeft, offY = hmCanvas.offsetTop;
+          tip.style.left = (offX + Math.min(mx + 14, w - 190)) + 'px';
+          tip.style.top = (offY + Math.max(my - 58, 4)) + 'px';
+          tip.classList.remove('hidden');
+          desenharHeatmap();
+        }
+      });
+
+      hmCanvas.addEventListener('mouseleave', () => {
+        hmCell = null;
+        document.getElementById('hm-tip').classList.add('hidden');
+        desenharHeatmap();
+      });
+
+      window.addEventListener('resize', redesenharHeatmap);
+      atualizarRotulosHeatmap();
+      renderFrequencias();
+      redesenharHeatmap();
+    }
+
+    function atualizarRotulosHeatmap() {
+      const p = hmParams();
+      document.getElementById('hm-len-out').textContent = p.n;
+      document.getElementById('hm-d-out').textContent = p.d;
+      document.getElementById('hm-base-out').textContent = p.base >= 1000
+        ? Math.round(p.base).toLocaleString('pt-BR')
+        : p.base.toFixed(p.base < 100 ? 1 : 0);
+    }
+
+    function renderFrequencias() {
+      const p = hmParams();
+      const pares = p.d / 2;
+      const amostras = [0, Math.floor(pares / 4), Math.floor(pares / 2), pares - 1]
+        .filter((v, i, arr) => arr.indexOf(v) === i);
+      document.getElementById('freq-count').textContent = `${pares} pares · d = ${p.d}`;
+      document.getElementById('freq-tbl').innerHTML = amostras.map(i => {
+        const w = peOmega(i, p.d, p.base);
+        return `<tr class="border-b border-slate-800/60">
+          <td class="py-1.5 pr-3 text-cyan-300">${i}</td>
+          <td class="pr-3 text-slate-500">${2 * i}, ${2 * i + 1}</td>
+          <td class="text-right pr-3">${w.toExponential(3)}</td>
+          <td class="text-right text-slate-400">${(2 * Math.PI / w).toFixed(1)} pos</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function redesenharHeatmap() {
+      if (!hmCanvas) return;
+      const rect = hmCanvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const larguraCss = Math.max(240, rect.width - 24);
+      hmCanvas.width = larguraCss * dpr;
+      hmCanvas.height = HM_H * dpr;
+      hmCtx.setTransform(1, 0, 0, 1, 0, 0);
+      hmCtx.scale(dpr, dpr);
+      hmCanvas.style.width = larguraCss + 'px';
+      hmCanvas.style.height = HM_H + 'px';
+      desenharHeatmap();
+    }
+
+    /* Diverging: rosa (-1) → fundo (0) → ciano (+1). */
+    function corPE(v) {
+      const t = Math.max(-1, Math.min(1, v));
+      const zero = [11, 18, 32], neg = [244, 63, 94], pos = [34, 211, 238];
+      const alvo = t >= 0 ? pos : neg;
+      const a = Math.abs(t);
+      const c = zero.map((z, i) => Math.round(z + (alvo[i] - z) * a));
+      return `rgb(${c[0]},${c[1]},${c[2]})`;
+    }
+
+    function desenharHeatmap() {
+      if (!hmCanvas || !hmCtx) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = hmCanvas.width / dpr, h = hmCanvas.height / dpr;
+      const p = hmParams();
+      const pw = w - HM_ML - HM_MR, ph = h - HM_MT - HM_MB;
+      const cw = pw / p.d, ch = ph / p.n;
+
+      hmCtx.clearRect(0, 0, w, h);
+
+      for (let row = 0; row < p.n; row++) {
+        for (let col = 0; col < p.d; col++) {
+          hmCtx.fillStyle = corPE(peValue(row, col, p.d, p.base));
+          hmCtx.fillRect(HM_ML + col * cw, HM_MT + row * ch, Math.ceil(cw) + 0.5, Math.ceil(ch) + 0.5);
+        }
+      }
+
+      if (hmCell) {
+        hmCtx.strokeStyle = '#ffffff';
+        hmCtx.lineWidth = 1.5;
+        hmCtx.strokeRect(HM_ML + hmCell.col * cw, HM_MT + hmCell.row * ch, Math.max(cw, 2), Math.max(ch, 2));
+      }
+
+      hmCtx.fillStyle = '#64748b';
+      hmCtx.font = '10px JetBrains Mono';
+      hmCtx.textAlign = 'right';
+      const passoPos = Math.max(1, Math.round(p.n / 8));
+      for (let row = 0; row < p.n; row += passoPos) {
+        hmCtx.fillText('pos ' + row, HM_ML - 6, HM_MT + row * ch + 8);
+      }
+      hmCtx.textAlign = 'center';
+      const passoDim = Math.max(1, Math.round(p.d / 8));
+      for (let col = 0; col < p.d; col += passoDim) {
+        hmCtx.fillText(String(col), HM_ML + col * cw + cw / 2, h - 14);
+      }
+      hmCtx.fillStyle = '#94a3b8';
+      hmCtx.fillText('índice da dimensão →', HM_ML + pw / 2, h - 2);
+    }
+
+    /* ═══════════ módulo 03 — matriz de rotação ═══════════ */
+    function initRotacao() {
+      ['rot-k', 'rot-i'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', renderRotacao);
+      });
+      renderRotacao();
+    }
+
+    function renderRotacao() {
+      const k = parseInt(document.getElementById('rot-k').value, 10);
+      const i = parseInt(document.getElementById('rot-i').value, 10);
+      const d = 64, base = 10000;
+      document.getElementById('rot-k-out').textContent = k;
+      document.getElementById('rot-i-out').textContent = i;
+
+      const w = peOmega(i, d, base);
+      const ang = w * k;
+      const c = Math.cos(ang), s = Math.sin(ang);
+      const f = v => (v >= 0 ? ' ' : '') + v.toFixed(4);
+
+      document.getElementById('rot-matrix').innerHTML = `
+        <div class="text-slate-500 text-[11px] mb-2">M<sub>k</sub> para d = 64, base = 10000, ω<sub>i</sub> = ${w.toExponential(3)}, ω<sub>i</sub>·k = ${ang.toFixed(4)} rad</div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-1 max-w-[16rem]">
+          <span class="text-cyan-300">${f(c)}</span><span class="text-cyan-300">${f(s)}</span>
+          <span class="text-cyan-300">${f(-s)}</span><span class="text-cyan-300">${f(c)}</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-2">determinante = ${(c * c + s * s).toFixed(6)} — rotação pura, preserva a norma do par.</div>`;
+
+      /* Verificação numérica: aplica M_k a um pos qualquer e compara com o PE real de pos+k. */
+      const pos = 7;
+      const sp = Math.sin(w * pos), cp = Math.cos(w * pos);
+      const s2 = c * sp + s * cp, c2 = -s * sp + c * cp;
+      const sReal = Math.sin(w * (pos + k)), cReal = Math.cos(w * (pos + k));
+      const erro = Math.max(Math.abs(s2 - sReal), Math.abs(c2 - cReal));
+
+      document.getElementById('rot-check').innerHTML =
+        `<i class="fa-solid fa-vial text-emerald-400 mr-1"></i>
+         Conferindo em pos = ${pos}: aplicar M<sub>k</sub> dá
+         (<span class="font-mono text-slate-300">${s2.toFixed(5)}, ${c2.toFixed(5)}</span>);
+         o PE real de pos+k = ${pos + k} é
+         (<span class="font-mono text-slate-300">${sReal.toFixed(5)}, ${cReal.toFixed(5)}</span>).
+         Erro máximo: <span class="font-mono text-emerald-300">${erro.toExponential(2)}</span>.
+         Mude o par <span class="font-mono">i</span>: o ângulo encolhe, mas a matriz continua sem nenhum traço de <span class="font-mono">pos</span>.`;
+    }
+
+    /* ═══════════ módulo 03 — similaridade entre posições ═══════════ */
+    let simCos = true;
+
+    function initSimilaridade() {
+      ['sim-ref', 'sim-len', 'sim-d'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', renderSimilaridade);
+      });
+      const btn = document.getElementById('sim-metric');
+      if (btn) btn.addEventListener('click', () => {
+        simCos = !simCos;
+        document.getElementById('sim-metric-label').textContent = simCos ? 'cosseno' : 'produto escalar';
+        Guia.toast(simCos ? 'Métrica: cosseno' : 'Métrica: produto escalar bruto', 'fa-repeat');
+        renderSimilaridade();
+      });
+      renderSimilaridade();
+    }
+
+    function renderSimilaridade() {
+      const n = parseInt(document.getElementById('sim-len').value, 10);
+      const d = parseInt(document.getElementById('sim-d').value, 10);
+      const refSlider = document.getElementById('sim-ref');
+      refSlider.max = String(n - 1);
+      const ref = Math.min(parseInt(refSlider.value, 10), n - 1);
+      refSlider.value = String(ref);
+
+      document.getElementById('sim-len-out').textContent = n;
+      document.getElementById('sim-d-out').textContent = d;
+      document.getElementById('sim-ref-out').textContent = ref;
+
+      const base = 10000;
+      const vr = peVec(ref, d, base);
+      const nr = norm(vr);
+
+      const vals = [];
+      for (let p = 0; p < n; p++) {
+        const v = peVec(p, d, base);
+        const bruto = dot(vr, v);
+        vals.push(simCos ? bruto / (nr * norm(v)) : bruto);
+      }
+      const maxAbs = Math.max(...vals.map(Math.abs)) || 1;
+
+      document.getElementById('sim-bars').innerHTML = vals.map((v, p) => {
+        const larg = Math.max(1.5, (Math.abs(v) / maxAbs) * 100);
+        const cor = v >= 0 ? 'bg-cyan-500' : 'bg-rose-500';
+        const txt = v >= 0 ? 'text-cyan-300' : 'text-rose-300';
+        const marca = p === ref ? 'text-white font-bold' : 'text-slate-500';
+        return `<div class="flex items-center gap-2 text-[10px] font-mono">
+          <span class="w-10 shrink-0 text-right ${marca}">${p}</span>
+          <div class="flex-1 h-3 bg-surface-900 rounded overflow-hidden">
+            <div class="${cor} h-full rounded" style="width:${larg.toFixed(1)}%"></div>
+          </div>
+          <span class="w-16 shrink-0 text-right ${txt}">${v.toFixed(3)}</span>
+        </div>`;
+      }).join('');
+
+      /* Média da similaridade por faixa de distância: mostra o decaimento sem fingir monotonia. */
+      const faixa = (lo, hi) => {
+        const sel = vals.filter((_, p) => {
+          const dist = Math.abs(p - ref);
+          return dist >= lo && dist <= hi;
+        });
+        return sel.length ? sel.reduce((a, b) => a + b, 0) / sel.length : NaN;
+      };
+      const perto = faixa(1, 3), medio = faixa(4, 10), longe = faixa(11, n);
+      const fmt = x => isNaN(x) ? '—' : x.toFixed(3);
+
+      document.getElementById('sim-note').innerHTML =
+        `<i class="fa-solid fa-chart-line text-cyan-400 mr-1"></i>
+         Média em relação a <span class="font-mono text-slate-300">pos = ${ref}</span>:
+         distância 1–3 → <span class="font-mono text-cyan-300">${fmt(perto)}</span> ·
+         distância 4–10 → <span class="font-mono text-slate-300">${fmt(medio)}</span> ·
+         distância &gt; 10 → <span class="font-mono text-slate-400">${fmt(longe)}</span>.
+         A similaridade cai com a distância, mas <strong class="text-slate-200">não de forma
+         monótona</strong>: as frequências altas fazem o valor oscilar. É um decaimento com ruído
+         periódico, não uma rampa limpa — e é por isso que ninguém usa esse produto escalar
+         diretamente como medida de distância.`;
+    }
+
+    /* ═══════════ módulo 04 — custo em parâmetros ═══════════ */
+    function initCusto() {
+      ['cost-d', 'cost-n', 'cost-l', 'cost-dp'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', renderCusto);
+      });
+      renderCusto();
+    }
+
+    function renderCusto() {
+      const d = parseInt(document.getElementById('cost-d').value, 10);
+      const n = parseInt(document.getElementById('cost-n').value, 10);
+      const L = parseInt(document.getElementById('cost-l').value, 10);
+      const dp = parseInt(document.getElementById('cost-dp').value, 10);
+
+      document.getElementById('cost-d-out').textContent = d;
+      document.getElementById('cost-n-out').textContent = br(n);
+      document.getElementById('cost-l-out').textContent = L;
+      document.getElementById('cost-dp-out').textContent = dp;
+
+      const aprendido = n * d;
+      /* Concatenar alarga a entrada de W_Q, W_K, W_V e W_O em cada camada: 4·d_pos·d por camada. */
+      const concat = 4 * dp * d * L;
+
+      document.getElementById('cost-sin').textContent = '0';
+      document.getElementById('cost-learn').textContent = br(aprendido);
+      document.getElementById('cost-concat').textContent = '+' + br(concat);
+      document.getElementById('cost-concat-note').innerHTML =
+        `parâmetros a mais só nas projeções de atenção: 4 matrizes × ${dp} casas × ${d} × ${L} camadas. `
+        + `São <span class="text-rose-300 font-mono">${(concat / Math.max(aprendido, 1)).toFixed(1)}×</span> `
+        + `a tabela aprendida — e ainda falta a FFN.`;
+    }
+  </script>
+</body>
+</html>

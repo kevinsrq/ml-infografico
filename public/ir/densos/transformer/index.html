@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arquitetura Transformer: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Arquitetura Transformer"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Atenção como mecanismo de contextualização (Vaswani et al., 2017)"
+      data-icon="fa-network-wired"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ===================== MÓDULO 01 ===================== -->
+    <section class="slide-section" data-nav="Tokens & Posição" data-icon="fa-list-ol">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Da Frase à <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">Sequência de Vetores</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A página de Fundamentos mostrou o Masked LM aprendendo com "atenção bidirecional" sem abrir a caixa.
+          Esta abre: como uma frase vira $n$ vetores contextuais, um por token — a matéria-prima de tudo o que
+          vem depois no capítulo (Vaswani et al., 2017, <em>Attention Is All You Need</em>).
+        </p>
+      </div>
+
+      <!-- Banner conceitual -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-6 sm:p-8 mb-8">
+        <div class="absolute -right-6 -bottom-8 text-slate-800/40 text-9xl pointer-events-none"><i class="fa-solid fa-network-wired"></i></div>
+        <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center shrink-0 text-brand-400 text-2xl">
+            <i class="fa-solid fa-quote-left"></i>
+          </div>
+          <div>
+            <blockquote class="text-lg sm:text-xl font-medium text-slate-100 italic">
+              "Attention Is All You Need."
+            </blockquote>
+            <p class="text-xs text-brand-400 font-mono mt-2">— Vaswani et al. (2017) • NeurIPS</p>
+            <p class="text-slate-400 text-xs mt-1">
+              Sem recorrência e sem convolução: a única troca de informação entre posições é a atenção.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparação Word2Vec vs Transformer -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-8">
+        <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-code-compare text-cyan-400"></i> Estático vs. Contextual: o que muda na prática
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">
+          O Word2Vec dá um vetor por <em>palavra do vocabulário</em>; o Transformer dá um vetor por <em>ocorrência na frase</em>.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse min-w-[560px]">
+            <thead>
+              <tr class="text-left text-slate-300 border-b border-slate-700">
+                <th class="py-2 pr-3 font-semibold">Critério</th>
+                <th class="py-2 pr-3 font-semibold text-amber-300">Word2Vec (estático)</th>
+                <th class="py-2 font-semibold text-brand-300">Transformer (contextual)</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-400">
+              <tr class="border-b border-slate-800">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium">Mesmo vetor para toda ocorrência?</td>
+                <td class="py-2.5 pr-3 text-rose-300">Sim: "jejum" é sempre o mesmo vetor</td>
+                <td class="py-2.5 text-emerald-300">Não: "sem jejum" e "de jejum" geram vetores diferentes</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium">Entende negação e ordem?</td>
+                <td class="py-2.5 pr-3 text-rose-300">Não (saco de palavras, sem posição)</td>
+                <td class="py-2.5 text-emerald-300">Sim (embedding posicional + atenção)</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium">Custo de inferência</td>
+                <td class="py-2.5 pr-3 text-emerald-300">Consulta em tabela, praticamente zero</td>
+                <td class="py-2.5 text-amber-300">12+ camadas, $\mathcal{O}(n^2)$ na atenção; GPU recomendada</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 text-slate-200 font-medium">Onde aparece no guia</td>
+                <td class="py-2.5 pr-3">Fundamentos ("significado é geometria")</td>
+                <td class="py-2.5 text-brand-300">Embeddings, Cross-Encoder, Sparse Encoder, Multi-Vector</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Simulador: tokens + embedding posicional -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-8">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-brand-400"></i> Entrada = E(token) + P(posição)
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Escolha a frase: as barras abaixo são recalculadas token a token.</p>
+          </div>
+          <div class="flex flex-wrap gap-2" id="sent-picker-1"></div>
+        </div>
+
+        <div class="overflow-x-auto pb-1">
+          <div id="m1-tokens" class="flex gap-3 min-w-max"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5">
+          <div class="p-4 rounded-xl bg-surface-950 border border-brand-500/30 text-xs text-slate-300 leading-relaxed">
+            <div class="flex items-center gap-2 text-brand-300 font-semibold mb-1.5">
+              <i class="fa-solid fa-circle-info"></i> Por que somar posição?
+            </div>
+            <p id="m1-note">—</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+            <div class="flex items-center gap-2 text-cyan-300 font-semibold mb-1.5">
+              <i class="fa-solid fa-wave-square"></i> A fórmula senoidal original
+            </div>
+            <p class="mb-2">$$PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/d}}\right) \qquad PE_{(pos,\,2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d}}\right)$$</p>
+            <p>As barras roxas acima são exatamente essa conta com $d = 4$, reescalada de $[-1,1]$ para $[0,1]$
+            para caber na barra. No BERT-base $d = 768$ e a posição é aprendida, não senoidal.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Glossário -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-book text-purple-400"></i> Glossário na ordem em que a frase passa
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-brand-300 font-semibold mb-1">token / WordPiece</div>
+            <p class="text-slate-400 leading-relaxed">Unidade mínima de entrada. O tokenizador quebra palavras raras em pedaços de um vocabulário fixo (~30 mil no BERT): "glicemia" pode virar <code class="font-mono text-slate-300">glic</code> + <code class="font-mono text-slate-300">##emia</code>. Aqui cada palavra é um token, para simplificar.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-brand-300 font-semibold mb-1">embedding posicional</div>
+            <p class="text-slate-400 leading-relaxed">Vetor somado ao embedding do token para informar a posição. Sem ele, a atenção não distingue "jejum de 8 horas" de "8 horas de jejum".</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-cyan-300 font-semibold mb-1">Q, K, V</div>
+            <p class="text-slate-400 leading-relaxed">Três projeções lineares ($W_Q$, $W_K$, $W_V$) do mesmo vetor. $Q$ é a pergunta que o token faz; $K$ é a etiqueta que ele exibe; $V$ é o conteúdo que entrega.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-cyan-300 font-semibold mb-1">softmax</div>
+            <p class="text-slate-400 leading-relaxed">Transforma uma lista de scores em pesos positivos que somam 1. Scores altos viram pesos próximos de 1; baixos, próximos de 0.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-amber-300 font-semibold mb-1">$d_k$</div>
+            <p class="text-slate-400 leading-relaxed">Dimensão dos vetores $Q$ e $K$ (64 por cabeça no BERT-base). Dividir por $\sqrt{d_k}$ evita que o produto escalar cresça demais e o softmax sature em 0/1.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-amber-300 font-semibold mb-1">cabeça (head)</div>
+            <p class="text-slate-400 leading-relaxed">Uma atenção completa com seu próprio $W_Q$, $W_K$, $W_V$. Cabeças diferentes aprendem padrões diferentes (sintaxe, números, negação). BERT-base tem 12 por camada.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-emerald-300 font-semibold mb-1">camada / FFN</div>
+            <p class="text-slate-400 leading-relaxed">Bloco de atenção multi-head + <em>feed-forward network</em> (duas camadas lineares por posição). Empilhados 12 vezes no BERT-base, 24 no BERT-large.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-emerald-300 font-semibold mb-1">[CLS], [SEP] e pooling</div>
+            <p class="text-slate-400 leading-relaxed"><code class="font-mono text-slate-300">[CLS]</code> abre a sequência e costuma servir de resumo; <code class="font-mono text-slate-300">[SEP]</code> separa dois textos (é assim que o Cross-Encoder junta consulta e documento). <em>Pooling</em> reduz os $n$ vetores a 1.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 md:col-span-2">
+            <div class="font-mono text-purple-300 font-semibold mb-1">encoder vs. decoder</div>
+            <p class="text-slate-400 leading-relaxed">Busca usa encoders tipo BERT, em que cada token vê os dois lados da frase; LLMs geradores usam decoders causais, em que cada token só vê o que veio antes. Esta página descreve o encoder.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 02 ===================== -->
+    <section class="slide-section" data-nav="Q, K, V" data-icon="fa-arrows-split-up-and-left">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-arrows-split-up-and-left"></i> Módulo 02 • Mecanismo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Q, K, V: <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">Três Leituras do Mesmo Vetor</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Cada vetor de entrada é multiplicado por três matrizes aprendidas no treino. O que muda de token para
+          token é só o vetor de entrada — as matrizes são as mesmas para a frase inteira.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-cyan-400"></i> Uma entrada, três projeções
+          </h3>
+          <svg viewBox="0 0 560 220" role="img" aria-label="Um vetor de token projetado por três matrizes em Q, K e V" class="w-full h-auto rounded-xl bg-surface-950 border border-slate-800">
+            <defs>
+              <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"></path>
+              </marker>
+            </defs>
+            <rect x="24" y="80" width="156" height="60" rx="8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.5"></rect>
+            <text x="102" y="106" font-size="14" font-weight="700" fill="#e2e8f0" text-anchor="middle" font-family="JetBrains Mono, monospace">E + P</text>
+            <text x="102" y="124" font-size="10" fill="#94a3b8" text-anchor="middle">vetor de entrada do token</text>
+
+            <line x1="184" y1="98" x2="356" y2="44" stroke="#818cf8" stroke-width="2" marker-end="url(#arr)"></line>
+            <text x="268" y="60" font-size="11" fill="#818cf8" text-anchor="middle" font-family="JetBrains Mono, monospace">× W_Q</text>
+            <rect x="360" y="16" width="176" height="52" rx="8" fill="#0f172a" stroke="#818cf8" stroke-width="1.5"></rect>
+            <text x="448" y="40" font-size="14" font-weight="700" fill="#818cf8" text-anchor="middle" font-family="JetBrains Mono, monospace">Q</text>
+            <text x="448" y="56" font-size="10" fill="#94a3b8" text-anchor="middle">a pergunta que faz</text>
+
+            <line x1="184" y1="110" x2="356" y2="110" stroke="#22d3ee" stroke-width="2" marker-end="url(#arr)"></line>
+            <text x="268" y="102" font-size="11" fill="#22d3ee" text-anchor="middle" font-family="JetBrains Mono, monospace">× W_K</text>
+            <rect x="360" y="84" width="176" height="52" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5"></rect>
+            <text x="448" y="108" font-size="14" font-weight="700" fill="#22d3ee" text-anchor="middle" font-family="JetBrains Mono, monospace">K</text>
+            <text x="448" y="124" font-size="10" fill="#94a3b8" text-anchor="middle">a etiqueta que exibe</text>
+
+            <line x1="184" y1="122" x2="356" y2="176" stroke="#34d399" stroke-width="2" marker-end="url(#arr)"></line>
+            <text x="268" y="168" font-size="11" fill="#34d399" text-anchor="middle" font-family="JetBrains Mono, monospace">× W_V</text>
+            <rect x="360" y="152" width="176" height="52" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1.5"></rect>
+            <text x="448" y="176" font-size="14" font-weight="700" fill="#34d399" text-anchor="middle" font-family="JetBrains Mono, monospace">V</text>
+            <text x="448" y="192" font-size="10" fill="#94a3b8" text-anchor="middle">o conteúdo que entrega</text>
+          </svg>
+          <div class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+            No BERT-base, $W_Q, W_K, W_V \in \mathbb{R}^{768 \times 64}$ <strong>por cabeça</strong>: a entrada de 768
+            dimensões vira três vetores de 64. Aqui usamos 4 dimensões nomeadas para que você possa ler os números.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-table-cells text-brand-400"></i> Q e K de cada token desta frase
+          </h3>
+          <p class="text-xs text-slate-400 mb-4">
+            As 4 dimensões deste modelo didático: <span class="font-mono text-slate-300">exame</span>,
+            <span class="font-mono text-slate-300">duração</span>,
+            <span class="font-mono text-slate-300">sintaxe</span>,
+            <span class="font-mono text-slate-300">negação</span>. Elas alimentam o simulador do módulo 03.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[11px] font-mono border-collapse min-w-[520px]">
+              <thead>
+                <tr class="text-slate-400 border-b border-slate-700">
+                  <th class="py-2 pr-2 text-left">token</th>
+                  <th class="py-2 pr-2 text-left text-brand-300">Q (o que procura)</th>
+                  <th class="py-2 text-left text-cyan-300">K (o que oferece)</th>
+                </tr>
+              </thead>
+              <tbody id="m2-qk" class="text-slate-300"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 sm:p-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-brand-400"></i> A fórmula inteira, de uma vez
+        </h3>
+        <p class="text-center text-slate-100 my-4">
+          $$\mathrm{Attention}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-brand-300 font-semibold mb-1">$QK^\top$</div>
+            <p class="text-slate-400">Matriz $n \times n$: cada pergunta contra cada etiqueta. É o módulo 03.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-amber-300 font-semibold mb-1">$\div \sqrt{d_k}$</div>
+            <p class="text-slate-400">Controla a escala antes do softmax. Você liga e desliga isso no módulo 03.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-emerald-300 font-semibold mb-1">$\cdot\,V$</div>
+            <p class="text-slate-400">Soma ponderada dos conteúdos: é aqui que o vetor vira contextual.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 03 ===================== -->
+    <section class="slide-section" data-nav="Matriz de Atenção" data-icon="fa-table-cells-large">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-table-cells-large"></i> Módulo 03 • Matemática ao Vivo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A Conta da Atenção: <span class="bg-gradient-to-r from-brand-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">Score, Softmax, Soma</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          <strong>Clique em um token</strong> (ou em qualquer célula da matriz) para ver para onde ele olha.
+          Todos os números desta tela são calculados em JavaScript a partir dos $Q$ e $K$ do módulo 02 e dos
+          controles abaixo — nada é tabelado.
+        </p>
+      </div>
+
+      <!-- Painel de controle -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center gap-x-8 gap-y-4 pb-5 border-b border-slate-800">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-slate-400 font-medium">Frase:</span>
+            <span id="sent-picker-3" class="flex flex-wrap gap-2"></span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Amplitude $\gamma$: <span id="lbl-gain" class="font-mono text-brand-300">8,0</span></span>
+            <input id="ctl-gain" type="range" min="1" max="14" step="0.5" value="8" class="w-32 sm:w-40" aria-label="Amplitude dos scores">
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Peso da posição $\lambda$: <span id="lbl-lam" class="font-mono text-cyan-300">0,35</span></span>
+            <input id="ctl-lam" type="range" min="0" max="1" step="0.05" value="0.35" class="w-32 sm:w-40" aria-label="Peso do termo posicional">
+          </div>
+          <label class="flex items-center gap-2 text-xs text-slate-400 font-medium cursor-pointer select-none">
+            <input id="ctl-scale" type="checkbox" checked class="w-4 h-4 accent-brand-500" aria-label="Dividir por raiz de d_k">
+            dividir por $\sqrt{d_k}$ &nbsp;<span class="font-mono text-amber-300">($d_k = 4$)</span>
+          </label>
+        </div>
+
+        <div class="pt-5">
+          <div class="text-xs text-slate-400 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-hand-pointer text-brand-400"></i> Token que pergunta (linha da matriz):
+          </div>
+          <div id="m3-toks" class="flex flex-wrap gap-2" role="group" aria-label="Escolha o token que pergunta"></div>
+        </div>
+
+        <!-- Frase destacada -->
+        <div class="mt-5 p-4 rounded-xl bg-surface-950 border border-slate-800">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-2.5 font-mono">Para onde este token olha</div>
+          <div id="m3-phrase" class="flex flex-wrap gap-1.5 items-center"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Matriz -->
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-table-cells-large text-brand-400"></i> Matriz de atenção $n \times n$
+          </h3>
+          <p class="text-xs text-slate-400 mb-4">
+            Linha $i$ = quem pergunta, coluna $j$ = quem é atendido. Cada linha soma 1. Clique em uma célula.
+          </p>
+          <div class="overflow-x-auto">
+            <table id="m3-matrix" class="text-[11px] font-mono border-collapse"></table>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3">
+            A diagonal costuma ser alta: todo token também olha para si mesmo.
+          </p>
+        </div>
+
+        <!-- Decomposição -->
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-calculator text-cyan-400"></i> A linha destrinchada
+          </h3>
+          <p class="text-xs text-slate-400 mb-4">
+            $s_{ij} = \gamma\,(q_i \cdot k_j + \lambda\,\pi_{ij}) / \sqrt{d_k}$, e depois
+            $w_{ij} = e^{s_{ij}} / \sum_j e^{s_{ij}}$.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[11px] font-mono border-collapse min-w-[440px]">
+              <thead>
+                <tr class="text-slate-400 border-b border-slate-700">
+                  <th class="py-2 pr-2 text-left">token j</th>
+                  <th class="py-2 pr-2 text-right">q·k</th>
+                  <th class="py-2 pr-2 text-right">λ·π</th>
+                  <th class="py-2 pr-2 text-right">s</th>
+                  <th class="py-2 pr-2 text-right">e^s</th>
+                  <th class="py-2 text-right text-brand-300">w</th>
+                </tr>
+              </thead>
+              <tbody id="m3-break" class="text-slate-300"></tbody>
+              <tfoot>
+                <tr class="border-t border-slate-700 text-slate-400">
+                  <td class="py-2 pr-2">soma</td>
+                  <td colspan="3"></td>
+                  <td class="py-2 pr-2 text-right" id="m3-expsum">—</td>
+                  <td class="py-2 text-right text-emerald-300" id="m3-wsum">—</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-amber-500/30 text-[11px] text-slate-400 leading-relaxed">
+            <span class="text-amber-300 font-semibold">$\pi_{ij} = e^{-|i-j|/2}$</span> é uma aproximação didática do
+            efeito do embedding posicional: no modelo real ele já está somado à entrada antes de virar $Q$ e $K$.
+            Zere $\lambda$ e veja os dois "jejum" da primeira frase colapsarem em linhas idênticas — exatamente o
+            problema que a posição resolve.
+          </div>
+        </div>
+      </div>
+
+      <!-- Soma ponderada -->
+      <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-layer-group text-emerald-400"></i> Soma ponderada: o token absorve o contexto
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">
+          $\mathrm{saída}_i = \sum_j w_{ij}\, V_j$. As barras são os pesos que você acabou de calcular.
+        </p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div id="m3-bars" class="space-y-2"></div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-3 font-mono" id="m3-outlabel">saída</div>
+            <div id="m3-vec" class="space-y-2"></div>
+            <p class="text-[11px] text-slate-500 mt-3 leading-relaxed" id="m3-outnote">—</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Softmax explicado -->
+      <details class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+        <summary class="cursor-pointer text-sm font-semibold text-brand-300 flex items-center gap-2">
+          <i class="fa-solid fa-circle-nodes"></i> Por dentro do softmax e do $\sqrt{d_k}$
+        </summary>
+        <div class="mt-4 space-y-3 text-xs text-slate-400 leading-relaxed">
+          <p>
+            Exemplo fechado com três scores $[2;\ 1;\ 0{,}1]$: as exponenciais são
+            $[7{,}39;\ 2{,}72;\ 1{,}11]$, a soma é $11{,}21$ e os pesos ficam
+            $[0{,}66;\ 0{,}24;\ 0{,}10]$. Sempre positivos, sempre somando 1, e o maior score domina.
+          </p>
+          <p>
+            Produtos escalares em $d_k$ dimensões crescem com $\sqrt{d_k}$. Sem a divisão, com $d_k = 64$, os
+            scores ficariam grandes o bastante para o softmax virar quase um <em>argmax</em> (um peso 1, o resto 0) e
+            o gradiente morreria. Desmarque a caixa acima e observe a linha ficar mais concentrada.
+          </p>
+          <p class="text-slate-500">
+            O controle $\gamma$ existe porque este modelo tem 4 dimensões, não 64: ele simula a magnitude que o
+            produto escalar teria em um espaço realmente grande. É a única forma de ver o efeito do
+            $\sqrt{d_k}$ em uma escala legível.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===================== MÓDULO 04 ===================== -->
+    <section class="slide-section" data-nav="Multi-head & Camadas" data-icon="fa-cubes-stacked">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-cubes-stacked"></i> Módulo 04 • Escala e Profundidade
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Multi-head e Camadas: <span class="bg-gradient-to-r from-amber-400 to-brand-400 bg-clip-text text-transparent">a Mesma Ideia, Muitas Vezes</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Uma cabeça só consegue aprender um tipo de relação. O modelo roda várias em paralelo, cada uma com seu
+          próprio $W_Q, W_K, W_V$; as saídas são concatenadas, passam por um FFN, e o bloco inteiro se repete.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-grip text-amber-400"></i> Três cabeças, três projeções, três respostas
+          </h3>
+          <span class="text-[11px] text-slate-400 font-mono">token que pergunta: <span id="m4-focus" class="text-brand-300">—</span></span>
+        </div>
+        <p class="text-xs text-slate-400 mb-5 leading-relaxed">
+          Cada cabeça aqui projeta a entrada em um subespaço diferente das 4 dimensões — um stand-in legível para
+          o que $W_Q$ e $W_K$ distintos fazem. Os pesos são recalculados com os mesmos controles do módulo 03.
+        </p>
+        <div id="m4-heads" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        <p class="text-[11px] text-slate-500 mt-4">
+          Em modelos reais as cabeças não têm rótulo: os papéis emergem do treino e variam por camada. O que é real
+          aqui é o efeito — a mesma frase produz distribuições de atenção diferentes em subespaços diferentes.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-cubes-stacked text-brand-400"></i> Um bloco Transformer, 12 vezes
+          </h3>
+          <svg viewBox="0 0 300 250" role="img" aria-label="Bloco Transformer: atenção multi-head, soma residual e normalização, FFN, soma residual e normalização; repetido 12 vezes" class="w-full max-w-[320px] mx-auto h-auto">
+            <rect x="14" y="26" width="272" height="196" rx="10" fill="none" stroke="#6366f1" stroke-dasharray="5 4"></rect>
+            <text x="150" y="18" font-size="11" fill="#94a3b8" text-anchor="middle" font-family="JetBrains Mono, monospace">× 12 camadas (BERT-base)</text>
+            <text x="150" y="46" font-size="11" fill="#818cf8" text-anchor="middle">saída: n vetores → próxima camada</text>
+            <rect x="40" y="56" width="220" height="30" rx="6" fill="#0f172a" stroke="#94a3b8" stroke-width="1.5"></rect>
+            <text x="150" y="75" font-size="11" fill="#cbd5e1" text-anchor="middle">soma residual + normalização</text>
+            <rect x="40" y="96" width="220" height="30" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1.5"></rect>
+            <text x="150" y="115" font-size="11" fill="#34d399" text-anchor="middle">FFN (por posição)</text>
+            <rect x="40" y="136" width="220" height="30" rx="6" fill="#0f172a" stroke="#94a3b8" stroke-width="1.5"></rect>
+            <text x="150" y="155" font-size="11" fill="#cbd5e1" text-anchor="middle">soma residual + normalização</text>
+            <rect x="40" y="176" width="220" height="30" rx="6" fill="#0f172a" stroke="#6366f1" stroke-width="1.5"></rect>
+            <text x="150" y="195" font-size="11" fill="#818cf8" text-anchor="middle">atenção multi-head (12 cabeças)</text>
+            <text x="150" y="240" font-size="11" fill="#818cf8" text-anchor="middle">entrada: n vetores (tokens + posição)</text>
+          </svg>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 space-y-3 text-xs text-slate-400 leading-relaxed">
+          <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-cyan-400"></i> O que cada peça faz
+          </h3>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <span class="text-brand-300 font-semibold">Concatenar as cabeças.</span> 12 cabeças × 64 dimensões
+            devolvem os 768 de volta, e uma matriz $W_O$ mistura tudo.
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <span class="text-emerald-300 font-semibold">FFN.</span> Duas camadas lineares (768 → 3072 → 768) com
+            GELU, aplicadas a cada posição <em>separadamente</em>. É onde o modelo processa o que a atenção misturou.
+            A atenção é o único ponto em que os tokens trocam informação.
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <span class="text-amber-300 font-semibold">Residual + LayerNorm.</span> A entrada é somada à saída de
+            cada sub-bloco: sem isso, 12 camadas não treinariam. A normalização mantém a escala estável.
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-brand-500/30">
+            <span class="text-brand-300 font-semibold">Profundidade.</span> Após 12 camadas cada vetor já "viu" a
+            frase inteira várias vezes: as primeiras camadas capturam sintaxe local, as últimas, semântica de frase.
+            É por isso que embeddings de busca costumam sair da última camada.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 05 ===================== -->
+    <section class="slide-section" data-nav="Saídas & Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Aplicação, Limites & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          As Três Saídas que a <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">Busca Neural Consome</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Depois da última camada existem $n$ vetores contextuais, um por token. Tudo o que vem a seguir no
+          capítulo é uma escolha sobre o que fazer com eles.
+        </p>
+      </div>
+
+      <!-- Prova ao vivo da contextualização -->
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-vials text-brand-400"></i> A prova: o mesmo "jejum" em duas frases
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">
+          Os dois vetores abaixo saem do mesmo E(token), com os controles do módulo 03 aplicados. A similaridade
+          de cosseno é calculada agora, com os valores que você ajustou.
+        </p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[11px] font-mono text-cyan-300 mb-2">"…exige <strong>jejum</strong> de 8 horas"</div>
+            <div id="m5-vecA" class="space-y-2"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[11px] font-mono text-rose-300 mb-2">"hemograma completo sem <strong>jejum</strong>"</div>
+            <div id="m5-vecB" class="space-y-2"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-gradient-to-br from-surface-950 to-surface-900 border border-brand-500/40 flex flex-col justify-center items-center text-center">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono mb-2">cosseno entre eles</div>
+            <div id="m5-cos" class="text-3xl font-extrabold font-mono text-brand-300">—</div>
+            <div class="text-[11px] text-slate-400 mt-2 leading-relaxed">
+              No Word2Vec esse número seria exatamente <span class="font-mono text-amber-300">1,000</span>:
+              um vetor por palavra, contexto nenhum.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- As três saídas -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-brand-500/40 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-brand-400 font-mono font-bold text-xs">(a) pooling</span>
+            <i class="fa-solid fa-compress text-brand-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">[CLS] ou média → 1 vetor</h4>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1">
+            Pegar o vetor do <code class="font-mono text-slate-300">[CLS]</code> ou a média de todos. Se consulta e
+            documento passam <em>separados</em>, é o Bi-Encoder da página Embeddings; se passam <em>juntos</em>
+            (<code class="font-mono text-slate-300">[CLS] q [SEP] d</code>), a atenção cruza os dois e o vetor único
+            vira um score de relevância.
+          </p>
+          <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] font-mono text-slate-500">
+            saída: 1 × 768 &nbsp;·&nbsp; média ao vivo desta frase:
+            <span id="m5-mean" class="text-brand-300"></span>
+          </div>
+          <a href="../cross-encoder/index.html" class="mt-3 text-xs font-semibold text-brand-300 hover:text-brand-200">
+            Cross-Encoder <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-surface-900 border border-purple-500/30 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-purple-400 font-mono font-bold text-xs">(b) cabeça MLM</span>
+            <i class="fa-solid fa-diagram-project text-purple-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Projeção no vocabulário</h4>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1">
+            A mesma cabeça que previa a palavra mascarada no treino projeta cada token sobre o vocabulário inteiro
+            (30 522 logits). Agregando as posições, o texto vira um vetor esparso com termos expandidos e pesados —
+            pesquisável em índice invertido.
+          </p>
+          <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] font-mono text-slate-500">
+            saída: 1 × 30 522, quase todo zero
+          </div>
+          <a href="../../esparsos/sparse-encoder/index.html" class="mt-3 text-xs font-semibold text-purple-300 hover:text-purple-200">
+            Sparse Encoder <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/30 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-emerald-400 font-mono font-bold text-xs">(c) todos</span>
+            <i class="fa-solid fa-table-list text-emerald-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Guardar os $n$ vetores</h4>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1">
+            Nada de compressão: guardam-se todos os vetores e, na busca, cada token da consulta procura o token mais
+            parecido no documento (<em>late interaction</em>). Máxima precisão, máximo custo de armazenamento.
+          </p>
+          <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] font-mono text-slate-500">
+            saída: <span id="m5-n" class="text-emerald-300">n</span> × 768 nesta frase
+          </div>
+          <a href="../multi-vector/index.html" class="mt-3 text-xs font-semibold text-emerald-300 hover:text-emerald-200">
+            Multi-Vector <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Limitações -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Limitações da arquitetura
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-rose-300 font-semibold mb-1">Custo quadrático</div>
+            <p class="text-slate-400 leading-relaxed">A matriz de atenção tem $n^2$ células: dobrar o texto quadruplica a conta e a memória. Daí o limite prático de 512 tokens do BERT e o corte de documentos longos em <em>chunks</em>.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-rose-300 font-semibold mb-1">Janela fixa</div>
+            <p class="text-slate-400 leading-relaxed">O embedding posicional é treinado até um comprimento máximo. Além dele o modelo não extrapola sem técnicas extras (ALiBi, RoPE, interpolação).</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-rose-300 font-semibold mb-1">Latência em produção</div>
+            <p class="text-slate-400 leading-relaxed">Um encoder por documento não escala em tempo de consulta. É exatamente por isso que o Bi-Encoder indexa vetores offline e o Cross-Encoder só entra no re-ranking do top-k.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-rose-300 font-semibold mb-1">Opacidade</div>
+            <p class="text-slate-400 leading-relaxed">Pesos de atenção são sugestivos, não explicações: cabeças diferentes discordam, e atenção alta não prova causalidade na predição.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Como usar -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-terminal text-cyan-400"></i> Como inspecionar isso de verdade
+        </h3>
+        <ul class="text-xs text-slate-400 space-y-1.5 mb-4 leading-relaxed">
+          <li>• <strong class="text-slate-200">transformers</strong> (Hugging Face) — <code class="font-mono text-cyan-300">AutoModel</code> com <code class="font-mono text-cyan-300">output_attentions=True</code> devolve as matrizes de todas as camadas e cabeças.</li>
+          <li>• <strong class="text-slate-200">bertviz</strong> — visualização interativa das cabeças dentro do notebook.</li>
+          <li>• <strong class="text-slate-200">sentence-transformers</strong> — encapsula o pooling quando você só quer o vetor único.</li>
+        </ul>
+        <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800">
+          <pre class="p-4 text-[11px] font-mono text-slate-300 leading-relaxed"><code><span class="text-brand-300">import</span> torch
+<span class="text-brand-300">from</span> transformers <span class="text-brand-300">import</span> AutoTokenizer, AutoModel
+
+nome = <span class="text-emerald-300">"neuralmind/bert-base-portuguese-cased"</span>
+tok = AutoTokenizer.from_pretrained(nome)
+model = AutoModel.from_pretrained(nome)
+
+frase = <span class="text-emerald-300">"glicemia de jejum exige jejum de 8 horas"</span>
+enc = tok(frase, return_tensors=<span class="text-emerald-300">"pt"</span>)
+<span class="text-brand-300">with</span> torch.no_grad():
+    out = model(**enc, output_attentions=<span class="text-brand-300">True</span>)
+
+<span class="text-brand-300">print</span>(out.last_hidden_state.shape)  <span class="text-slate-500"># (1, n_tokens, 768): um vetor por token</span>
+<span class="text-brand-300">print</span>(out.attentions[-<span class="text-amber-300">1</span>].shape)     <span class="text-slate-500"># (1, 12, n, n): última camada, 12 cabeças</span>
+
+tokens = tok.convert_ids_to_tokens(enc[<span class="text-emerald-300">"input_ids"</span>][<span class="text-amber-300">0</span>])
+att = out.attentions[-<span class="text-amber-300">1</span>][<span class="text-amber-300">0</span>, <span class="text-amber-300">0</span>]        <span class="text-slate-500"># cabeça 0 da última camada</span>
+i = tokens.index(<span class="text-emerald-300">"jejum"</span>)              <span class="text-slate-500"># primeira ocorrência</span>
+<span class="text-brand-300">for</span> peso, j <span class="text-brand-300">in</span> <span class="text-brand-300">zip</span>(*torch.topk(att[i], <span class="text-amber-300">3</span>)):
+    <span class="text-brand-300">print</span>(tokens[<span class="text-brand-300">int</span>(j)], <span class="text-brand-300">round</span>(<span class="text-brand-300">float</span>(peso), <span class="text-amber-300">3</span>))</code></pre>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3">
+          Nomes de modelo são exemplos; confira a disponibilidade no Hugging Face Hub antes de usar.
+        </p>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação Conceitual
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que você acabou de calcular.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">1</span>
+              Por que os scores são divididos por $\sqrt{d_k}$ antes do softmax?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A soma dos pesos é 1 por construção do softmax, com ou sem a divisão.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Para garantir que os pesos da linha somem 1.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'O produto escalar cresce com a dimensão; sem a divisão o softmax satura em 0/1 e o gradiente morre.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o produto escalar cresce com a dimensão e saturaria o softmax em 0/1.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A normalização de escala do vetor é feita pelo LayerNorm, não por esse divisor.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Para normalizar o comprimento dos vetores $V$.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O custo é O(n²) independentemente do divisor: ele não muda o número de células da matriz.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Para reduzir o custo computacional de $\mathcal{O}(n^2)$ para $\mathcal{O}(n)$.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">2</span>
+              O que torna o vetor de saída de um token <em>contextual</em>?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A tabela de embeddings é a mesma do Word2Vec: estática. O contexto entra depois.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) A tabela de embeddings guarda um vetor por sentido da palavra.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O FFN processa cada posição isoladamente: ele não troca informação entre tokens.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O FFN, que mistura as posições entre si.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Os pesos mudam com a frase, então a soma ponderada dos V muda junto — foi o que o cosseno menor que 1 do módulo 05 mostrou.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) A soma ponderada dos $V$ pelos pesos de atenção, que dependem da frase inteira.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A posição sozinha diferencia ocorrências, mas não traz o significado dos vizinhos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Exclusivamente o embedding posicional somado na entrada.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">3</span>
+              Um Sparse Encoder e um Multi-Vector partem do mesmo encoder. O que os diferencia?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Ambos podem usar o mesmo backbone; a arquitetura do encoder não muda.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) O número de camadas do encoder.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O tokenizador é o mesmo; a diferença está depois da última camada.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O tokenizador usado na entrada.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A atenção é a mesma operação nos dois; nenhum deles a substitui.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) O Multi-Vector dispensa o mecanismo de atenção.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A escolha é sobre o que fazer com os n vetores de saída: projetar no vocabulário ou guardar todos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) O que cada um faz com os $n$ vetores de saída: projetar no vocabulário ou guardar todos.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          <a href="../fundamentos/index.html" class="text-xs text-slate-400 hover:text-white flex items-center gap-2">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i> Fundamentos & Além da Linguagem
+          </a>
+          <a href="../cross-encoder/index.html" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg shadow-brand-600/30">
+            Próximo tópico: Cross-Encoder <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ================= Simulador: Matriz de Atenção Interativa =================
+       Modelo didático de 4 dimensões nomeadas (exame, duração, sintaxe, negação).
+       Cada token tem E (conteúdo, usado como V), Q (o que procura) e K (o que oferece).
+       Todos os números exibidos saem destas tabelas + dos controles visíveis. */
+
+    const DIM_NAMES = ['exame', 'duração', 'sintaxe', 'negação'];
+
+    const TOK = {
+      glicemia:  { e: [0.95, 0.15, 0.05, 0.10], q: [0.25, 0.70, 0.20, 0.30], k: [0.95, 0.05, 0.10, 0.10] },
+      de:        { e: [0.05, 0.10, 0.90, 0.05], q: [0.70, 0.15, 0.20, 0.05], k: [0.05, 0.10, 0.85, 0.05] },
+      jejum:     { e: [0.40, 0.65, 0.10, 0.15], q: [0.80, 0.45, 0.25, 0.50], k: [0.35, 0.60, 0.15, 0.20] },
+      exige:     { e: [0.20, 0.40, 0.75, 0.10], q: [0.75, 0.50, 0.20, 0.10], k: [0.15, 0.35, 0.70, 0.10] },
+      '8':       { e: [0.05, 0.95, 0.10, 0.05], q: [0.10, 0.90, 0.20, 0.05], k: [0.05, 0.95, 0.15, 0.05] },
+      horas:     { e: [0.10, 0.90, 0.15, 0.05], q: [0.15, 0.85, 0.25, 0.05], k: [0.05, 0.90, 0.20, 0.05] },
+      hemograma: { e: [0.90, 0.10, 0.05, 0.10], q: [0.20, 0.60, 0.20, 0.30], k: [0.90, 0.05, 0.10, 0.10] },
+      completo:  { e: [0.35, 0.25, 0.55, 0.10], q: [0.85, 0.10, 0.20, 0.05], k: [0.30, 0.20, 0.50, 0.10] },
+      sem:       { e: [0.05, 0.15, 0.35, 0.95], q: [0.30, 0.85, 0.20, 0.30], k: [0.05, 0.10, 0.40, 0.95] }
+    };
+
+    const SENTS = [
+      { label: '"glicemia de jejum exige jejum de 8 horas"',
+        tokens: ['glicemia', 'de', 'jejum', 'exige', 'jejum', 'de', '8', 'horas'], focus: 2 },
+      { label: '"hemograma completo sem jejum"',
+        tokens: ['hemograma', 'completo', 'sem', 'jejum'], focus: 3 }
+    ];
+
+    const HEADS = [
+      { name: 'sintática', dims: [2], color: '#818cf8', note: 'só a dimensão de função sintática: preposições e verbos dominam.' },
+      { name: 'número / duração', dims: [1], color: '#22d3ee', note: 'só a dimensão de duração: números e unidades se amarram.' },
+      { name: 'conteúdo + negação', dims: [0, 3], color: '#34d399', note: 'exame e negação juntos: é onde "sem jejum" se resolve.' }
+    ];
+
+    const S = { si: 0, focus: 2, gain: 8, lam: 0.35, scaled: true };
+
+    const fmt = (n, d) => n.toFixed(d === undefined ? 2 : d).replace('.', ',');
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const sent = () => SENTS[S.si];
+
+    /* Embedding posicional senoidal com d = 4, reescalado de [-1,1] para [0,1]. */
+    function posVec(p) {
+      return [
+        (Math.sin(p) + 1) / 2,
+        (Math.cos(p) + 1) / 2,
+        (Math.sin(p / 100) + 1) / 2,
+        (Math.cos(p / 100) + 1) / 2
+      ];
+    }
+    const inputVec = (name, p) => TOK[name].e.map((x, k) => (x + posVec(p)[k]) / 2);
+
+    function dot(a, b, dims) {
+      const idx = dims || [0, 1, 2, 3];
+      return idx.reduce((acc, k) => acc + a[k] * b[k], 0);
+    }
+
+    /* Linha i da matriz de atenção, calculada dos Q/K visíveis + controles. */
+    function attRow(i, dims) {
+      const toks = sent().tokens;
+      const dk = (dims || [0, 1, 2, 3]).length;
+      const raw = toks.map((t, j) => {
+        const qk = dot(TOK[toks[i]].q, TOK[t].k, dims);
+        const prox = S.lam * Math.exp(-Math.abs(i - j) / 2);
+        let s = S.gain * (qk + prox);
+        if (S.scaled) s /= Math.sqrt(dk);
+        return { j: j, qk: qk, prox: prox, s: s };
+      });
+      const max = Math.max.apply(null, raw.map(r => r.s));
+      const exps = raw.map(r => Math.exp(r.s - max));           // estabilidade numérica
+      const sum = exps.reduce((a, b) => a + b, 0);
+      raw.forEach((r, j) => { r.exp = exps[j]; r.w = exps[j] / sum; });
+      return { rows: raw, expSum: sum, wSum: raw.reduce((a, r) => a + r.w, 0) };
+    }
+
+    /* Vetor de saída do token i: soma ponderada dos V (aqui V = E do token). */
+    function outVec(i, sentIdx) {
+      const prev = S.si;
+      if (sentIdx !== undefined) S.si = sentIdx;
+      const toks = sent().tokens;
+      const rows = attRow(i).rows;
+      const v = [0, 0, 0, 0];
+      rows.forEach(r => { for (let k = 0; k < 4; k++) v[k] += r.w * TOK[toks[r.j]].e[k]; });
+      S.si = prev;
+      return v;
+    }
+
+    function cosine(a, b) {
+      const na = Math.sqrt(dot(a, a)), nb = Math.sqrt(dot(b, b));
+      return na && nb ? dot(a, b) / (na * nb) : 0;
+    }
+
+    /* ---------- helpers de render ---------- */
+    function barRow(label, val, color) {
+      return '<div class="flex items-center gap-2">' +
+        '<span class="text-[10px] font-mono text-slate-500 w-14 shrink-0 truncate">' + esc(label) + '</span>' +
+        '<div class="flex-1 h-2.5 rounded bg-surface-800 overflow-hidden min-w-0">' +
+          '<div class="h-full rounded" style="width:' + Math.round(Math.max(0, Math.min(1, val)) * 100) + '%;background:' + color + '"></div>' +
+        '</div>' +
+        '<span class="text-[10px] font-mono text-slate-400 w-9 text-right shrink-0">' + fmt(val, 2) + '</span>' +
+      '</div>';
+    }
+    const vecBars = (v, color) => v.map((x, k) => barRow(DIM_NAMES[k], x, color)).join('');
+    const vecInline = v => '[' + v.map(x => fmt(x, 2)).join(' ') + ']';
+
+    /* ---------- Módulo 01 ---------- */
+    function renderM1() {
+      const s = sent();
+      document.getElementById('m1-tokens').innerHTML = s.tokens.map((t, i) => {
+        const hl = t === 'jejum';
+        return '<div class="w-[150px] shrink-0 rounded-xl p-3 border ' +
+          (hl ? 'bg-brand-500/5 border-brand-500/40' : 'bg-surface-950 border-slate-800') + '">' +
+          '<div class="flex items-baseline justify-between mb-2">' +
+            '<span class="text-xs font-bold ' + (hl ? 'text-brand-300' : 'text-slate-200') + '">' + esc(t) + '</span>' +
+            '<span class="text-[10px] font-mono text-slate-500">pos. ' + (i + 1) + '</span>' +
+          '</div>' +
+          '<div class="text-[10px] font-mono text-cyan-400 mb-1">E(token)</div>' + vecBars(TOK[t].e, '#22d3ee') +
+          '<div class="text-[10px] font-mono text-purple-400 mt-2 mb-1">P(' + (i + 1) + ')</div>' + vecBars(posVec(i), '#a855f7') +
+          '<div class="text-[10px] font-mono text-brand-400 mt-2 mb-1">= entrada</div>' + vecBars(inputVec(t, i), '#6366f1') +
+        '</div>';
+      }).join('');
+
+      const occ = s.tokens.reduce((acc, t, i) => (t === 'jejum' ? acc.concat(i + 1) : acc), []);
+      document.getElementById('m1-note').innerHTML = occ.length > 1
+        ? 'Nesta frase "jejum" aparece nas posições <strong class="text-brand-300">' + occ.join(' e ') +
+          '</strong> com <strong>exatamente o mesmo E(token)</strong>. Só P(pos) as diferencia — e é essa diferença ' +
+          'que faz as duas linhas da matriz de atenção do módulo 03 saírem distintas.'
+        : 'Aqui "jejum" aparece uma vez (posição ' + occ[0] + '). Troque para a outra frase para ver o mesmo ' +
+          'E(token) ocupando duas posições e gerando dois vetores de entrada diferentes.';
+    }
+
+    /* ---------- Módulo 02 ---------- */
+    function renderM2() {
+      const seen = {};
+      document.getElementById('m2-qk').innerHTML = sent().tokens.filter(t => {
+        if (seen[t]) return false;
+        seen[t] = 1;
+        return true;
+      }).map(t => '<tr class="border-b border-slate-800/70">' +
+          '<td class="py-1.5 pr-2 text-slate-200">' + esc(t) + '</td>' +
+          '<td class="py-1.5 pr-2 text-brand-300">' + vecInline(TOK[t].q) + '</td>' +
+          '<td class="py-1.5 text-cyan-300">' + vecInline(TOK[t].k) + '</td>' +
+        '</tr>').join('');
+    }
+
+    /* ---------- Módulo 03 ---------- */
+    function renderM3() {
+      const s = sent(), toks = s.tokens, i = S.focus;
+      const res = attRow(i);
+      const rows = res.rows;
+      const max = Math.max.apply(null, rows.map(r => r.w));
+
+      document.getElementById('m3-toks').innerHTML = toks.map((t, j) =>
+        '<button data-tok="' + j + '" aria-pressed="' + (j === i) + '" class="px-3 py-1.5 rounded-lg text-xs font-medium transition border ' +
+        (j === i ? 'bg-brand-600 border-brand-500 text-white shadow-lg shadow-brand-600/30'
+                 : 'bg-surface-950 border-slate-800 text-slate-300 hover:border-slate-600 hover:text-white') +
+        '">' + esc(t) + ' <span class="font-mono text-[10px] opacity-60">' + (j + 1) + '</span></button>').join('');
+
+      document.getElementById('m3-phrase').innerHTML = toks.map((t, j) => {
+        const a = (rows[j].w / max) * 0.9;
+        return '<span data-tok="' + j + '" class="px-2 py-1 rounded-lg text-xs cursor-pointer transition border ' +
+          (j === i ? 'border-brand-400' : 'border-transparent') + '" style="background:rgba(99,102,241,' + a.toFixed(3) + ')">' +
+          esc(t) + ' <span class="font-mono text-[10px] text-slate-300">' + fmt(rows[j].w, 2) + '</span></span>';
+      }).join('');
+
+      const head = '<thead><tr><th class="p-1"></th>' + toks.map(t =>
+        '<th class="p-1 text-[10px] font-normal text-slate-400 align-bottom" title="' + esc(t) + '">' +
+        esc(t.length > 5 ? t.slice(0, 5) + '.' : t) + '</th>').join('') + '</tr></thead>';
+      const body = '<tbody>' + toks.map((tq, r) => {
+        const rw = attRow(r).rows;
+        const rmax = Math.max.apply(null, rw.map(x => x.w));
+        return '<tr>' +
+          '<td data-tok="' + r + '" class="p-1 pr-2 text-[10px] cursor-pointer whitespace-nowrap ' +
+            (r === i ? 'text-brand-300 font-bold' : 'text-slate-400 hover:text-white') + '">' + esc(tq) + '</td>' +
+          rw.map(x => '<td data-tok="' + r + '" class="p-1 text-center cursor-pointer text-[10px] border ' +
+            (r === i ? 'border-brand-500/40' : 'border-slate-800/60') + '" ' +
+            'style="background:rgba(99,102,241,' + ((x.w / rmax) * 0.85).toFixed(3) + ');color:' +
+            (x.w / rmax > 0.55 ? '#ffffff' : '#94a3b8') + '">' + fmt(x.w, 2) + '</td>').join('') +
+        '</tr>';
+      }).join('') + '</tbody>';
+      document.getElementById('m3-matrix').innerHTML = head + body;
+
+      const sorted = rows.slice().sort((a, b) => b.w - a.w);
+      document.getElementById('m3-break').innerHTML = sorted.map((r, rank) =>
+        '<tr class="border-b border-slate-800/70 ' + (rank < 2 ? 'text-brand-200' : '') + '">' +
+          '<td class="py-1.5 pr-2">' + esc(toks[r.j]) + '<span class="text-slate-600"> ' + (r.j + 1) + '</span>' +
+            (r.j === i ? '<span class="text-[10px] text-slate-500"> (ele mesmo)</span>' : '') + '</td>' +
+          '<td class="py-1.5 pr-2 text-right">' + fmt(r.qk, 3) + '</td>' +
+          '<td class="py-1.5 pr-2 text-right text-cyan-300/80">' + fmt(r.prox, 3) + '</td>' +
+          '<td class="py-1.5 pr-2 text-right">' + fmt(r.s, 2) + '</td>' +
+          '<td class="py-1.5 pr-2 text-right text-slate-400">' + fmt(r.exp, 3) + '</td>' +
+          '<td class="py-1.5 text-right font-bold ' + (rank < 2 ? 'text-brand-300' : 'text-slate-300') + '">' + fmt(r.w, 3) + '</td>' +
+        '</tr>').join('');
+      document.getElementById('m3-expsum').textContent = fmt(res.expSum, 3);
+      document.getElementById('m3-wsum').textContent = fmt(res.wSum, 3);
+
+      document.getElementById('m3-bars').innerHTML = sorted.map(r => {
+        const pct = Math.round((r.w / max) * 100);
+        return '<div class="grid grid-cols-[92px_minmax(0,1fr)_52px] gap-2 items-center">' +
+          '<span class="text-[11px] font-mono text-slate-400 truncate">V' + (r.j + 1) + ' · ' + esc(toks[r.j]) + '</span>' +
+          '<div class="h-3 rounded bg-surface-800 overflow-hidden"><div class="h-full rounded bg-gradient-to-r from-brand-500 to-cyan-400" style="width:' + pct + '%"></div></div>' +
+          '<span class="text-[11px] font-mono text-right ' + (r.w === max ? 'text-emerald-300' : 'text-slate-500') + '">× ' + fmt(r.w, 2) + '</span>' +
+        '</div>';
+      }).join('');
+
+      const ov = outVec(i);
+      document.getElementById('m3-outlabel').textContent = 'saída contextual de "' + toks[i] + '" (pos. ' + (i + 1) + ')';
+      document.getElementById('m3-vec').innerHTML = vecBars(ov, '#34d399');
+      const delta = ov.map((x, k) => Math.abs(x - TOK[toks[i]].e[k])).reduce((a, b) => a + b, 0);
+      document.getElementById('m3-outnote').innerHTML =
+        'Entrada era ' + vecInline(TOK[toks[i]].e) + '. Distância L1 entre entrada e saída: <span class="text-emerald-300 font-mono">' +
+        fmt(delta, 3) + '</span> — o quanto o contexto deslocou este token.';
+
+      document.getElementById('m4-focus').textContent = toks[i] + ' (pos. ' + (i + 1) + ')';
+    }
+
+    /* ---------- Módulo 04 ---------- */
+    function renderM4() {
+      const toks = sent().tokens, i = S.focus;
+      document.getElementById('m4-heads').innerHTML = HEADS.map((h, hi) => {
+        const rows = attRow(i, h.dims).rows;
+        const max = Math.max.apply(null, rows.map(r => r.w));
+        const top = rows.slice().sort((a, b) => b.w - a.w)[0];
+        return '<div class="rounded-xl bg-surface-950 border border-slate-800 p-4" style="border-left:3px solid ' + h.color + '">' +
+          '<div class="text-xs font-bold mb-0.5" style="color:' + h.color + '">cabeça ' + (hi + 1) + ' · ' + h.name + '</div>' +
+          '<div class="text-[10px] font-mono text-slate-500 mb-3">dims: ' + h.dims.map(d => DIM_NAMES[d]).join(', ') + '</div>' +
+          '<div class="space-y-1.5">' + rows.map(r =>
+            '<div class="flex items-center gap-2">' +
+              '<span class="text-[10px] font-mono w-16 shrink-0 truncate ' + (r.j === i ? 'text-slate-200' : 'text-slate-500') + '">' + esc(toks[r.j]) + '</span>' +
+              '<div class="flex-1 h-2 rounded bg-surface-800 overflow-hidden min-w-0"><div class="h-full rounded" style="width:' +
+                Math.round((r.w / max) * 100) + '%;background:' + h.color + '"></div></div>' +
+              '<span class="text-[10px] font-mono text-slate-400 w-8 text-right shrink-0">' + fmt(r.w, 2) + '</span>' +
+            '</div>').join('') + '</div>' +
+          '<div class="text-[11px] text-slate-500 mt-3 leading-relaxed">Mais atendido: <span class="font-mono" style="color:' + h.color + '">' +
+            esc(toks[top.j]) + '</span> (' + fmt(top.w, 2) + '). ' + h.note + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    /* ---------- Módulo 05 ---------- */
+    function renderM5() {
+      const iA = SENTS[0].tokens.indexOf('jejum');
+      const iB = SENTS[1].tokens.indexOf('jejum');
+      const vA = outVec(iA, 0), vB = outVec(iB, 1);
+      document.getElementById('m5-vecA').innerHTML = vecBars(vA, '#22d3ee');
+      document.getElementById('m5-vecB').innerHTML = vecBars(vB, '#f43f5e');
+      document.getElementById('m5-cos').textContent = fmt(cosine(vA, vB), 3);
+
+      const toks = sent().tokens;
+      const mean = [0, 0, 0, 0];
+      toks.forEach((t, j) => {
+        const v = outVec(j);
+        for (let k = 0; k < 4; k++) mean[k] += v[k] / toks.length;
+      });
+      document.getElementById('m5-mean').textContent = vecInline(mean);
+      document.getElementById('m5-n').textContent = toks.length;
+    }
+
+    /* ---------- orquestração ---------- */
+    function renderPickers() {
+      const html = SENTS.map((s, k) =>
+        '<button data-si="' + k + '" class="px-3 py-1.5 rounded-lg text-xs font-medium transition border ' +
+        (k === S.si ? 'bg-brand-600 border-brand-500 text-white' : 'bg-surface-950 border-slate-800 text-slate-300 hover:border-slate-600 hover:text-white') +
+        '">' + esc(s.label) + '</button>').join('');
+      document.getElementById('sent-picker-1').innerHTML = html;
+      document.getElementById('sent-picker-3').innerHTML = html;
+    }
+
+    function renderAll() {
+      renderPickers();
+      renderM1();
+      renderM2();
+      renderM3();
+      renderM4();
+      renderM5();
+    }
+
+    Guia.ready(() => {
+      const gain = document.getElementById('ctl-gain');
+      const lam = document.getElementById('ctl-lam');
+      const scale = document.getElementById('ctl-scale');
+
+      gain.addEventListener('input', () => {
+        S.gain = parseFloat(gain.value);
+        document.getElementById('lbl-gain').textContent = fmt(S.gain, 1);
+        renderAll();
+      });
+      lam.addEventListener('input', () => {
+        S.lam = parseFloat(lam.value);
+        document.getElementById('lbl-lam').textContent = fmt(S.lam, 2);
+        if (S.lam === 0) Guia.toast('λ = 0: sem posição, os dois "jejum" viram linhas idênticas.', 'fa-clone');
+        renderAll();
+      });
+      scale.addEventListener('change', () => {
+        S.scaled = scale.checked;
+        Guia.toast(S.scaled ? 'Scores divididos por √d_k: distribuição mais suave.'
+                            : 'Sem √d_k: os scores crescem e o softmax concentra.', 'fa-square-root-variable');
+        renderAll();
+      });
+
+      document.addEventListener('click', e => {
+        const si = e.target.closest('[data-si]');
+        if (si) {
+          S.si = parseInt(si.getAttribute('data-si'), 10);
+          S.focus = sent().focus;
+          renderAll();
+          return;
+        }
+        const tk = e.target.closest('[data-tok]');
+        if (tk) {
+          S.focus = parseInt(tk.getAttribute('data-tok'), 10);
+          renderM3();
+          renderM4();
+          renderM5();
+        }
+      });
+
+      renderAll();
+    });
+
+    /* Módulos 03 e 04 dependem da largura do layout: redesenha ao entrar no módulo. */
+    Guia.onSlide(2, renderM3);
+    Guia.onSlide(3, renderM4);
+  </script>
+</body>
+</html>

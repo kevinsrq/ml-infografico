@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Do Retrieval ao Agente Confiável</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/guia.css">
+  <script src="../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Do Retrieval ao Agente Confiável"
+      data-badge="Seção 1.4"
+      data-subtitle="Como a recuperação sustenta um agente e reduz alucinação"
+      data-icon="fa-shield-halved"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <nav class="text-xs text-slate-500 mb-6 flex items-center gap-2 flex-wrap">
+      <a href="../../index.html" class="hover:text-slate-300 transition">Guia Técnico</a>
+      <i class="fa-solid fa-chevron-right text-[8px]"></i>
+      <a href="../index.html" class="hover:text-slate-300 transition">1. Information Retrieval (RAG)</a>
+      <i class="fa-solid fa-chevron-right text-[8px]"></i>
+      <span class="text-slate-300"><strong class="font-mono text-brand-400">1.4</strong> Do Retrieval ao Agente Confiável</span>
+    </nav>
+
+    <!-- Hero -->
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-4">
+        <i class="fa-solid fa-shield-halved"></i> Seção 1.4 • Aplicação
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+        As seções anteriores ensinaram a achar o trecho certo.<br>
+        <span class="bg-gradient-to-r from-brand-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">Esta ensina por que isso decide tudo.</span>
+      </h2>
+      <p class="text-slate-400 mt-4 max-w-3xl text-sm sm:text-base leading-relaxed">
+        Um LLM sozinho não distingue "eu sei" de "eu consigo escrever algo plausível sobre". Ele sempre
+        produz a continuação mais provável — inclusive quando a informação não existe no treino, está
+        desatualizada, ou é específica da sua empresa. Recuperação não deixa o modelo mais inteligente:
+        ela <strong class="text-slate-200">troca lembrar por consultar</strong>, e é isso que torna a
+        resposta verificável.
+      </p>
+    </div>
+
+    <!-- A tese do capítulo -->
+    <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-6 sm:p-8 mb-10">
+      <div class="flex flex-col sm:flex-row items-start gap-5">
+        <div class="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-xl shrink-0">
+          <i class="fa-solid fa-quote-left"></i>
+        </div>
+        <div>
+          <p class="text-lg sm:text-xl font-medium text-slate-100 leading-snug">
+            Alucinação quase nunca é falha de geração. É falha de <span class="text-brand-300">recuperação</span> chegando ao gerador.
+          </p>
+          <p class="text-slate-400 text-sm mt-3 leading-relaxed max-w-3xl">
+            Se o trecho certo não entrou no contexto, o modelo não tem de onde tirar a resposta — e o
+            comportamento padrão dele é preencher a lacuna, não admitir o vazio. Todo método das seções
+            1.1 a 1.3 existe para que o trecho certo esteja lá. Esta seção mostra o que fazer depois disso:
+            como exigir que a resposta se prenda ao que foi recuperado, como o agente decide buscar de
+            novo, como medir se está funcionando, e quais ganhos vêm junto além de não inventar.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo: com e sem contexto -->
+    <div class="flex items-center gap-3 mb-4">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Veja a diferença</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-10">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+        <div>
+          <h4 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-flask text-cyan-400"></i> A mesma pergunta, com e sem recuperação
+          </h4>
+          <p class="text-xs text-slate-400 mt-1">Base fictícia de 4 documentos internos. Escolha a pergunta e o modo.</p>
+        </div>
+        <div class="flex flex-wrap gap-2" id="modo-grp"></div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 mb-5" id="pergunta-grp"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <!-- Base -->
+        <div class="lg:col-span-2">
+          <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Base de conhecimento</p>
+          <div class="space-y-2" id="base-lista"></div>
+        </div>
+        <!-- Resposta -->
+        <div class="lg:col-span-3">
+          <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Resposta do agente</p>
+          <div id="resposta-box" class="rounded-xl border p-4 text-sm leading-relaxed transition-all duration-300"></div>
+          <div id="veredito-box" class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ponte com o capítulo 1 -->
+    <div class="flex items-center gap-3 mb-4">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">O que cada método das seções anteriores resolve aqui</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <div class="rounded-2xl bg-surface-900 border border-slate-800 overflow-hidden mb-10">
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs min-w-[640px]">
+          <thead>
+            <tr class="bg-surface-950/60 text-left">
+              <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">Método</th>
+              <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">Modo de falha que ele evita</th>
+              <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">Efeito no agente</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+            <tr class="hover:bg-surface-850/50 transition">
+              <td class="px-4 py-3"><a href="../esparsos/bm25/index.html" class="font-semibold text-cyan-300 hover:underline">BM25</a> <span class="text-slate-600 font-mono text-[10px]">1.1.2</span></td>
+              <td class="px-4 py-3 text-slate-400">A query cita um código, sigla ou nome próprio e o vetorial devolve "parecidos" em vez do exato.</td>
+              <td class="px-4 py-3 text-slate-300">O agente cita o documento certo em vez de um primo semântico.</td>
+            </tr>
+            <tr class="hover:bg-surface-850/50 transition">
+              <td class="px-4 py-3"><a href="../densos/embeddings/index.html" class="font-semibold text-emerald-300 hover:underline">Embeddings</a> <span class="text-slate-600 font-mono text-[10px]">1.2.1</span></td>
+              <td class="px-4 py-3 text-slate-400">O usuário pergunta com outras palavras que as do documento; o léxico devolve nada.</td>
+              <td class="px-4 py-3 text-slate-300">Contexto vazio é o caminho mais curto para a invenção. Aqui ele deixa de ser vazio.</td>
+            </tr>
+            <tr class="hover:bg-surface-850/50 transition">
+              <td class="px-4 py-3"><a href="../densos/cross-encoder/index.html" class="font-semibold text-emerald-300 hover:underline">Cross-Encoder</a> <span class="text-slate-600 font-mono text-[10px]">1.2.5</span></td>
+              <td class="px-4 py-3 text-slate-400">Dez trechos chegam, um é útil; o modelo se perde no ruído e mistura fontes.</td>
+              <td class="px-4 py-3 text-slate-300">Menos contexto e mais denso em sinal: menos chance de costurar duas fontes numa afirmação falsa.</td>
+            </tr>
+            <tr class="hover:bg-surface-850/50 transition">
+              <td class="px-4 py-3"><a href="../densos/multi-vector/index.html" class="font-semibold text-emerald-300 hover:underline">ColBERT</a> <span class="text-slate-600 font-mono text-[10px]">1.2.6</span></td>
+              <td class="px-4 py-3 text-slate-400">A resposta depende de um termo específico enterrado num parágrafo longo.</td>
+              <td class="px-4 py-3 text-slate-300">Casamento token a token acha a passagem, não só o documento.</td>
+            </tr>
+            <tr class="hover:bg-surface-850/50 transition">
+              <td class="px-4 py-3"><a href="../rrf/index.html" class="font-semibold text-purple-300 hover:underline">RRF</a> <span class="text-slate-600 font-mono text-[10px]">1.3</span></td>
+              <td class="px-4 py-3 text-slate-400">Escolher um único motor significa herdar o ponto cego dele.</td>
+              <td class="px-4 py-3 text-slate-300">Recall alto sem ajuste manual de pesos: o trecho certo raramente fica de fora do top-k.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tópicos -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Tópicos desta seção</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+      <a href="alucinacao/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-rose-500/40 p-5 transition">
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-sm shrink-0"><i class="fa-solid fa-ghost"></i></span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">1.4.1</span>
+            <h4 class="font-bold text-white text-sm group-hover:text-rose-300 transition">Por que o modelo alucina</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">De onde vem a invenção: previsão de próximo token, lacuna de conhecimento, contexto ausente e contexto contraditório. A diferença entre erro intrínseco e extrínseco — e o que o retrieval consegue (e não consegue) corrigir.</p>
+          </div>
+        </div>
+      </a>
+
+      <a href="grounding/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-emerald-500/40 p-5 transition">
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-sm shrink-0"><i class="fa-solid fa-anchor"></i></span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">1.4.2</span>
+            <h4 class="font-bold text-white text-sm group-hover:text-emerald-300 transition">Grounding e citação</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Da resposta ao trecho que a sustenta: atribuição por afirmação, citar ou se abster, e por que uma resposta sem âncora verificável é indistinguível de um palpite bem escrito.</p>
+          </div>
+        </div>
+      </a>
+
+      <a href="laco/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-cyan-500/40 p-5 transition">
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-sm shrink-0"><i class="fa-solid fa-rotate"></i></span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">1.4.3</span>
+            <h4 class="font-bold text-white text-sm group-hover:text-cyan-300 transition">O laço do agente</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Quando buscar, quando reescrever a query, quando buscar de novo e quando desistir. Reformulação, multi-hop, auto-crítica e o critério de parada que evita tanto o loop infinito quanto a resposta precipitada.</p>
+          </div>
+        </div>
+      </a>
+
+      <a href="avaliacao/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-amber-500/40 p-5 transition">
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm shrink-0"><i class="fa-solid fa-ruler-combined"></i></span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">1.4.4</span>
+            <h4 class="font-bold text-white text-sm group-hover:text-amber-300 transition">Medir se está funcionando</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Separar a culpa entre recuperação e geração: recall@k, MRR e nDCG de um lado; fidelidade, precisão de contexto e relevância da resposta do outro. Sem isso, "melhorar o RAG" é chute.</p>
+          </div>
+        </div>
+      </a>
+
+      <a href="ganhos/index.html" class="group rounded-2xl bg-surface-900 border border-slate-800 hover:border-purple-500/40 p-5 transition md:col-span-2">
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-sm shrink-0"><i class="fa-solid fa-gift"></i></span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">1.4.5</span>
+            <h4 class="font-bold text-white text-sm group-hover:text-purple-300 transition">Os outros ganhos</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Não alucinar é o mais citado, não o único: conhecimento atualizável sem retreinar, custo e janela de contexto sob controle, permissão por documento, auditoria de "por que respondeu isso", dado privado que nunca vira peso de modelo, e a possibilidade de corrigir um erro editando um arquivo em vez de um dataset.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 text-xs text-slate-400 leading-relaxed">
+      <p><strong class="text-slate-200">Pré-requisito:</strong> esta seção assume as
+      <a href="../index.html" class="text-brand-400 hover:underline">seções 1.1 a 1.3</a> — em especial
+      <a href="../rrf/index.html" class="text-brand-400 hover:underline">1.3 Busca Híbrida e RRF</a>,
+      que é o pipeline de recuperação completo usado como ponto de partida aqui.</p>
+    </div>
+
+  </main>
+
+  <script>
+    const BASE = [
+      { id: 'D1', tit: 'Política de reembolso 2026', txt: 'Solicitações de reembolso devem ser enviadas em até 30 dias corridos após a despesa.', tema: 'reembolso' },
+      { id: 'D2', tit: 'Manual de acesso VPN',       txt: 'O acesso remoto exige token de segundo fator renovado a cada 90 dias.',                  tema: 'vpn' },
+      { id: 'D3', tit: 'Tabela de exames — jejum',   txt: 'Glicemia de jejum requer 8 horas sem alimentação; água está liberada.',                  tema: 'jejum' },
+      { id: 'D4', tit: 'Calendário de folgas',       txt: 'O banco de horas é apurado no último dia útil de cada trimestre.',                       tema: 'folgas' },
+    ];
+
+    const PERGUNTAS = [
+      { id: 'p1', rotulo: 'Quantos dias tenho para pedir reembolso?', tema: 'reembolso',
+        semRag: 'Você tem até 60 dias corridos para solicitar o reembolso, contados a partir da data da nota fiscal.',
+        comRag: 'Você tem 30 dias corridos após a despesa para enviar a solicitação.',
+        erro: 'Inventou 60 dias e uma regra de "data da nota fiscal" que não existe. Plausível, específico e errado.' },
+      { id: 'p2', rotulo: 'Preciso ficar quantas horas em jejum para glicemia?', tema: 'jejum',
+        semRag: 'O jejum recomendado para glicemia costuma ser de 12 horas, sem ingerir água ou alimentos.',
+        comRag: 'São 8 horas sem alimentação. Água está liberada.',
+        erro: 'Errou o número e ainda proibiu água — o tipo de erro que vira orientação clínica equivocada.' },
+      { id: 'p3', rotulo: 'Qual o limite de despesa por viagem?', tema: 'inexistente',
+        semRag: 'O limite padrão é de R$ 850,00 por diária de viagem nacional, conforme a política interna.',
+        comRag: null,
+        erro: 'A base não cobre esse assunto. Sem recuperação, o modelo preencheu a lacuna com um valor convincente.' },
+    ];
+
+    const estado = { pergunta: 'p1', modo: 'sem' };
+
+    function esc(t) {
+      return t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    }
+
+    function render() {
+      const p = PERGUNTAS.find(x => x.id === estado.pergunta);
+      const comRag = estado.modo === 'com';
+
+      document.getElementById('pergunta-grp').innerHTML = PERGUNTAS.map(x => `
+        <button onclick="selecionarPergunta('${x.id}')" class="px-3 py-2 rounded-xl text-xs font-medium border transition ${
+          x.id === estado.pergunta
+            ? 'bg-brand-600 border-brand-500 text-white'
+            : 'bg-surface-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'}">"${esc(x.rotulo)}"</button>`).join('');
+
+      document.getElementById('modo-grp').innerHTML = [
+        ['sem', 'Só o modelo', 'fa-ghost'],
+        ['com', 'Com recuperação', 'fa-shield-halved'],
+      ].map(([v, rot, ico]) => `
+        <button onclick="selecionarModo('${v}')" class="px-3 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-2 ${
+          estado.modo === v
+            ? (v === 'com' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-rose-600 border-rose-500 text-white')
+            : 'bg-surface-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'}">
+          <i class="fa-solid ${ico} text-[10px]"></i> ${rot}</button>`).join('');
+
+      // Só o que o tema da pergunta casa é recuperado — e nada casa na pergunta sem cobertura.
+      document.getElementById('base-lista').innerHTML = BASE.map(d => {
+        const usado = comRag && d.tema === p.tema;
+        return `<div class="rounded-xl border p-3 transition-all duration-300 ${
+          usado ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-surface-950 border-slate-800 ' + (comRag ? 'opacity-40' : 'opacity-70')}">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="font-mono text-[10px] ${usado ? 'text-emerald-400' : 'text-slate-600'}">${d.id} · ${esc(d.tit)}</span>
+            ${usado ? '<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">no contexto</span>' : ''}
+          </div>
+          <p class="text-[11px] ${usado ? 'text-slate-200' : 'text-slate-500'} leading-snug">${esc(d.txt)}</p>
+        </div>`;
+      }).join('');
+
+      const semCobertura = comRag && !BASE.some(d => d.tema === p.tema);
+      const texto = comRag
+        ? (p.comRag || 'Não encontrei nada na base sobre limite de despesa por viagem. Não vou responder por dedução — vale checar com a área de Compliance.')
+        : p.semRag;
+      const bom = comRag;
+
+      const box = document.getElementById('resposta-box');
+      box.className = 'rounded-xl border p-4 text-sm leading-relaxed transition-all duration-300 ' + (bom
+        ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-100'
+        : 'bg-rose-950/30 border-rose-500/40 text-rose-100');
+      box.innerHTML = esc(texto)
+        + (comRag && p.comRag ? `<span class="ml-2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 align-middle">fonte: ${BASE.find(d => d.tema === p.tema).id}</span>` : '');
+
+      const cartao = (ico, rot, val, cor) => `
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-2.5">
+          <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1"><i class="fa-solid ${ico} mr-1"></i>${rot}</p>
+          <p class="text-xs font-semibold text-${cor}-300">${val}</p>
+        </div>`;
+
+      document.getElementById('veredito-box').innerHTML =
+        cartao('fa-ghost', 'Alucinação', bom ? 'não' : 'sim', bom ? 'emerald' : 'rose')
+        + cartao('fa-link', 'Fonte citável', comRag && p.comRag ? 'sim' : 'não', comRag && p.comRag ? 'emerald' : 'slate')
+        + cartao('fa-circle-question', 'Admite não saber', semCobertura ? 'sim' : (comRag ? 'n/a' : 'não'), semCobertura ? 'emerald' : 'slate');
+
+      document.getElementById('resposta-box').insertAdjacentHTML('beforeend',
+        `<p class="mt-3 pt-3 border-t ${bom ? 'border-emerald-500/20 text-emerald-400/80' : 'border-rose-500/20 text-rose-400/80'} text-[11px] leading-relaxed">
+          ${bom ? 'A afirmação sai do trecho recuperado — dá para conferir palavra por palavra.' : esc(p.erro)}
+        </p>`);
+    }
+
+    function selecionarPergunta(id) { estado.pergunta = id; render(); }
+    function selecionarModo(m) { estado.modo = m; render(); }
+
+    Guia.ready(render);
+  </script>
+</body>
+</html>

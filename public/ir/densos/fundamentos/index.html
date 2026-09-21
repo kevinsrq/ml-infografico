@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embeddings: Origem &amp; Além da Linguagem: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Embeddings: Origem &amp; Além da Linguagem"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Hipótese distribucional, efeito gargalo e embeddings multimodais"
+      data-icon="fa-seedling"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — Hipótese Distribucional ══════════════ -->
+    <section class="slide-section" data-nav="Hipótese Distribucional" data-icon="fa-lightbulb">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Você conhecerá uma palavra <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">pela companhia que ela mantém</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Embeddings não são só uma técnica de busca. São a ideia de transformar qualquer entidade discreta — palavras, imagens, músicas, proteínas, transações — em coordenadas contínuas de um espaço geométrico. Tudo começa com uma hipótese linguística de 1957.
+        </p>
+      </div>
+
+      <!-- Citação Firth -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-6 sm:p-8 mb-8">
+        <div class="absolute -right-6 -bottom-6 text-slate-800/40 text-9xl pointer-events-none font-serif">“</div>
+        <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center shrink-0 text-brand-400 text-2xl">
+            <i class="fa-solid fa-quote-left"></i>
+          </div>
+          <div>
+            <blockquote class="text-lg sm:text-xl font-medium text-slate-100 italic">
+              "You shall know a word by the company it keeps."
+            </blockquote>
+            <p class="text-xs text-brand-400 font-mono mt-2">— J. R. Firth (1957) • Hipótese Distribucional</p>
+            <p class="text-slate-400 text-xs mt-1">
+              Se <em>chá</em> e <em>café</em> aparecem cercados das mesmas vizinhas (<em>xícara</em>, <em>quente</em>, <em>manhã</em>), compartilham significado — mesmo que nunca apareçam na mesma frase.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- One-hot vs denso -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-lg bg-rose-500/10 text-rose-400 text-xs font-mono font-semibold border border-rose-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation"></i> Antes de 2013
+            </span>
+            <span class="text-xs text-slate-500 font-mono">$\mathbb{R}^{|V|}$ esparso</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">One-Hot Encoding</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Cada termo vira um vetor com um único $1$ e $|V| - 1$ zeros. Em um vocabulário de 50.000 termos, "cachorro" é um vetor de 50.000 dimensões com um bit ligado.
+          </p>
+          <div class="bg-surface-950 rounded-xl p-4 border border-slate-800 font-mono text-xs space-y-2 mb-4">
+            <div class="flex justify-between items-center text-slate-400 border-b border-slate-800 pb-2">
+              <span>Vocabulário ($|V| = 5$)</span><span>Vetor</span>
+            </div>
+            <div class="flex justify-between items-center text-rose-300"><span>cachorro</span><span class="bg-surface-900 px-2 py-0.5 rounded border border-rose-500/30">[ 1, 0, 0, 0, 0 ]</span></div>
+            <div class="flex justify-between items-center text-amber-300"><span>cão</span><span class="bg-surface-900 px-2 py-0.5 rounded border border-amber-500/30">[ 0, 1, 0, 0, 0 ]</span></div>
+            <div class="flex justify-between items-center text-slate-400"><span>submarino</span><span class="bg-surface-900 px-2 py-0.5 rounded border border-slate-700">[ 0, 0, 1, 0, 0 ]</span></div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950/60 border border-slate-800 text-xs text-slate-300 space-y-1">
+            <div class="flex items-center gap-2 text-rose-400 font-medium"><i class="fa-solid fa-ban"></i> Ortogonalidade total</div>
+            <p class="font-mono text-slate-400 text-[11px]">$\vec{v}(\text{cachorro}) \cdot \vec{v}(\text{cão}) = 0$</p>
+            <p class="text-[11px] text-slate-400">
+              A distância entre <em>cachorro</em> e <em>cão</em> é idêntica à distância entre <em>cachorro</em> e <em>submarino</em>. Não existe geometria do significado — e a matriz ainda é gigantesca e quase 100% vazia (maldição da dimensionalidade).
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6 relative overflow-hidden glow-indigo">
+          <div class="absolute -top-12 -right-12 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold border border-emerald-500/30 flex items-center gap-1.5">
+              <i class="fa-solid fa-check-double"></i> Paradigma denso
+            </span>
+            <span class="text-xs text-brand-400 font-mono">$\mathbb{R}^d$, $d \approx 300$</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Embeddings contínuos</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Cada entidade vira um ponto em um espaço de poucas centenas de dimensões, em que direções latentes codificam propriedades que ninguém rotulou à mão.
+          </p>
+          <div class="bg-surface-950 rounded-xl p-4 border border-brand-500/20 font-mono text-xs space-y-2 mb-4">
+            <div class="flex justify-between items-center text-slate-400 border-b border-slate-800 pb-2">
+              <span>Conceito ($d = 4$)</span><span>Projeção latente</span>
+            </div>
+            <div class="flex justify-between items-center text-cyan-300"><span>cachorro</span><span class="bg-surface-900 px-2 py-0.5 rounded border border-cyan-500/30">[ +0.82, −0.45, +0.91, +0.12 ]</span></div>
+            <div class="flex justify-between items-center text-emerald-300"><span>cão</span><span class="bg-surface-900 px-2 py-0.5 rounded border border-emerald-500/30">[ +0.79, −0.41, +0.88, +0.15 ]</span></div>
+            <div class="flex justify-between items-center text-slate-500"><span>submarino</span><span class="bg-surface-900 px-2 py-0.5 rounded border border-slate-800">[ −0.15, +0.02, −0.63, +0.81 ]</span></div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-brand-950/40 border border-brand-500/30 text-xs text-slate-300 space-y-1">
+            <div class="flex items-center gap-2 text-brand-300 font-medium"><i class="fa-solid fa-compass"></i> Similaridade de cosseno</div>
+            <p class="font-mono text-[11px] text-slate-400">$\cos(u, v) = \dfrac{u \cdot v}{\lVert u \rVert \, \lVert v \rVert}$</p>
+            <p class="text-[11px] text-slate-400">Ângulo agudo = significado próximo. A geometria passa a carregar semântica.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR 1: contador de coocorrência -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5 pb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-flask text-cyan-400"></i> Simulador — Contagem de contexto em um mini-corpus
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Oito frases, nenhum dicionário. Escolha duas palavras e o raio da janela: o simulador conta os vizinhos de cada uma e calcula o cosseno entre os dois <em>vetores de contexto</em>. É a hipótese distribucional virando número.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 font-medium">Raio $c$:</span>
+            <div class="flex items-center gap-1 bg-surface-950 px-2 py-1.5 rounded-lg border border-slate-800">
+              <button onclick="setCoocRadius(1)" class="cooc-radius-btn px-2 py-0.5 text-xs rounded font-mono transition" data-c="1">1</button>
+              <button onclick="setCoocRadius(2)" class="cooc-radius-btn px-2 py-0.5 text-xs rounded font-mono transition" data-c="2">2</button>
+              <button onclick="setCoocRadius(3)" class="cooc-radius-btn px-2 py-0.5 text-xs rounded font-mono transition" data-c="3">3</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="lg:col-span-2 space-y-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex flex-col gap-1 min-w-[140px] flex-1">
+                <label for="cooc-a" class="text-[11px] uppercase tracking-wide text-slate-500 font-mono">Palavra A</label>
+                <select id="cooc-a" onchange="updateCooc()" class="bg-surface-950 border border-slate-700 text-cyan-300 text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none font-mono"></select>
+              </div>
+              <div class="flex flex-col gap-1 min-w-[140px] flex-1">
+                <label for="cooc-b" class="text-[11px] uppercase tracking-wide text-slate-500 font-mono">Palavra B</label>
+                <select id="cooc-b" onchange="updateCooc()" class="bg-surface-950 border border-slate-700 text-brand-300 text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-brand-500 focus:outline-none font-mono"></select>
+              </div>
+            </div>
+
+            <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+              <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono mb-2">Corpus (8 frases) — vizinhos destacados ao vivo</div>
+              <div id="cooc-corpus" class="space-y-1.5 text-[11px] font-mono leading-relaxed max-h-60 overflow-y-auto pr-1"></div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+              <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono mb-2">Vetores de contexto (contagens)</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-[11px] font-mono min-w-[220px]">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-slate-800">
+                      <th class="text-left py-1 font-normal">contexto</th>
+                      <th class="text-right py-1 font-normal" id="cooc-head-a">A</th>
+                      <th class="text-right py-1 font-normal" id="cooc-head-b">B</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cooc-table"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="bg-surface-950 rounded-xl border border-cyan-500/30 p-4 space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-400">Cosseno dos contextos</span>
+                <span id="cooc-cos" class="font-mono font-bold text-cyan-300">—</span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div id="cooc-bar" class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-300" style="width:0%"></div>
+              </div>
+              <p id="cooc-verdict" class="text-[11px] text-slate-400 leading-relaxed"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 rounded-xl bg-surface-950 border border-slate-800 flex items-start gap-3">
+          <i class="fa-solid fa-circle-info text-cyan-400 text-sm mt-0.5"></i>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Em 2013, <strong class="text-slate-200">Mikolov et al. (Google)</strong> trocaram essa contagem explícita por uma rede rasa que <em>prevê</em> os vizinhos — o Word2Vec. Os pesos internos dela viraram os primeiros embeddings densos modernos. A contagem acima é a mesma ideia sem gradiente: contar é caro em memória, prever é caro em computação, e o resultado geométrico é parecido.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — Efeito Gargalo ══════════════ -->
+    <section class="slide-section" data-nav="Efeito Gargalo" data-icon="fa-compress">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-compress"></i> Módulo 02 • Mecanismo de Treinamento
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O efeito gargalo: <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">comprimir é o que força a semântica</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O modelo aprende sem rotulador humano por dois pilares: <strong>auto-supervisão</strong> (o próprio texto é o gabarito) e o <strong>gargalo</strong> — uma camada estreita demais para decorar, e por isso obrigada a sintetizar conceitos.
+        </p>
+      </div>
+
+      <!-- Funil -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row items-stretch gap-3">
+          <div class="flex-1 text-center rounded-xl bg-surface-950 border border-rose-500/30 p-4">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono">Entrada gigante</div>
+            <div class="text-xl font-extrabold text-rose-300 my-1 font-mono">50.000</div>
+            <div class="text-[11px] text-slate-400">one-hot esparso da palavra atual</div>
+          </div>
+          <div class="flex items-center justify-center text-brand-400 text-xl"><i class="fa-solid fa-arrow-right rotate-90 sm:rotate-0"></i></div>
+          <div class="flex-1 text-center rounded-xl bg-brand-950/40 border-2 border-brand-500/50 p-4 glow-indigo">
+            <div class="text-[10px] uppercase tracking-wide text-brand-300 font-mono font-bold">O gargalo (embedding)</div>
+            <div class="text-2xl font-extrabold text-white my-1 font-mono">300</div>
+            <div class="text-[11px] text-brand-300">camada oculta contínua e densa</div>
+          </div>
+          <div class="flex items-center justify-center text-brand-400 text-xl"><i class="fa-solid fa-arrow-right rotate-90 sm:rotate-0"></i></div>
+          <div class="flex-1 text-center rounded-xl bg-surface-950 border border-emerald-500/30 p-4">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono">Predição</div>
+            <div class="text-xl font-extrabold text-emerald-300 my-1 font-mono">50.000</div>
+            <div class="text-[11px] text-slate-400">probabilidade das palavras vizinhas</div>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-4 leading-relaxed">
+          <strong class="text-emerald-300">O que observar:</strong> é aqui, no funil, que o vetor aparece — <strong class="text-white">os pesos da camada escondida SÃO os embeddings</strong>. Terminado o treino, joga-se fora a camada de saída e guarda-se a tabela de $50{.}000 \times 300$ números. Como não cabe memorizar 50.000 itens em 300 coordenadas, a rede é forçada a inventar direções latentes: gênero, formalidade, tamanho, polaridade química emergem sozinhas — ninguém as pediu nem as nomeou.
+        </p>
+      </div>
+
+      <!-- As três pretext tasks -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 text-[10px] font-mono font-bold">WORD2VEC • 2013</span>
+            <i class="fa-solid fa-arrows-left-right-to-line text-cyan-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Skip-Gram (janela deslizante)</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Dada a palavra central, prever os vizinhos dentro de um raio $c$. Para acertar os mesmos vizinhos, <em>febre</em> e <em>gripe</em> precisam de vetores parecidos: a proximidade nasce de <strong>compartilhar contexto</strong>, não de aparecer lado a lado.
+          </p>
+          <p class="text-[11px] text-cyan-300/90 leading-relaxed mt-2 pt-2 border-t border-slate-800">
+            <strong>Negative sampling:</strong> em vez de normalizar sobre 100 mil palavras a cada passo, compara-se o vizinho verdadeiro contra ~5 ruídos sorteados. Milhares de vezes mais barato, resultado quase idêntico.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-purple-500/30 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 text-[10px] font-mono font-bold">BERT • 2018</span>
+            <i class="fa-solid fa-puzzle-piece text-purple-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Masked Language Modeling</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Oculta-se 15% dos tokens com <code class="font-mono text-purple-300">[MASK]</code> e o Transformer combina o contexto da esquerda <em>e</em> da direita para deduzir o que falta.
+          </p>
+          <p class="text-[11px] text-purple-300/90 leading-relaxed mt-2 pt-2 border-t border-slate-800">
+            A rede não pode trapacear olhando só a vizinhança imediata: precisa absorver sintaxe, coerência de domínio e contexto global para acertar o buraco.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-mono font-bold">BI-ENCODERS • CLIP</span>
+            <i class="fa-solid fa-magnet text-emerald-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Aprendizado contrastivo (InfoNCE)</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Âncora, um positivo e vários negativos. O gradiente <strong>puxa</strong> o par certo e <strong>empurra</strong> os errados. É o padrão ouro moderno de busca vetorial e RAG.
+          </p>
+          <p class="text-[11px] text-emerald-300/90 leading-relaxed mt-2 pt-2 border-t border-slate-800">
+            Calibra o espaço para que distâncias angulares reflitam relevância para a tarefa — não semelhança genérica de tópico.
+          </p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="text-xs text-slate-400 mb-2 font-semibold flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-emerald-400"></i> A perda contrastiva, por escrito
+        </div>
+        <div class="p-3 bg-surface-950 rounded-xl border border-slate-800 text-xs overflow-x-auto">
+          $$\mathcal{L}_{\text{InfoNCE}} = -\log \frac{\exp\!\big(\mathrm{sim}(q, d^{+})/\tau\big)}{\exp\!\big(\mathrm{sim}(q, d^{+})/\tau\big) + \sum_{j=1}^{K}\exp\!\big(\mathrm{sim}(q, d^{-}_{j})/\tau\big)}$$
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-xs font-semibold text-amber-300 mb-1">O papel da temperatura $\tau$</div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Com $\tau$ típico entre $0{,}05$ e $0{,}07$, a perda funciona como termostato: temperaturas baixas amplificam a penalidade sobre negativos de similaridade alta, tornando a fronteira hiper-precisa e forçando o modelo a separar nuances finas.
+            </p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-xs font-semibold text-rose-300 mb-1">Hard negative mining</div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Negativos sorteados do lote (<em>in-batch negatives</em>) são fáceis demais. Minera-se <strong>hard negatives</strong> com BM25: textos com muitas palavras iguais à consulta mas conclusão diferente. É o que ensina a rede a não cair em coincidência lexical.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR 2 (obrigatório): gargalo -->
+      <div class="bg-surface-900 border border-amber-500/30 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5 pb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-filter-circle-dollar text-amber-400"></i> Simulador do Gargalo — o que sobrevive à compressão?
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              12 conceitos descritos por 8 atributos latentes. O simulador calcula a covariância, extrai os componentes principais (rotação de Jacobi, em JS) e projeta tudo em $k$ dimensões. Mexa no $k$ e veja o que a compressão preserva e o que ela destrói.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4 mb-5">
+          <div class="flex-1 min-w-[220px]">
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <label for="bn-k" class="text-slate-400 font-medium">Dimensão do gargalo ($k$)</label>
+              <span id="bn-k-val" class="font-mono text-amber-300 font-bold">k = 3</span>
+            </div>
+            <input id="bn-k" type="range" min="1" max="8" step="1" value="3" oninput="updateBottleneck()" class="w-full">
+            <div class="flex justify-between text-[10px] text-slate-600 font-mono mt-1"><span>1</span><span>8 (sem compressão)</span></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="px-3 py-2 rounded-xl bg-surface-950 border border-slate-800 min-w-[92px]">
+              <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono">Variância</div>
+              <div id="bn-var" class="font-mono text-sm font-bold text-emerald-400">—</div>
+            </div>
+            <div class="px-3 py-2 rounded-xl bg-surface-950 border border-slate-800 min-w-[92px]">
+              <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono">Distorção</div>
+              <div id="bn-dist" class="font-mono text-sm font-bold text-amber-400">—</div>
+            </div>
+            <div class="px-3 py-2 rounded-xl bg-surface-950 border border-slate-800 min-w-[92px]">
+              <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono">Vizinhos</div>
+              <div id="bn-keep" class="font-mono text-sm font-bold text-cyan-400">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div class="lg:col-span-3 bg-surface-950 rounded-xl p-3 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono px-1 pb-2">Variância explicada por componente</div>
+            <canvas id="bn-canvas" class="w-full h-[260px] rounded-lg block"></canvas>
+            <p class="text-[11px] text-slate-500 px-1 pt-2 leading-relaxed">
+              Barras acesas = direções que passam pelo gargalo. A linha é a variância acumulada: quando ela satura, dimensões extras custam memória sem comprar significado.
+            </p>
+          </div>
+
+          <div class="lg:col-span-2 bg-surface-950 rounded-xl p-4 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono mb-2">Vizinho mais próximo: original → comprimido</div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-[11px] font-mono min-w-[260px]">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="text-left py-1 font-normal">conceito</th>
+                    <th class="text-left py-1 font-normal">original</th>
+                    <th class="text-left py-1 font-normal">em $k$ dims</th>
+                  </tr>
+                </thead>
+                <tbody id="bn-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/25 text-[11px] text-slate-300 leading-relaxed">
+            <strong class="text-emerald-300"><i class="fa-solid fa-check mr-1"></i>O que sobrevive:</strong>
+            as distinções que explicam mais variância no corpus — separar <em>animais</em> de <em>bebidas</em> de <em>tecnologia</em>. São as direções que o gargalo compra primeiro.
+          </div>
+          <div class="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/25 text-[11px] text-slate-300 leading-relaxed">
+            <strong class="text-rose-300"><i class="fa-solid fa-xmark mr-1"></i>O que morre:</strong>
+            nuances de baixa variância — gênero, tamanho, se o animal é doméstico. Com $k$ pequeno, <em>rei</em> e <em>rainha</em> colapsam no mesmo ponto: o modelo passa a ser incapaz de distingui-los.
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          Os 8 atributos aqui foram escritos à mão para o exemplo ficar legível; num modelo real as dimensões não têm nome. O mecanismo, porém, é exatamente este — e é por isso que escolher $d$ (384, 768, 1024) é decidir quantas distinções o sistema poderá fazer.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — Da palavra à sentença ══════════════ -->
+    <section class="slide-section" data-nav="Palavra → Sentença" data-icon="fa-align-left">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-align-left"></i> Módulo 03 • Da Palavra à Sentença
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Um vetor por palavra não basta: <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">o caminho até a frase</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Busca não recupera palavras soltas, recupera trechos. Juntar vetores de palavras em um vetor de frase parece trivial — e é exatamente onde aparecem a polissemia e a anisotropia.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[640px]">
+            <thead>
+              <tr class="text-left text-brand-300 border-b border-slate-800">
+                <th class="py-2 pr-3 font-semibold">Critério</th>
+                <th class="py-2 pr-3 font-semibold">Estáticos (Word2Vec / GloVe)</th>
+                <th class="py-2 pr-3 font-semibold">Contextuais por token (BERT)</th>
+                <th class="py-2 font-semibold">Sentence-Transformers (SBERT)</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-400">
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium">Vetor atribuído</td>
+                <td class="py-2.5 pr-3">1 vetor estático por palavra</td>
+                <td class="py-2.5 pr-3">1 vetor dinâmico por token</td>
+                <td class="py-2.5 text-emerald-400 font-semibold">1 vetor denso por frase inteira</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium">Polissemia</td>
+                <td class="py-2.5 pr-3 text-rose-400">Falha (colapsa "banco de sangue" e "banco financeiro")</td>
+                <td class="py-2.5 pr-3 text-brand-300">Excelente (via atenção)</td>
+                <td class="py-2.5 text-brand-300">Excelente para a frase completa</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium">Geometria &amp; anisotropia</td>
+                <td class="py-2.5 pr-3">Também anisotrópico (viés de frequência), porém menos concentrado que o BERT cru</td>
+                <td class="py-2.5 pr-3 text-rose-400">Altamente <strong>anisotrópico</strong>: cone estreito, cosseno médio &gt; 0,8</td>
+                <td class="py-2.5 text-emerald-400 font-semibold">Isotrópico e calibrado para cosseno</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 text-slate-200 font-medium">Adequação para RAG</td>
+                <td class="py-2.5 pr-3">Média de palavras (perde ordem sintática)</td>
+                <td class="py-2.5 pr-3 text-rose-400">Inviável direto para k-NN (custo $\mathcal{O}(N \times M)$)</td>
+                <td class="py-2.5 text-emerald-400 font-semibold">Padrão ouro: pré-cálculo offline + índice HNSW</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-4 leading-relaxed">
+          <strong class="text-brand-300">Anisotropia, em uma frase:</strong> em transformers crus, os vetores de saída ocupam um cone estreito do hiperespaço — duas sentenças sem vínculo nenhum registram cosseno enganosamente alto. O <strong class="text-slate-200">SBERT (Reimers &amp; Gurevych, 2019)</strong> corrigiu isso com <em>mean pooling</em> + redes siamesas e treino contrastivo, espalhando os vetores de forma mais uniforme na esfera unitária.
+        </p>
+      </div>
+
+      <!-- SIMULADOR 3: pooling -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5 pb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-cyan-400"></i> Simulador — Pooling, stopwords e a margem do ranking
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Cada palavra tem um vetor de 5 dimensões interpretáveis. Escolha a estratégia de pooling e veja o vetor da frase e os cossenos serem recalculados. Repare no que acontece com a <strong>margem</strong> entre o documento certo e o errado.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="setPooling('mean')" class="pool-btn px-3 py-1.5 rounded-lg text-xs font-medium transition" data-pool="mean">Média (todos os tokens)</button>
+            <button onclick="setPooling('content')" class="pool-btn px-3 py-1.5 rounded-lg text-xs font-medium transition" data-pool="content">Média sem stopwords</button>
+            <button onclick="setPooling('max')" class="pool-btn px-3 py-1.5 rounded-lg text-xs font-medium transition" data-pool="max">Max pooling</button>
+          </div>
+        </div>
+
+        <div id="pool-sentences" class="space-y-3 mb-5"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="bg-surface-950 rounded-xl border border-brand-500/30 p-4">
+            <div class="text-[11px] uppercase tracking-wide text-brand-300 font-mono mb-2">Consulta vs. Documento A (financeiro)</div>
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="text-slate-400">$\cos(q, d_A)$</span>
+              <span id="pool-cos-a" class="font-mono font-bold text-emerald-400">—</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div id="pool-bar-a" class="h-full rounded-full bg-emerald-500 transition-all duration-300" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono mb-2">Consulta vs. Documento B (praça)</div>
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="text-slate-400">$\cos(q, d_B)$</span>
+              <span id="pool-cos-b" class="font-mono font-bold text-rose-400">—</span>
+            </div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div id="pool-bar-b" class="h-full rounded-full bg-rose-500 transition-all duration-300" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-amber-500/30 p-4">
+            <div class="text-[11px] uppercase tracking-wide text-amber-300 font-mono mb-2">Margem do ranking</div>
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="text-slate-400">$\cos_A - \cos_B$</span>
+              <span id="pool-margin" class="font-mono font-bold text-amber-300">—</span>
+            </div>
+            <p id="pool-note" class="text-[11px] text-slate-400 leading-relaxed"></p>
+          </div>
+        </div>
+
+        <div class="mt-4 bg-surface-950 rounded-xl border border-slate-800 p-4">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono mb-2">Vetores de frase resultantes ($d = 5$)</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[11px] font-mono min-w-[520px]">
+              <thead>
+                <tr class="text-slate-500 border-b border-slate-800">
+                  <th class="text-left py-1 font-normal">frase</th>
+                  <th class="text-right py-1 font-normal">finanças</th>
+                  <th class="text-right py-1 font-normal">tecnologia</th>
+                  <th class="text-right py-1 font-normal">assento</th>
+                  <th class="text-right py-1 font-normal">natureza</th>
+                  <th class="text-right py-1 font-normal">genérico</th>
+                </tr>
+              </thead>
+              <tbody id="pool-vectors"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/25 text-[11px] text-slate-300 leading-relaxed">
+          <strong class="text-rose-300"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Polissemia na prática:</strong>
+          a palavra <span class="font-mono text-rose-200">banco</span> tem um único vetor estático, com carga de <em>finanças</em> e de <em>assento</em> ao mesmo tempo. É por isso que ela aparece nos dois documentos e ajuda a confundir o ranking. Modelos contextuais resolvem isso dando a <em>banco</em> vetores diferentes em cada frase — assunto do próximo tópico da seção.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — Além do texto ══════════════ -->
+    <section class="slide-section" data-nav="Além do Texto" data-icon="fa-shapes">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-shapes"></i> Módulo 04 • Aplicação Multimodal
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Além do texto: <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">imagem, áudio, consumo e proteína</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A percepção mais transformadora do ML recente: <strong>qualquer modalidade com estrutura relacional pode virar um espaço vetorial contínuo</strong>. A linguagem natural foi só a primeira prova de conceito.
+        </p>
+      </div>
+
+      <!-- SIMULADOR 4: espaço compartilhado CLIP -->
+      <div class="bg-surface-900 border border-emerald-500/30 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5 pb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-image text-emerald-400"></i> Simulador — Espaço compartilhado imagem ↔ texto (CLIP)
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Um encoder de imagem e um de texto projetam no <strong>mesmo</strong> espaço de 6 dimensões. Escolha a consulta, ajuste a temperatura $\tau$ e veja o cosseno e a probabilidade zero-shot de cada imagem serem recalculados.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 mb-5" id="clip-queries"></div>
+
+        <div class="flex flex-wrap items-center gap-4 mb-5">
+          <div class="flex-1 min-w-[220px]">
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <label for="clip-tau" class="text-slate-400 font-medium">Temperatura $\tau$ da softmax</label>
+              <span id="clip-tau-val" class="font-mono text-emerald-300 font-bold">τ = 0,07</span>
+            </div>
+            <input id="clip-tau" type="range" min="1" max="40" step="1" value="7" oninput="updateClip()" class="w-full">
+            <div class="flex justify-between text-[10px] text-slate-600 font-mono mt-1"><span>0,01 (decisão dura)</span><span>0,40 (tudo parecido)</span></div>
+          </div>
+          <div class="px-4 py-2.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono">Vencedor zero-shot</div>
+            <div id="clip-winner" class="font-mono text-sm font-bold text-emerald-400">—</div>
+          </div>
+        </div>
+
+        <div id="clip-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          <strong class="text-slate-300">Nota de escala:</strong> no CLIP real, um par imagem–texto realmente relacionado costuma ficar em torno de $\cos \approx 0{,}31$, enquanto em modelos de frase (SBERT) o mesmo "par bom" passa de $0{,}70$. O que importa é a <strong>ordem do ranking</strong>, não o valor absoluto. O espaço de 6 dimensões acima é ilustrativo e por isso produz cossenos mais redondos.
+        </p>
+      </div>
+
+      <!-- Tabela de modalidades -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-filter text-cyan-400"></i> O que o embedding absorve em cada modalidade
+        </h3>
+        <p class="text-xs text-slate-400 mb-4 max-w-3xl leading-relaxed">
+          Dizer que "o modelo gera um vetor de floats" descreve só o formato de saída. O que importa é a rede <strong>descartar o ruído do sensor</strong> e <strong>reter os invariantes</strong> — o padrão se repete em toda modalidade.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[720px]">
+            <thead>
+              <tr class="text-left text-cyan-300 border-b border-slate-800">
+                <th class="py-2 pr-3 font-semibold">Modalidade</th>
+                <th class="py-2 pr-3 font-semibold">O que vira "token"</th>
+                <th class="py-2 pr-3 font-semibold">Ruído descartado</th>
+                <th class="py-2 pr-3 font-semibold">Invariante retido</th>
+                <th class="py-2 font-semibold">Modelos</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-400">
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium"><i class="fa-solid fa-eye text-brand-400 mr-1.5"></i>Visão</td>
+                <td class="py-2.5 pr-3">patches 16×16 da imagem</td>
+                <td class="py-2.5 pr-3">iluminação, fundo, ângulo, ruído do sensor</td>
+                <td class="py-2.5 pr-3">objeto, cena, relação espacial</td>
+                <td class="py-2.5 font-mono text-[11px]">ViT, CLIP, SigLIP</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium"><i class="fa-solid fa-wave-square text-cyan-400 mr-1.5"></i>Áudio &amp; fala</td>
+                <td class="py-2.5 pr-3">janelas do espectrograma</td>
+                <td class="py-2.5 pr-3">timbre, sotaque, chiado, volume</td>
+                <td class="py-2.5 pr-3">fonema, conteúdo falado, identidade do locutor</td>
+                <td class="py-2.5 font-mono text-[11px]">wav2vec 2.0, Whisper</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium"><i class="fa-solid fa-heart-pulse text-rose-400 mr-1.5"></i>Séries temporais</td>
+                <td class="py-2.5 pr-3">segmentos de janela deslizante</td>
+                <td class="py-2.5 pr-3">deriva de linha de base, artefato de movimento</td>
+                <td class="py-2.5 pr-3">morfologia do batimento, periodicidade, anomalia</td>
+                <td class="py-2.5 font-mono text-[11px]">TS2Vec, Chronos</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium"><i class="fa-solid fa-cart-shopping text-amber-400 mr-1.5"></i>Recomendação</td>
+                <td class="py-2.5 pr-3">itens da sessão de consumo</td>
+                <td class="py-2.5 pr-3">ordem exata do clique, horário isolado</td>
+                <td class="py-2.5 pr-3">afinidade de gosto, coocorrência de catálogo</td>
+                <td class="py-2.5 font-mono text-[11px]">Item2Vec, Two-Tower</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-3 text-slate-200 font-medium"><i class="fa-solid fa-circle-nodes text-purple-400 mr-1.5"></i>Grafos &amp; fraude</td>
+                <td class="py-2.5 pr-3">nós visitados em random walks</td>
+                <td class="py-2.5 pr-3">identidade nominal da conta, valores isolados</td>
+                <td class="py-2.5 pr-3">papel estrutural na rede, comunidade</td>
+                <td class="py-2.5 font-mono text-[11px]">Node2Vec, GraphSAGE</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 text-slate-200 font-medium"><i class="fa-solid fa-dna text-emerald-400 mr-1.5"></i>Bioinformática</td>
+                <td class="py-2.5 pr-3">aminoácidos; SMILES de moléculas</td>
+                <td class="py-2.5 pr-3">mutações silenciosas, numeração da cadeia</td>
+                <td class="py-2.5 pr-3">dobra, sítio ativo, função bioquímica</td>
+                <td class="py-2.5 font-mono text-[11px]">ESM-2, ESMFold</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quatro casos comentados -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="font-bold text-white text-sm mb-1.5"><i class="fa-solid fa-image text-brand-400 mr-1.5"></i>Visão e multimodalidade (CLIP)</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Uma rede processa a imagem (Vision Transformer) e outra o texto; ambas projetam no <strong>mesmo</strong> espaço. O vetor da foto de um gato persa cai em região próxima à da frase <em>"um felino peludo descansando no tapete"</em> — próxima o bastante para vencer o ranking, ainda que os dois vetores nunca coincidam. Daí saem busca por descrição livre, classificação zero-shot e geração condicionada (Stable Diffusion).
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="font-bold text-white text-sm mb-1.5"><i class="fa-solid fa-music text-amber-400 mr-1.5"></i>Recomendação (Item2Vec, Two-Tower)</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            No Spotify ou Netflix, a "frase" é a sessão do usuário e os "termos" são as músicas ou filmes consumidos. Dois títulos assistidos na mesma noite por milhões de pessoas ganham vetores próximos. Usuários e itens habitam o mesmo espaço: <strong>recomendar vira uma busca k-NN</strong> em torno do vetor do usuário.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="font-bold text-white text-sm mb-1.5"><i class="fa-solid fa-dna text-emerald-400 mr-1.5"></i>Bioinformática (ESM-2, AlphaFold)</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Proteínas são cadeias de aminoácidos — as letras primárias da biologia. O <strong>ESM-2 (Meta)</strong> treinou em milhões de sequências evolutivas com a mesma pretext task do BERT; sobre esses embeddings foi construído o <strong>ESMFold</strong>, que prevê a estrutura 3D direto da sequência. O <strong>AlphaFold (DeepMind)</strong> toma outro caminho, apoiado em alinhamentos de homólogos. Em ambos, a representação aprendida captura a física das dobras.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="font-bold text-white text-sm mb-1.5"><i class="fa-solid fa-circle-nodes text-purple-400 mr-1.5"></i>Grafos e fraude (Node2Vec)</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Passeios aleatórios em redes financeiras ou sociais: nós visitados em sequência recebem representações similares. Contas que operam lavagem de dinheiro, mesmo escondidas atrás de laranjas, acabam se aglomerando no mesmo cluster vetorial — sem que ninguém tenha rotulado "fraude".
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono mb-2">Python — embeddings multimodais e similaridade cruzada</div>
+        <pre class="bg-surface-950 border border-slate-800 rounded-xl p-4 overflow-x-auto text-[11px] leading-relaxed font-mono text-slate-300"><code><span class="text-brand-400">from</span> sentence_transformers <span class="text-brand-400">import</span> SentenceTransformer, util
+<span class="text-brand-400">from</span> PIL <span class="text-brand-400">import</span> Image
+
+<span class="text-slate-500"># Modelo multimodal que projeta imagem e texto no mesmo espaço vetorial</span>
+model = SentenceTransformer(<span class="text-emerald-400">"clip-ViT-B-32"</span>)
+
+<span class="text-slate-500"># 1. Consulta textual abstrata</span>
+texto = <span class="text-emerald-400">"um exame laboratorial de coleta sanguínea"</span>
+vetor_texto = model.encode(texto, normalize_embeddings=<span class="text-brand-400">True</span>)
+
+<span class="text-slate-500"># 2. Imagens reais</span>
+vetor_tubo  = model.encode(Image.open(<span class="text-emerald-400">"tubo_ensaio.jpg"</span>), normalize_embeddings=<span class="text-brand-400">True</span>)
+vetor_praia = model.encode(Image.open(<span class="text-emerald-400">"praia_sol.jpg"</span>),   normalize_embeddings=<span class="text-brand-400">True</span>)
+
+<span class="text-slate-500"># 3. Similaridade geométrica no espaço compartilhado</span>
+<span class="text-brand-400">print</span>(util.cos_sim(vetor_texto, vetor_tubo).item())   <span class="text-slate-500"># ~0.312 — alto para CLIP</span>
+<span class="text-brand-400">print</span>(util.cos_sim(vetor_texto, vetor_praia).item())  <span class="text-slate-500"># ~0.041 — irrelevante</span></code></pre>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — Limites & Quiz ══════════════ -->
+    <section class="slide-section" data-nav="Limites &amp; Quiz" data-icon="fa-flag-checkered">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-flag-checkered"></i> Módulo 05 • Limitações &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que um embedding <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">não captura</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Comprimir significado em algumas centenas de números tem preço. Estas são as falhas que aparecem em produção — e o motivo de nenhum sistema sério de RAG usar embedding denso sozinho.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/25 p-5">
+          <div class="text-rose-400 text-lg mb-2"><i class="fa-solid fa-not-equal"></i></div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Negação</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">"paciente com febre" e "paciente sem febre" ficam quase colados no espaço: quase todos os tokens coincidem. Negação é lógica, não distribuição.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/25 p-5">
+          <div class="text-rose-400 text-lg mb-2"><i class="fa-solid fa-hashtag"></i></div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Números, datas e unidades</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">"12 mg" e "120 mg" são vizinhos no espaço vetorial. Filtro numérico é trabalho de metadado e de índice estruturado, não de cosseno.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/25 p-5">
+          <div class="text-rose-400 text-lg mb-2"><i class="fa-solid fa-id-badge"></i></div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Identificadores raros</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Código de peça, número de protocolo, nome próprio incomum: termos que aparecem pouco no treino ficam mal posicionados. Aqui o BM25 ganha do denso com folga.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/25 p-5">
+          <div class="text-amber-400 text-lg mb-2"><i class="fa-solid fa-arrows-turn-to-dots"></i></div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Deslocamento de domínio</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Um modelo treinado em texto de internet degrada em laudo clínico ou jurídico: o vocabulário é o mesmo, a distribuição de contexto não.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/25 p-5">
+          <div class="text-amber-400 text-lg mb-2"><i class="fa-solid fa-scale-unbalanced"></i></div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Viés herdado</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">A geometria copia o corpus, inclusive os estereótipos: as mesmas direções que codificam "gênero" replicam associações profissionais enviesadas do texto de origem.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/25 p-5">
+          <div class="text-amber-400 text-lg mb-2"><i class="fa-solid fa-eye-slash"></i></div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Opacidade das dimensões</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Nenhuma coordenada tem nome. Você não audita por que dois documentos ficaram próximos — só mede o efeito no ranking. É o custo da compressão do módulo 02.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-5 sm:p-6 mb-8">
+        <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-route text-brand-400"></i> Para onde isso aponta</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-[11px] text-slate-400 leading-relaxed">
+          <p><strong class="text-slate-200">Contexto:</strong> um vetor estático por palavra não resolve polissemia. A atenção do <strong class="text-brand-300">Transformer</strong> dá a cada ocorrência o seu próprio vetor.</p>
+          <p><strong class="text-slate-200">Precisão:</strong> quando o ranking denso erra por nuance, um <strong class="text-brand-300">cross-encoder</strong> relê consulta e documento juntos e reordena o topo.</p>
+          <p><strong class="text-slate-200">Cobertura:</strong> para códigos e termos raros, combina-se denso com esparso via <strong class="text-brand-300">RRF</strong> — nenhum dos dois sozinho basta.</p>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-5">
+          <a href="../index.html" class="px-4 py-2 rounded-xl bg-surface-900 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-2 transition">
+            <i class="fa-solid fa-chevron-left"></i> Voltar: índice de Modelos Densos
+          </a>
+          <a href="../transformer/index.html" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg shadow-brand-600/30">
+            Próximo tópico: Arquitetura Transformer <i class="fa-solid fa-chevron-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre origem, gargalo e multimodalidade.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que o gargalo (camada oculta estreita) é o que força a rede a aprender semântica?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A normalização acelera o treino, mas não é o que cria as direções latentes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque normaliza os vetores e acelera a convergência do gradiente.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Sem espaço para memorizar item a item, a rede é obrigada a agrupar o que se comporta igual — e esses agrupamentos são as dimensões latentes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque não cabe decorar cada item individualmente, então a rede precisa sintetizar conceitos compartilhados.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A tarefa-pretexto define o sinal de treino; o gargalo define a compressão. São coisas diferentes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque só uma camada estreita permite usar negative sampling.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A camada de saída é descartada no fim do treino — o que se guarda é justamente o gargalo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque a camada de saída é o que se guarda como embedding final.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              No CLIP, o que significa dizer que imagem e texto vivem no "mesmo espaço vetorial"?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'São dois encoders distintos: um ViT e um encoder de texto. O que é compartilhado é o espaço de saída, não a rede.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Que a mesma rede neural processa pixels e tokens indistintamente.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Os vetores nunca coincidem exatamente — basta que fiquem próximos o suficiente para vencer o ranking.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Que a foto e a legenda correta produzem exatamente o mesmo vetor.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Dois encoders separados, uma só geometria de saída: por isso o cosseno entre uma foto e uma frase é comparável e viabiliza classificação zero-shot.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Que encoders diferentes projetam em uma geometria comum, na qual o cosseno entre foto e frase é comparável.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A escala do cosseno depende do modelo: no CLIP, ~0,31 já é um par muito bom.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Que o cosseno entre pares corretos precisa passar de 0,90 para valer.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Qual consulta tende a ir pior com busca puramente densa?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Paráfrase é o caso em que o denso brilha: vocabulário diferente, mesmo significado.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) "como cuidar de um cão idoso" contra um texto que só fala em "cachorro velho".
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Identificadores raros aparecem pouco no treino e ficam mal posicionados no espaço; casamento lexical exato (BM25) resolve melhor, e a fusão via RRF cobre os dois casos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) "erro XR-4471-B no protocolo 99812" contra o manual que cita exatamente esse código.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Consulta conceitual ampla é justamente o forte do embedding denso.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) "riscos cardiovasculares do sedentarismo" contra um artigo de prevenção.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Busca multilíngue é bem atendida por modelos densos treinados em vários idiomas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) "machine learning basics" contra um texto introdutório em português.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════════ utilidades numéricas ═══════════════ */
+    function dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+    function norm(a) { return Math.sqrt(dot(a, a)); }
+    function cosine(a, b) {
+      const na = norm(a), nb = norm(b);
+      if (na === 0 || nb === 0) return 0;
+      return dot(a, b) / (na * nb);
+    }
+    function fmt(n, d) { return n.toFixed(d === undefined ? 3 : d).replace('.', ','); }
+
+    /* ═══════════════ MÓDULO 1 — coocorrência ═══════════════ */
+    const COOC_CORPUS = [
+      ['eu', 'bebo', 'café', 'quente', 'pela', 'manhã', 'na', 'xícara'],
+      ['ela', 'bebe', 'chá', 'quente', 'pela', 'manhã', 'na', 'xícara'],
+      ['o', 'café', 'da', 'manhã', 'acompanha', 'uma', 'xícara', 'de', 'leite'],
+      ['o', 'chá', 'da', 'tarde', 'acompanha', 'uma', 'xícara', 'de', 'leite'],
+      ['o', 'cachorro', 'late', 'no', 'quintal', 'durante', 'a', 'noite'],
+      ['o', 'gato', 'mia', 'no', 'quintal', 'durante', 'a', 'noite'],
+      ['o', 'cachorro', 'corre', 'atrás', 'da', 'bola', 'no', 'quintal'],
+      ['o', 'gato', 'dorme', 'em', 'cima', 'do', 'sofá', 'da', 'sala']
+    ];
+    const COOC_WORDS = ['café', 'chá', 'cachorro', 'gato', 'xícara', 'quintal'];
+    const coocState = { a: 'café', b: 'chá', c: 2 };
+
+    function contextCounts(word, radius) {
+      const counts = {};
+      COOC_CORPUS.forEach(sent => {
+        sent.forEach((tok, i) => {
+          if (tok !== word) return;
+          for (let j = Math.max(0, i - radius); j <= Math.min(sent.length - 1, i + radius); j++) {
+            if (j === i) continue;
+            counts[sent[j]] = (counts[sent[j]] || 0) + 1;
+          }
+        });
+      });
+      return counts;
+    }
+
+    function setCoocRadius(r) {
+      coocState.c = r;
+      updateCooc();
+    }
+
+    function updateCooc() {
+      const selA = document.getElementById('cooc-a');
+      const selB = document.getElementById('cooc-b');
+      coocState.a = selA.value;
+      coocState.b = selB.value;
+
+      document.querySelectorAll('.cooc-radius-btn').forEach(btn => {
+        const on = parseInt(btn.dataset.c, 10) === coocState.c;
+        btn.className = 'cooc-radius-btn px-2 py-0.5 text-xs rounded font-mono transition ' +
+          (on ? 'bg-brand-500 text-white font-bold' : 'text-slate-400 hover:text-white');
+      });
+
+      const ca = contextCounts(coocState.a, coocState.c);
+      const cb = contextCounts(coocState.b, coocState.c);
+      const vocab = Array.from(new Set(Object.keys(ca).concat(Object.keys(cb))))
+        .sort((x, y) => ((cb[y] || 0) + (ca[y] || 0)) - ((cb[x] || 0) + (ca[x] || 0)));
+
+      const va = vocab.map(w => ca[w] || 0);
+      const vb = vocab.map(w => cb[w] || 0);
+      const cos = cosine(va, vb);
+
+      document.getElementById('cooc-head-a').textContent = coocState.a;
+      document.getElementById('cooc-head-b').textContent = coocState.b;
+
+      const tbody = document.getElementById('cooc-table');
+      tbody.innerHTML = vocab.slice(0, 9).map(w => {
+        const x = ca[w] || 0, y = cb[w] || 0;
+        const shared = x > 0 && y > 0;
+        return '<tr class="border-b border-slate-800/60 ' + (shared ? 'text-emerald-300' : 'text-slate-500') + '">' +
+          '<td class="py-1">' + w + '</td>' +
+          '<td class="py-1 text-right">' + x + '</td>' +
+          '<td class="py-1 text-right">' + y + '</td></tr>';
+      }).join('');
+
+      document.getElementById('cooc-cos').textContent = fmt(cos);
+      document.getElementById('cooc-bar').style.width = (Math.max(0, cos) * 100).toFixed(1) + '%';
+
+      const shared = vocab.filter(w => (ca[w] || 0) > 0 && (cb[w] || 0) > 0);
+      const verdict = document.getElementById('cooc-verdict');
+      if (cos >= 0.5) {
+        verdict.innerHTML = '<span class="text-emerald-400 font-semibold">Contextos muito parecidos.</span> As duas palavras dividem ' +
+          shared.length + ' vizinhos (' + shared.slice(0, 4).join(', ') + '). Sem nenhum dicionário, o corpus já diz que elas são do mesmo tipo.';
+      } else if (cos >= 0.2) {
+        verdict.innerHTML = '<span class="text-amber-400 font-semibold">Parentesco fraco.</span> Só ' + shared.length +
+          ' vizinhos em comum — em geral palavras estruturais, não temáticas.';
+      } else {
+        verdict.innerHTML = '<span class="text-rose-400 font-semibold">Contextos disjuntos.</span> Praticamente nenhuma companhia em comum: para a hipótese distribucional, são conceitos sem relação.';
+      }
+
+      renderCoocCorpus(coocState.a, coocState.b, coocState.c);
+    }
+
+    function renderCoocCorpus(a, b, radius) {
+      const box = document.getElementById('cooc-corpus');
+      box.innerHTML = COOC_CORPUS.map(sent => {
+        const role = sent.map(() => 0); // 0 neutro, 1 alvo A, 2 alvo B, 3 contexto A, 4 contexto B
+        sent.forEach((tok, i) => {
+          if (tok !== a && tok !== b) return;
+          const isA = tok === a;
+          role[i] = isA ? 1 : 2;
+          for (let j = Math.max(0, i - radius); j <= Math.min(sent.length - 1, i + radius); j++) {
+            if (j === i || role[j] === 1 || role[j] === 2) continue;
+            role[j] = isA ? 3 : 4;
+          }
+        });
+        const spans = sent.map((tok, i) => {
+          const cls = {
+            0: 'text-slate-600',
+            1: 'px-1.5 py-0.5 rounded bg-cyan-600 text-white font-bold',
+            2: 'px-1.5 py-0.5 rounded bg-brand-600 text-white font-bold',
+            3: 'px-1 rounded bg-cyan-950/70 text-cyan-300 border border-cyan-500/30',
+            4: 'px-1 rounded bg-brand-950/70 text-brand-300 border border-brand-500/30'
+          }[role[i]];
+          return '<span class="' + cls + '">' + tok + '</span>';
+        }).join(' ');
+        return '<div class="flex flex-wrap items-center gap-1">' + spans + '</div>';
+      }).join('');
+    }
+
+    function initCooc() {
+      const selA = document.getElementById('cooc-a');
+      const selB = document.getElementById('cooc-b');
+      const opts = COOC_WORDS.map(w => '<option value="' + w + '">' + w + '</option>').join('');
+      selA.innerHTML = opts; selB.innerHTML = opts;
+      selA.value = 'café'; selB.value = 'chá';
+      updateCooc();
+    }
+
+    /* ═══════════════ MÓDULO 2 — simulador do gargalo ═══════════════ */
+    // 12 conceitos descritos por 8 atributos latentes escritos à mão.
+    const BN_FEATURES = ['realeza', 'gênero', 'animal', 'doméstico', 'comida', 'tecnologia', 'movimento', 'tamanho'];
+    const BN_ITEMS = [
+      { w: 'rei',       v: [1.00, -0.90, 0.00,  0.00, 0.00, 0.00, 0.00,  0.60] },
+      { w: 'rainha',    v: [1.00,  0.90, 0.00,  0.00, 0.00, 0.00, 0.00,  0.60] },
+      { w: 'homem',     v: [0.10, -0.90, 0.00,  0.00, 0.00, 0.00, 0.20,  0.30] },
+      { w: 'mulher',    v: [0.10,  0.90, 0.00,  0.00, 0.00, 0.00, 0.20,  0.30] },
+      { w: 'cachorro',  v: [0.00,  0.00, 1.00,  0.90, 0.00, 0.00, 0.70,  0.20] },
+      { w: 'gato',      v: [0.00,  0.00, 1.00,  0.90, 0.00, 0.00, 0.60, -0.10] },
+      { w: 'leão',      v: [0.30,  0.00, 1.00, -0.80, 0.00, 0.00, 0.80,  0.70] },
+      { w: 'café',      v: [0.00,  0.00, 0.00,  0.00, 1.00, 0.00, 0.00, -0.50] },
+      { w: 'chá',       v: [0.00,  0.00, 0.00,  0.00, 0.95, 0.00, 0.00, -0.50] },
+      { w: 'xícara',    v: [0.00,  0.00, 0.00,  0.00, 0.60, 0.00, 0.00, -0.70] },
+      { w: 'servidor',  v: [0.00,  0.00, 0.00,  0.00, 0.00, 1.00, 0.00,  0.40] },
+      { w: 'notebook',  v: [0.00,  0.00, 0.00,  0.00, 0.00, 0.95, 0.20, -0.30] }
+    ];
+
+    // Autovalores/autovetores de matriz simétrica por rotações de Jacobi.
+    function jacobiEigen(Ain, sweeps) {
+      const n = Ain.length;
+      const A = Ain.map(r => r.slice());
+      const V = [];
+      for (let i = 0; i < n; i++) { V.push(new Array(n).fill(0)); V[i][i] = 1; }
+      for (let s = 0; s < (sweeps || 60); s++) {
+        let off = 0;
+        for (let p = 0; p < n - 1; p++) for (let q = p + 1; q < n; q++) off += A[p][q] * A[p][q];
+        if (off < 1e-14) break;
+        for (let p = 0; p < n - 1; p++) {
+          for (let q = p + 1; q < n; q++) {
+            if (Math.abs(A[p][q]) < 1e-14) continue;
+            const theta = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+            const t = (theta >= 0 ? 1 : -1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+            const c = 1 / Math.sqrt(t * t + 1), sn = t * c;
+            for (let k = 0; k < n; k++) {
+              const akp = A[k][p], akq = A[k][q];
+              A[k][p] = c * akp - sn * akq;
+              A[k][q] = sn * akp + c * akq;
+            }
+            for (let k = 0; k < n; k++) {
+              const apk = A[p][k], aqk = A[q][k];
+              A[p][k] = c * apk - sn * aqk;
+              A[q][k] = sn * apk + c * aqk;
+            }
+            for (let k = 0; k < n; k++) {
+              const vkp = V[k][p], vkq = V[k][q];
+              V[k][p] = c * vkp - sn * vkq;
+              V[k][q] = sn * vkp + c * vkq;
+            }
+          }
+        }
+      }
+      const pairs = [];
+      for (let i = 0; i < n; i++) pairs.push({ value: A[i][i], vector: V.map(row => row[i]) });
+      pairs.sort((x, y) => y.value - x.value);
+      return pairs;
+    }
+
+    const bn = (function buildBottleneckModel() {
+      const n = BN_ITEMS.length, d = BN_FEATURES.length;
+      const mean = new Array(d).fill(0);
+      BN_ITEMS.forEach(it => it.v.forEach((x, j) => { mean[j] += x / n; }));
+      const Xc = BN_ITEMS.map(it => it.v.map((x, j) => x - mean[j]));
+      const cov = [];
+      for (let i = 0; i < d; i++) {
+        cov.push(new Array(d).fill(0));
+        for (let j = 0; j < d; j++) {
+          let s = 0;
+          for (let r = 0; r < n; r++) s += Xc[r][i] * Xc[r][j];
+          cov[i][j] = s / (n - 1);
+        }
+      }
+      const eig = jacobiEigen(cov, 80).map(p => ({ value: Math.max(0, p.value), vector: p.vector }));
+      const total = eig.reduce((s, p) => s + p.value, 0);
+      // scores[r][c] = projeção do item r no componente c
+      const scores = Xc.map(row => eig.map(p => dot(row, p.vector)));
+      // vizinho mais próximo no espaço original (cosseno sobre o vetor centrado)
+      const origNeighbor = BN_ITEMS.map((_, i) => {
+        let best = -Infinity, bestJ = -1;
+        BN_ITEMS.forEach((__, j) => {
+          if (i === j) return;
+          const c = cosine(Xc[i], Xc[j]);
+          if (c > best) { best = c; bestJ = j; }
+        });
+        return { idx: bestJ, cos: best };
+      });
+      return { mean: mean, Xc: Xc, eig: eig, total: total, scores: scores, origNeighbor: origNeighbor };
+    })();
+
+    function updateBottleneck() {
+      const k = parseInt(document.getElementById('bn-k').value, 10);
+      document.getElementById('bn-k-val').textContent = 'k = ' + k;
+
+      const kept = bn.eig.slice(0, k).reduce((s, p) => s + p.value, 0);
+      const varPct = bn.total > 0 ? (kept / bn.total) * 100 : 0;
+      document.getElementById('bn-var').textContent = varPct.toFixed(1).replace('.', ',') + '%';
+
+      const Z = bn.scores.map(row => row.slice(0, k));
+      const n = BN_ITEMS.length;
+
+      // distorção média do cosseno entre todos os pares
+      let sum = 0, pairs = 0;
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          sum += Math.abs(cosine(bn.Xc[i], bn.Xc[j]) - cosine(Z[i], Z[j]));
+          pairs++;
+        }
+      }
+      document.getElementById('bn-dist').textContent = fmt(sum / pairs);
+
+      // vizinho mais próximo no espaço comprimido
+      const rows = [];
+      let keptNeighbors = 0;
+      for (let i = 0; i < n; i++) {
+        let best = -Infinity, bestJ = -1;
+        for (let j = 0; j < n; j++) {
+          if (i === j) continue;
+          const c = cosine(Z[i], Z[j]);
+          if (c > best) { best = c; bestJ = j; }
+        }
+        const ok = bestJ === bn.origNeighbor[i].idx;
+        if (ok) keptNeighbors++;
+        rows.push({ w: BN_ITEMS[i].w, orig: BN_ITEMS[bn.origNeighbor[i].idx].w, comp: BN_ITEMS[bestJ].w, ok: ok, cos: best });
+      }
+      document.getElementById('bn-keep').textContent = keptNeighbors + '/' + n;
+
+      document.getElementById('bn-table').innerHTML = rows.map(r =>
+        '<tr class="border-b border-slate-800/60">' +
+        '<td class="py-1 text-slate-300">' + r.w + '</td>' +
+        '<td class="py-1 text-slate-500">' + r.orig + '</td>' +
+        '<td class="py-1 ' + (r.ok ? 'text-emerald-400' : 'text-rose-400') + '">' +
+        (r.ok ? '<i class="fa-solid fa-check mr-1"></i>' : '<i class="fa-solid fa-xmark mr-1"></i>') + r.comp +
+        ' <span class="text-slate-600">' + fmt(r.cos, 2) + '</span></td></tr>'
+      ).join('');
+
+      drawBottleneckCanvas(k);
+    }
+
+    function drawBottleneckCanvas(kArg) {
+      const canvas = document.getElementById('bn-canvas');
+      if (!canvas) return;
+      const k = kArg !== undefined ? kArg : parseInt(document.getElementById('bn-k').value, 10);
+      const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+      if (!cssW || !cssH) return;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = cssW * dpr;
+      canvas.height = cssH * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      const padL = 38, padR = 42, padT = 14, padB = 30;
+      const plotW = cssW - padL - padR, plotH = cssH - padT - padB;
+      if (plotW <= 0 || plotH <= 0) return;
+      const d = bn.eig.length;
+      const maxVal = Math.max.apply(null, bn.eig.map(p => p.value)) || 1;
+
+      // grade horizontal (escala da variância acumulada)
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.font = '10px JetBrains Mono, monospace';
+      for (let g = 0; g <= 4; g++) {
+        const y = padT + plotH - (plotH * g) / 4;
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+        ctx.fillStyle = '#475569';
+        ctx.textAlign = 'right';
+        ctx.fillText((g * 25) + '%', padL - 6, y + 3);
+      }
+
+      // barras: variância de cada componente
+      const slot = plotW / d, bw = Math.min(38, slot * 0.6);
+      bn.eig.forEach((p, i) => {
+        const h = (p.value / maxVal) * plotH;
+        const x = padL + slot * i + (slot - bw) / 2;
+        const y = padT + plotH - h;
+        const on = i < k;
+        ctx.fillStyle = on ? '#f59e0b' : '#1e293b';
+        ctx.strokeStyle = on ? '#fbbf24' : '#334155';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, y, bw, Math.max(1, h), 4);
+        else ctx.rect(x, y, bw, Math.max(1, h));
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = on ? '#fcd34d' : '#475569';
+        ctx.textAlign = 'center';
+        ctx.fillText('C' + (i + 1), x + bw / 2, padT + plotH + 16);
+      });
+
+      // linha da variância acumulada
+      ctx.strokeStyle = '#34d399';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let acc = 0;
+      bn.eig.forEach((p, i) => {
+        acc += p.value;
+        const frac = bn.total > 0 ? acc / bn.total : 0;
+        const x = padL + slot * i + slot / 2;
+        const y = padT + plotH - frac * plotH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      acc = 0;
+      bn.eig.forEach((p, i) => {
+        acc += p.value;
+        const frac = bn.total > 0 ? acc / bn.total : 0;
+        const x = padL + slot * i + slot / 2;
+        const y = padT + plotH - frac * plotH;
+        ctx.fillStyle = i < k ? '#34d399' : '#0f172a';
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      });
+
+      // corte do gargalo
+      if (k < d) {
+        const cut = padL + slot * k;
+        ctx.strokeStyle = '#6366f1';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(cut, padT); ctx.lineTo(cut, padT + plotH); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#818cf8';
+        ctx.textAlign = 'left';
+        ctx.fillText('descartado', Math.min(cut + 5, padL + plotW - 30), padT + 10);
+      }
+    }
+
+    /* ═══════════════ MÓDULO 3 — pooling ═══════════════ */
+    // dimensões: [finanças, tecnologia, assento, natureza, genérico]
+    const LEX = {
+      'banco': [0.70, 0.20, 0.60, 0.10, 0.30],
+      'negou': [0.40, 0.00, 0.00, 0.00, 0.30],
+      'empréstimo': [0.95, 0.10, 0.00, 0.00, 0.10],
+      'cliente': [0.60, 0.20, 0.00, 0.00, 0.20],
+      'instituição': [0.80, 0.10, 0.00, 0.00, 0.20],
+      'financeira': [0.95, 0.00, 0.00, 0.00, 0.10],
+      'recusou': [0.40, 0.00, 0.00, 0.00, 0.30],
+      'crédito': [0.90, 0.10, 0.00, 0.00, 0.10],
+      'sentei': [0.00, 0.00, 0.80, 0.20, 0.20],
+      'praça': [0.00, 0.00, 0.50, 0.80, 0.20],
+      'árvore': [0.00, 0.00, 0.00, 0.95, 0.10],
+      'lado': [0.00, 0.00, 0.20, 0.20, 0.30]
+    };
+    const STOP = ['o', 'a', 'do', 'da', 'no', 'ao', 'de', 'em'];
+    const STOP_VEC = [0.00, 0.00, 0.00, 0.00, 0.50];
+    const POOL_SENTS = [
+      { label: 'Consulta',    color: 'brand',   tokens: ['o', 'banco', 'negou', 'o', 'empréstimo', 'do', 'cliente'] },
+      { label: 'Documento A', color: 'emerald', tokens: ['a', 'instituição', 'financeira', 'recusou', 'o', 'crédito'] },
+      { label: 'Documento B', color: 'rose',    tokens: ['sentei', 'no', 'banco', 'da', 'praça', 'ao', 'lado', 'da', 'árvore'] }
+    ];
+    const poolState = { mode: 'content' };
+
+    function tokenVec(tok) { return LEX[tok] || STOP_VEC; }
+    function isStop(tok) { return STOP.indexOf(tok) !== -1; }
+
+    function poolSentence(tokens, mode) {
+      const dim = 5;
+      let list = tokens;
+      if (mode === 'content') list = tokens.filter(t => !isStop(t));
+      if (list.length === 0) list = tokens;
+      const out = new Array(dim).fill(mode === 'max' ? -Infinity : 0);
+      list.forEach(t => {
+        const v = tokenVec(t);
+        for (let i = 0; i < dim; i++) {
+          if (mode === 'max') out[i] = Math.max(out[i], v[i]);
+          else out[i] += v[i] / list.length;
+        }
+      });
+      return out;
+    }
+
+    function setPooling(mode) {
+      poolState.mode = mode;
+      updatePooling();
+    }
+
+    function updatePooling() {
+      const mode = poolState.mode;
+      document.querySelectorAll('.pool-btn').forEach(btn => {
+        const on = btn.dataset.pool === mode;
+        btn.className = 'pool-btn px-3 py-1.5 rounded-lg text-xs font-medium transition ' +
+          (on ? 'bg-cyan-600 text-white font-semibold shadow shadow-cyan-600/30'
+              : 'bg-surface-950 border border-slate-800 text-slate-400 hover:text-white');
+      });
+
+      const badgeColor = {
+        brand: 'bg-brand-500/15 text-brand-300 border-brand-500/30',
+        emerald: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        rose: 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+      };
+
+      document.getElementById('pool-sentences').innerHTML = POOL_SENTS.map(s => {
+        const toks = s.tokens.map(t => {
+          const used = mode !== 'content' || !isStop(t);
+          const known = !!LEX[t];
+          let cls;
+          if (!used) cls = 'px-1.5 py-0.5 rounded bg-surface-950 border border-slate-800 text-slate-700 line-through';
+          else if (known) cls = 'px-1.5 py-0.5 rounded bg-surface-950 border border-slate-700 text-slate-200';
+          else cls = 'px-1.5 py-0.5 rounded bg-surface-950 border border-amber-500/30 text-amber-300/80';
+          return '<span class="' + cls + '">' + t + '</span>';
+        }).join(' ');
+        return '<div class="flex flex-wrap items-center gap-2 text-[11px] font-mono">' +
+          '<span class="px-2 py-0.5 rounded border font-semibold shrink-0 ' + badgeColor[s.color] + '">' + s.label + '</span>' +
+          toks + '</div>';
+      }).join('');
+
+      const vq = poolSentence(POOL_SENTS[0].tokens, mode);
+      const va = poolSentence(POOL_SENTS[1].tokens, mode);
+      const vb = poolSentence(POOL_SENTS[2].tokens, mode);
+
+      const cosA = cosine(vq, va), cosB = cosine(vq, vb);
+      document.getElementById('pool-cos-a').textContent = fmt(cosA);
+      document.getElementById('pool-cos-b').textContent = fmt(cosB);
+      document.getElementById('pool-margin').textContent = fmt(cosA - cosB);
+      document.getElementById('pool-bar-a').style.width = (Math.max(0, cosA) * 100).toFixed(1) + '%';
+      document.getElementById('pool-bar-b').style.width = (Math.max(0, cosB) * 100).toFixed(1) + '%';
+
+      const note = document.getElementById('pool-note');
+      if (mode === 'mean') {
+        note.innerHTML = 'Os stopwords entram com uma carga <em>genérica</em> comum a todas as frases. Ela infla os dois cossenos ao mesmo tempo e <strong class="text-amber-300">encolhe a margem</strong> — é a versão de bolso da anisotropia.';
+      } else if (mode === 'content') {
+        note.innerHTML = 'Sem a direção comum dos stopwords, a diferença entre o documento certo e o errado <strong class="text-emerald-300">abre</strong>. Modelos de frase fazem isso via treino contrastivo, não por lista de stopwords.';
+      } else {
+        note.innerHTML = 'O máximo por dimensão ignora quantas vezes cada tema aparece: basta <strong>um</strong> token forte para acender a dimensão. O ranking fica sensível a palavra isolada.';
+      }
+
+      const names = ['Consulta', 'Documento A', 'Documento B'];
+      document.getElementById('pool-vectors').innerHTML = [vq, va, vb].map((v, i) =>
+        '<tr class="border-b border-slate-800/60">' +
+        '<td class="py-1 text-slate-300">' + names[i] + '</td>' +
+        v.map(x => '<td class="py-1 text-right ' + (x >= 0.5 ? 'text-emerald-400' : (x >= 0.2 ? 'text-slate-300' : 'text-slate-600')) + '">' + fmt(x, 2) + '</td>').join('') +
+        '</tr>'
+      ).join('');
+    }
+
+    /* ═══════════════ MÓDULO 4 — CLIP ═══════════════ */
+    // dimensões compartilhadas: [felino, canino, bebida, exterior, clínico, pessoa]
+    const CLIP_IMAGES = [
+      { nome: 'gato no tapete',     icon: 'fa-cat',     v: [0.95, 0.05, 0.00, 0.05, 0.00, 0.05] },
+      { nome: 'cachorro no parque', icon: 'fa-dog',     v: [0.10, 0.95, 0.00, 0.75, 0.00, 0.10] },
+      { nome: 'xícara na mesa',     icon: 'fa-mug-hot', v: [0.00, 0.00, 0.95, 0.05, 0.05, 0.00] },
+      { nome: 'tubo de coleta',     icon: 'fa-vial',    v: [0.00, 0.00, 0.15, 0.00, 0.95, 0.10] }
+    ];
+    const CLIP_QUERIES = [
+      { texto: 'um felino peludo descansando no tapete', v: [0.92, 0.08, 0.00, 0.10, 0.00, 0.05] },
+      { texto: 'um animal brincando ao ar livre',        v: [0.35, 0.55, 0.00, 0.85, 0.00, 0.05] },
+      { texto: 'uma bebida quente pela manhã',           v: [0.00, 0.00, 0.95, 0.10, 0.00, 0.05] },
+      { texto: 'um exame laboratorial de sangue',        v: [0.00, 0.00, 0.05, 0.00, 0.95, 0.20] }
+    ];
+    const clipState = { q: 0 };
+
+    function setClipQuery(i) {
+      clipState.q = i;
+      updateClip();
+    }
+
+    function updateClip() {
+      const tau = parseInt(document.getElementById('clip-tau').value, 10) / 100;
+      document.getElementById('clip-tau-val').textContent = 'τ = ' + fmt(tau, 2);
+
+      document.querySelectorAll('.clip-q-btn').forEach((btn, i) => {
+        const on = i === clipState.q;
+        btn.className = 'clip-q-btn px-3 py-1.5 rounded-lg text-xs transition text-left ' +
+          (on ? 'bg-emerald-600 text-white font-semibold shadow shadow-emerald-600/30'
+              : 'bg-surface-950 border border-slate-800 text-slate-400 hover:text-white');
+      });
+
+      const q = CLIP_QUERIES[clipState.q];
+      const scored = CLIP_IMAGES.map(img => ({ img: img, cos: cosine(q.v, img.v) }));
+      const logits = scored.map(s => s.cos / tau);
+      const mx = Math.max.apply(null, logits);
+      const exps = logits.map(l => Math.exp(l - mx));
+      const sumExp = exps.reduce((a, b) => a + b, 0);
+      scored.forEach((s, i) => { s.p = exps[i] / sumExp; });
+      scored.sort((a, b) => b.cos - a.cos);
+
+      document.getElementById('clip-winner').textContent =
+        scored[0].img.nome + ' · ' + (scored[0].p * 100).toFixed(1).replace('.', ',') + '%';
+
+      document.getElementById('clip-grid').innerHTML = scored.map((s, rank) => {
+        const top = rank === 0;
+        return '<div class="rounded-xl p-4 border ' + (top ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-surface-950 border-slate-800') + '">' +
+          '<div class="flex items-center justify-between mb-2">' +
+            '<span class="flex items-center gap-2 text-xs font-semibold ' + (top ? 'text-emerald-300' : 'text-slate-300') + '">' +
+              '<i class="fa-solid ' + s.img.icon + ' text-base"></i> ' + s.img.nome + '</span>' +
+            '<span class="text-[10px] font-mono text-slate-500">#' + (rank + 1) + '</span>' +
+          '</div>' +
+          '<div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">' +
+            '<span>cos = <span class="' + (top ? 'text-emerald-400' : 'text-slate-300') + ' font-bold">' + fmt(s.cos) + '</span></span>' +
+            '<span>zero-shot = <span class="' + (top ? 'text-emerald-400' : 'text-slate-300') + ' font-bold">' + (s.p * 100).toFixed(1).replace('.', ',') + '%</span></span>' +
+          '</div>' +
+          '<div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">' +
+            '<div class="h-full rounded-full ' + (top ? 'bg-emerald-500' : 'bg-slate-600') + ' transition-all duration-300" style="width:' + (s.p * 100).toFixed(1) + '%"></div>' +
+          '</div></div>';
+      }).join('');
+    }
+
+    function initClip() {
+      document.getElementById('clip-queries').innerHTML = CLIP_QUERIES.map((q, i) =>
+        '<button onclick="setClipQuery(' + i + ')" class="clip-q-btn px-3 py-1.5 rounded-lg text-xs transition text-left">"' + q.texto + '"</button>'
+      ).join('');
+      updateClip();
+    }
+
+    /* ═══════════════ inicialização ═══════════════ */
+    Guia.ready(() => {
+      initCooc();
+      updateBottleneck();
+      updatePooling();
+      initClip();
+      Guia.toast('Quatro simuladores ao vivo nesta página — mexa nos controles.', 'fa-flask');
+    });
+    Guia.onSlide(1, () => drawBottleneckCanvas());
+    window.addEventListener('resize', () => drawBottleneckCanvas());
+  </script>
+</body>
+</html>

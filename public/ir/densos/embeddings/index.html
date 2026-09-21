@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embeddings em IR: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Embeddings em IR"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Texto como vetor denso e similaridade de cosseno"
+      data-icon="fa-vector-square"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ============================ MÓDULO 01 ============================ -->
+    <section class="slide-section" data-nav="Abismo Léxico" data-icon="fa-lightbulb">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O Abismo Léxico: <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">Palavras Diferentes, Mesmo Sentido</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          TF-IDF e BM25 contam termos idênticos. Se a consulta diz <em>“açúcar no sangue”</em> e o laudo diz
+          <em>“glicemia de jejum”</em>, a interseção de tokens é vazia e a busca léxica devolve nada.
+          O <em>dense retrieval</em> (Karpukhin et al., 2020) troca a contagem de palavras por geometria.
+        </p>
+      </div>
+
+      <!-- Seletor global de consulta -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-magnifying-glass text-brand-400"></i> Consulta em teste
+            <span class="text-[11px] font-normal text-slate-500">(vale para os módulos 1, 2 e 3)</span>
+          </div>
+          <span class="text-[11px] font-mono text-slate-500">Acervo de laudos • 5 documentos</span>
+        </div>
+        <div id="query-buttons" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Léxico -->
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6">
+          <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <span class="px-3 py-1 rounded-lg bg-rose-500/10 text-rose-400 text-xs font-mono font-semibold border border-rose-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation"></i> Busca Léxica (BM25)
+            </span>
+            <span class="text-xs text-slate-500 font-mono">Esparsa: $\mathbb{R}^{|V|}$</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Casa strings, não conceitos</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            O BM25 só pontua um documento que repita literalmente um token da consulta. Abaixo, a interseção
+            de tokens e o score BM25 ($k_1 = 1{,}5$, $b = 0{,}75$) são calculados em JavaScript sobre os 5 laudos.
+          </p>
+          <div id="lex-cards" class="space-y-2"></div>
+          <div id="lex-comment" class="mt-4 p-3 rounded-xl bg-rose-950/20 border border-rose-500/20 text-[11px] text-slate-300 leading-relaxed"></div>
+        </div>
+
+        <!-- Denso -->
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6 relative overflow-hidden glow-indigo">
+          <div class="absolute -top-12 -right-12 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
+              <span class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold border border-emerald-500/30 flex items-center gap-1.5">
+                <i class="fa-solid fa-check-double"></i> Busca Densa (Embeddings)
+              </span>
+              <span class="text-xs text-brand-400 font-mono">Densa: $\mathbb{R}^d$</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Casa significado, não grafia</h3>
+            <p class="text-slate-400 text-xs leading-relaxed mb-4">
+              O mesmo acervo, agora ordenado por similaridade de cosseno entre o vetor da consulta e o de cada laudo.
+              Nenhum termo em comum é exigido.
+            </p>
+            <div id="dense-cards" class="space-y-2"></div>
+            <div id="dense-comment" class="mt-4 p-3 rounded-xl bg-brand-950/30 border border-brand-500/20 text-[11px] text-slate-300 leading-relaxed"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 p-4 rounded-2xl bg-surface-900 border border-slate-800 flex items-start gap-3">
+        <i class="fa-solid fa-circle-info text-amber-400 mt-0.5"></i>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          <strong class="text-slate-200">Repare no efeito colateral do léxico:</strong> D1 (“hemograma completo
+          <em>sem</em> jejum”) pontua no BM25 mesmo <em>negando</em> o jejum, e D5 (“tabela de jejum jejum … jejum …”)
+          sobe só por repetir o termo. Contagem de tokens não enxerga negação nem intenção.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================ MÓDULO 02 ============================ -->
+    <section class="slide-section" data-nav="Vetor Denso" data-icon="fa-table-cells">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-table-cells"></i> Módulo 02 • Representação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O Que É um <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">Vetor Denso</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          No BM25 cada palavra do dicionário é um eixo: um vetor com 20.000 zeros e dois uns. Num embedding,
+          o texto inteiro vira um punhado de números contínuos — cada dimensão é um tema latente aprendido, não uma palavra.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-rose-300 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-grip-lines"></i> Esparso — 1 eixo por termo do vocabulário
+          </h3>
+          <p class="text-xs text-slate-400 mb-3">Quase tudo é zero. Dois termos diferentes são sempre ortogonais: $\cos(\theta) = 0$.</p>
+          <div id="sparse-strip" class="grid gap-[2px] mb-2" style="grid-template-columns:repeat(40,minmax(0,1fr))"></div>
+          <p id="sparse-caption" class="text-[11px] font-mono text-slate-500"></p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6">
+          <h3 class="text-sm font-bold text-brand-300 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-wave-square"></i> Denso — $d$ dimensões latentes contínuas
+          </h3>
+          <p class="text-xs text-slate-400 mb-3">
+            Toda posição carrega sinal. Modelos de produção usam $d \in \{384, 768, 1024, 1536\}$;
+            aqui usamos $d = 6$ com rótulos didáticos para dar para ler a tabela.
+          </p>
+          <div class="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 text-[11px] text-amber-200/90 leading-relaxed">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+            <strong>Atenção:</strong> os nomes das dimensões são ilustrativos. Em modelos reais as 384+ dimensões
+            não têm rótulo humano — o significado está na combinação delas, não em um eixo isolado.
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-microscope text-cyan-400"></i> Matriz de embeddings do acervo
+          </h3>
+          <span class="text-[11px] font-mono text-slate-500">Todos os vetores normalizados: $\lVert v \rVert_2 = 1$</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[640px]">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-800">
+                <th class="text-left font-medium py-2 pr-3">Texto</th>
+                <th class="font-medium py-2 px-1">Glicose</th>
+                <th class="font-medium py-2 px-1">Jejum</th>
+                <th class="font-medium py-2 px-1">Lipídios</th>
+                <th class="font-medium py-2 px-1">Sangue</th>
+                <th class="font-medium py-2 px-1">Urina</th>
+                <th class="font-medium py-2 px-1">Tempo</th>
+                <th class="font-medium py-2 pl-2 text-right">$\lVert v \rVert$</th>
+              </tr>
+            </thead>
+            <tbody id="matrix-body" class="font-mono"></tbody>
+          </table>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          A norma da última coluna é recalculada em JS a partir das células exibidas — é o que garante que o
+          cosseno do próximo módulo se reduza a um produto escalar puro.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="text-emerald-400 text-xs font-mono font-bold mb-1"><i class="fa-solid fa-compress mr-1"></i> Compressão obriga a generalizar</div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Não cabem 20.000 palavras em 384 números sem agrupar o que significa a mesma coisa. A semântica emerge do gargalo.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="text-cyan-400 text-xs font-mono font-bold mb-1"><i class="fa-solid fa-layer-group mr-1"></i> Um vetor por trecho</div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">O <em>chunk</em> inteiro colapsa em um único ponto. Trechos longos demais diluem o sinal — por isso RAG fatia em 200–500 tokens.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="text-amber-400 text-xs font-mono font-bold mb-1"><i class="fa-solid fa-scale-unbalanced mr-1"></i> Custo real</div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Cada vetor <code>float32</code> de 768 dims ocupa 3 KB. Um milhão de trechos = 3 GB de RAM só de índice.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ MÓDULO 03 ============================ -->
+    <section class="slide-section" data-nav="Cosseno" data-icon="fa-compass-drafting">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-compass-drafting"></i> Módulo 03 • Geometria & Matemática
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Bússola Semântica: <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Similaridade de Cosseno</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Relevância vira ângulo. Quanto menor o $\theta$ entre a consulta e o documento, maior o alinhamento
+          semântico — independentemente do comprimento de cada vetor.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+          <div class="lg:col-span-2 p-4 rounded-xl bg-surface-950 border border-slate-800 overflow-x-auto">
+            $$\text{sim}(q, d) \;=\; \cos(\theta) \;=\; \frac{q \cdot d}{\lVert q \rVert \, \lVert d \rVert} \;=\; \frac{\sum_{i=1}^{d} q_i d_i}{\sqrt{\sum q_i^2}\sqrt{\sum d_i^2}} \;\overset{\lVert v \rVert = 1}{=}\; \sum_{i=1}^{d} q_i d_i$$
+          </div>
+          <div class="text-[11px] text-slate-400 space-y-2 leading-relaxed">
+            <p><strong class="text-emerald-400">$\cos(\theta) = 1$</strong> → mesma direção, mesmo conceito.</p>
+            <p><strong class="text-slate-300">$\cos(\theta) = 0$</strong> → ortogonais, assuntos sem relação ($\theta = 90°$).</p>
+            <p><strong class="text-rose-400">$\cos(\theta) = -1$</strong> → direções opostas (raro em embeddings de texto, que ocupam um cone estreito).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR: Bússola Semântica -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-compass text-emerald-400"></i> Simulador: Bússola Semântica
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Escolha a consulta, clique em um laudo e veja o ângulo $\theta$ real desenhado.</p>
+          </div>
+          <div id="query-buttons-2" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div class="lg:col-span-3 bg-surface-950 rounded-xl p-3 border border-slate-800">
+            <canvas id="cos-canvas" class="w-full h-[360px] rounded-lg cursor-pointer block"></canvas>
+            <p class="text-[11px] text-slate-500 font-mono mt-2 text-center">
+              Projeção fiel: o ângulo desenhado é exatamente o $\theta$ calculado nas 6 dimensões.
+            </p>
+          </div>
+
+          <div class="lg:col-span-2 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white"><i class="fa-solid fa-ranking-star text-brand-400 mr-1"></i> Ranking por cosseno</span>
+              <span class="text-[10px] font-mono text-slate-500">clique para inspecionar</span>
+            </div>
+            <div id="rank-list" class="space-y-2"></div>
+
+            <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+              <div class="text-xs font-bold text-emerald-300 mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-calculator"></i> Decomposição do produto escalar
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-[11px] font-mono min-w-[260px]">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-slate-800">
+                      <th class="text-left font-normal py-1">Dimensão</th>
+                      <th class="text-right font-normal py-1">$q_i$</th>
+                      <th class="text-right font-normal py-1">$d_i$</th>
+                      <th class="text-right font-normal py-1">$q_i d_i$</th>
+                    </tr>
+                  </thead>
+                  <tbody id="decomp-body"></tbody>
+                </table>
+              </div>
+              <div id="decomp-total" class="mt-2 pt-2 border-t border-emerald-500/30 text-xs font-mono text-right text-emerald-300"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ MÓDULO 04 ============================ -->
+    <section class="slide-section" data-nav="Pipeline & ANN" data-icon="fa-diagram-project">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-diagram-project"></i> Módulo 04 • Engenharia de Produção
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Pipeline do Bi-Encoder e <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">Busca por Vizinhos (ANN)</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Aqui foram 5 laudos. Com milhões de trechos, comparar a consulta contra todos é inviável. A saída é
+          desacoplar em dois mundos — e trocar a busca exata por uma aproximada.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 border-l-4 border-l-brand-500 p-6">
+          <div class="text-[11px] font-mono uppercase tracking-wider text-brand-400 font-bold mb-2">1. Offline — indexação (uma vez)</div>
+          <div class="flex flex-wrap items-center gap-2 mb-3 text-[11px] font-mono">
+            <span class="px-2 py-1 rounded bg-surface-950 border border-slate-800 text-slate-300">1.000.000 chunks</span>
+            <i class="fa-solid fa-arrow-right text-slate-600"></i>
+            <span class="px-2 py-1 rounded bg-surface-950 border border-brand-500/30 text-brand-300">modelo de embedding</span>
+            <i class="fa-solid fa-arrow-right text-slate-600"></i>
+            <span class="px-2 py-1 rounded bg-surface-950 border border-slate-800 text-slate-300">índice HNSW</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Os documentos passam pelo modelo <em>uma única vez</em>. Os vetores vão para o banco vetorial
+            (pgvector, Qdrant, Milvus, OpenSearch k-NN) e são organizados em um grafo navegável.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 border-l-4 border-l-cyan-500 p-6">
+          <div class="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-bold mb-2">2. Online — consulta (a cada busca)</div>
+          <div class="flex flex-wrap items-center gap-2 mb-3 text-[11px] font-mono">
+            <span class="px-2 py-1 rounded bg-surface-950 border border-slate-800 text-slate-300">consulta</span>
+            <i class="fa-solid fa-arrow-right text-slate-600"></i>
+            <span class="px-2 py-1 rounded bg-surface-950 border border-cyan-500/30 text-cyan-300">mesmo modelo</span>
+            <i class="fa-solid fa-arrow-right text-slate-600"></i>
+            <span class="px-2 py-1 rounded bg-surface-950 border border-slate-800 text-slate-300">salto no grafo</span>
+            <i class="fa-solid fa-arrow-right text-slate-600"></i>
+            <span class="px-2 py-1 rounded bg-surface-950 border border-emerald-500/30 text-emerald-300">top-k</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Só a consulta vira vetor em tempo real. É essa assimetria — chamada <em>bi-encoder</em> — que permite
+            responder em milissegundos: a parte cara já foi paga na indexação.
+          </p>
+        </div>
+      </div>
+
+      <!-- Calculadora de escala -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-gauge-high text-amber-400"></i> Força bruta vs. HNSW — calculadora ao vivo
+          </h3>
+          <span class="text-[11px] font-mono text-slate-500">$\mathcal{O}(N d)$ vs. $\mathcal{O}(d \log N)$</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+          <div>
+            <label class="text-xs text-slate-400 font-medium flex justify-between mb-1">
+              <span>Chunks no índice ($N$)</span><span id="ann-n-label" class="font-mono text-brand-300"></span>
+            </label>
+            <input id="ann-n" type="range" min="3" max="8" step="0.1" value="6" class="w-full accent-brand-500">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 font-medium flex justify-between mb-1">
+              <span>Dimensões ($d$)</span><span id="ann-d-label" class="font-mono text-cyan-300"></span>
+            </label>
+            <input id="ann-d" type="range" min="64" max="1536" step="64" value="768" class="w-full accent-cyan-500">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 font-medium flex justify-between mb-1">
+              <span>Exploração HNSW ($ef$)</span><span id="ann-ef-label" class="font-mono text-emerald-300"></span>
+            </label>
+            <input id="ann-ef" type="range" min="16" max="512" step="16" value="128" class="w-full accent-emerald-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-[11px] font-mono uppercase text-rose-400 font-bold mb-2">Força bruta (flat)</div>
+            <div class="text-2xl font-mono font-bold text-white" id="ann-brute-time">—</div>
+            <div class="text-[11px] text-slate-500 mt-1" id="ann-brute-ops"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[11px] font-mono uppercase text-emerald-400 font-bold mb-2">HNSW (aproximado)</div>
+            <div class="text-2xl font-mono font-bold text-white" id="ann-hnsw-time">—</div>
+            <div class="text-[11px] text-slate-500 mt-1" id="ann-hnsw-ops"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-amber-500/30">
+            <div class="text-[11px] font-mono uppercase text-amber-400 font-bold mb-2">Memória do índice</div>
+            <div class="text-2xl font-mono font-bold text-white" id="ann-mem">—</div>
+            <div class="text-[11px] text-slate-500 mt-1" id="ann-speedup"></div>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          Modelo de custo: $2 \times 10^{9}$ multiplicações-acumulação por segundo em um núcleo,
+          $4$ bytes por dimensão (<code>float32</code>) e $\approx ef \cdot \log_2 N$ comparações por busca no grafo.
+          É uma ordem de grandeza, não um benchmark — mas responde à pergunta certa: <em>onde a busca exata para de caber</em>.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><i class="fa-solid fa-code text-brand-400"></i> Como rodar na prática</h3>
+        <div class="overflow-x-auto">
+<pre class="text-[11px] font-mono leading-relaxed text-slate-300 bg-surface-950 border border-slate-800 rounded-xl p-4"><span class="text-slate-500"># sentence-transformers: o padrão aberto da indústria</span>
+<span class="text-brand-400">from</span> sentence_transformers <span class="text-brand-400">import</span> SentenceTransformer, util
+
+model = SentenceTransformer(<span class="text-emerald-300">"intfloat/multilingual-e5-base"</span>)
+
+documentos = [
+    <span class="text-emerald-300">"hemograma completo sem jejum"</span>,
+    <span class="text-emerald-300">"glicemia de jejum exige jejum de 8 horas"</span>,
+    <span class="text-emerald-300">"colesterol total e frações com jejum de 12 horas antes da coleta"</span>,
+    <span class="text-emerald-300">"exame de urina primeira urina da manhã"</span>,
+    <span class="text-emerald-300">"tabela de jejum jejum de 8 horas jejum de 12 horas"</span>,
+]
+
+<span class="text-slate-500"># OFFLINE — indexação: roda uma vez</span>
+doc_emb = model.encode(documentos, normalize_embeddings=<span class="text-brand-400">True</span>)
+
+<span class="text-slate-500"># ONLINE — só a consulta é codificada em tempo de busca</span>
+q_emb = model.encode(<span class="text-emerald-300">"açúcar no sangue em jejum"</span>, normalize_embeddings=<span class="text-brand-400">True</span>)
+
+<span class="text-slate-500"># vetores normalizados ⇒ cosseno == produto escalar</span>
+scores = util.cos_sim(q_emb, doc_emb)[<span class="text-amber-300">0</span>]
+<span class="text-brand-400">for</span> i <span class="text-brand-400">in</span> scores.argsort(descending=<span class="text-brand-400">True</span>):
+    <span class="text-brand-400">print</span>(<span class="text-brand-400">f</span><span class="text-emerald-300">"{scores[i]:.3f}  {documentos[i]}"</span>)</pre>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-[11px] text-slate-400">
+          <p><strong class="text-slate-200">fastembed</strong> (Qdrant) — runtime ONNX leve em CPU, sem PyTorch.</p>
+          <p><strong class="text-slate-200">pgvector</strong> — vetores dentro do PostgreSQL, com índice HNSW ou IVFFlat.</p>
+          <p><strong class="text-slate-200">Bancos dedicados</strong> — Qdrant, Chroma, Milvus, Weaviate, OpenSearch k-NN.</p>
+          <p><strong class="text-slate-200">Modelos PT-BR</strong> — <code>multilingual-e5-base</code>, <code>BAAI/bge-m3</code>, <code>paraphrase-multilingual-MiniLM-L12-v2</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ MÓDULO 05 ============================ -->
+    <section class="slide-section" data-nav="Limites & Quiz" data-icon="fa-flag-checkered">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-flag-checkered"></i> Módulo 05 • Limites & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Onde o Bi-Encoder <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">Erra</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Nenhuma das duas famílias é universalmente superior. O embedding resolve sinônimo e quebra em código exato —
+          exatamente o oposto do BM25.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-scale-balanced text-purple-400"></i> Léxico vs. Denso, critério a critério</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[620px]">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-800 text-left">
+                <th class="py-2 pr-3 font-medium">Critério</th>
+                <th class="py-2 px-3 font-medium">Busca Léxica (BM25)</th>
+                <th class="py-2 pl-3 font-medium">Busca Densa (Embeddings)</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-3 font-semibold">Sinônimos e paráfrases</td>
+                <td class="py-2.5 px-3 text-rose-400"><i class="fa-solid fa-xmark mr-1"></i> Falha: exige as mesmas palavras</td>
+                <td class="py-2.5 pl-3 text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Excelente: capta o conceito</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-3 font-semibold">Códigos, siglas e IDs exatos</td>
+                <td class="py-2.5 px-3 text-emerald-400"><i class="fa-solid fa-check mr-1"></i> Excelente (<code>CID-10 E11.9</code>)</td>
+                <td class="py-2.5 pl-3 text-rose-400"><i class="fa-solid fa-xmark mr-1"></i> Pobre: confunde códigos vizinhos</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-3 font-semibold">Negações</td>
+                <td class="py-2.5 px-3 text-rose-400">Ignora (“sem jejum” casa com “jejum”)</td>
+                <td class="py-2.5 pl-3 text-amber-400">Parcial: melhora com modelos modernos</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-3 font-semibold">Termos fora do treino (OOV)</td>
+                <td class="py-2.5 px-3 text-emerald-400">Funciona: é <em>string matching</em></td>
+                <td class="py-2.5 pl-3 text-rose-400">Degrada em jargão de domínio não visto</td>
+              </tr>
+              <tr class="border-b border-slate-800/60">
+                <td class="py-2.5 pr-3 font-semibold">Interação consulta × documento</td>
+                <td class="py-2.5 px-3 text-slate-400">Nenhuma (contagem independente)</td>
+                <td class="py-2.5 pl-3 text-amber-400">Nenhuma: os encoders nunca se veem</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 font-semibold">Custo de indexação e busca</td>
+                <td class="py-2.5 px-3 text-emerald-400">Baixo: CPU e índice invertido</td>
+                <td class="py-2.5 pl-3 text-amber-400">Inferência + RAM para os vetores</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <div class="text-xs font-bold text-rose-300 mb-1.5"><i class="fa-solid fa-box mr-1"></i> Gargalo do vetor único</div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Um <em>chunk</em> de 400 tokens vira um só ponto. Documento multi-tópico perde os assuntos secundários na média.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <div class="text-xs font-bold text-rose-300 mb-1.5"><i class="fa-solid fa-link-slash mr-1"></i> Zero interação q × d</div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Consulta e documento são codificados separadamente. Nuances que só aparecem no par escapam — é o que o <a href="../cross-encoder/index.html" class="text-brand-400 hover:text-brand-300 underline">Cross-Encoder</a> conserta no re-ranking.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <div class="text-xs font-bold text-rose-300 mb-1.5"><i class="fa-solid fa-eye-slash mr-1"></i> Recall aproximado</div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">HNSW é <em>aproximado</em>: o vizinho verdadeiro pode não aparecer. Subir o $ef$ recupera recall pagando latência.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-6 mb-8">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center shrink-0 text-brand-400 text-xl">
+            <i class="fa-solid fa-code-merge"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white mb-1">O padrão da indústria é híbrido</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Os melhores pipelines de RAG rodam BM25 <em>e</em> embeddings em paralelo, fundem os dois rankings com
+              <a href="../../rrf/index.html" class="text-brand-400 hover:text-brand-300 underline">Reciprocal Rank Fusion (RRF)</a>
+              e refinam o top-20 com um <a href="../cross-encoder/index.html" class="text-brand-400 hover:text-brand-300 underline">Cross-Encoder</a>.
+              Entre os dois extremos ainda existem o <a href="../../esparsos/sparse-encoder/index.html" class="text-brand-400 hover:text-brand-300 underline">Sparse Encoder (SPLADE)</a>,
+              que aprende pesos mas roda no índice invertido, e o <a href="../multi-vector/index.html" class="text-brand-400 hover:text-brand-300 underline">Multi-Vector (ColBERT)</a>,
+              que guarda um vetor por token.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUIZ -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800 flex-wrap gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre a geometria e a engenharia do retrieval denso.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que a similaridade de cosseno é preferida à distância euclidiana em retrieval de texto?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Porque o cosseno é mais rápido de calcular que uma subtração.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'O cosseno mede direção, não magnitude: um trecho longo e um curto sobre o mesmo assunto apontam para o mesmo lado, mas têm normas bem diferentes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Porque ela ignora a magnitude do vetor, que varia com o comprimento do texto, e mede só a direção.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Porque a distância euclidiana não existe em espaços com mais de 3 dimensões.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Porque o cosseno sempre devolve valores inteiros entre 0 e 100.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Um índice tem 50 milhões de <em>chunks</em>. Por que não se compara a consulta com todos eles?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Porque o produto escalar perde precisão acima de 1 milhão de vetores.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Porque o modelo de embedding precisaria ser re-treinado a cada consulta.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'A varredura exata é O(N·d). O HNSW navega um grafo em O(d·log N) e devolve os vizinhos prováveis — trocando recall garantido por latência.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Porque a varredura exata custa $\mathcal{O}(N d)$; o HNSW aproxima em $\mathcal{O}(d \log N)$ abrindo mão de recall garantido.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Porque bancos vetoriais só aceitam consultas de até 512 tokens.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              A busca por “CID-10 E11.9” devolve laudos parecidos, mas nunca o código exato. Qual a causa provável?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button data-correct onclick="Guia.answer(this, true, 'Códigos e IDs raros caem em regiões densas de tokens semelhantes. A correção padrão é busca híbrida: BM25 garante a correspondência literal e o RRF funde os rankings.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Embeddings tratam códigos raros como tokens quase idênticos; a correção é busca híbrida com BM25.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) O vetor da consulta não foi normalizado antes do produto escalar.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) O índice HNSW precisa ser reconstruído a cada 24 horas.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) A dimensionalidade do modelo está alta demais e precisa cair para 64.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <a href="../word2vec/index.html" class="block rounded-2xl bg-surface-900 border border-brand-500/30 p-6 hover:border-brand-500/60 transition group">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div class="text-[11px] font-mono text-brand-400 mb-1">Próximo tópico • 1.2.2</div>
+            <h3 class="text-lg font-bold text-white">Word2Vec — de onde vêm esses vetores</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Vimos <em>como</em> o vetor é usado na busca. Falta ver <em>como ele é aprendido</em>: janela deslizante,
+              CBOW vs. Skip-Gram e negative sampling.
+            </p>
+          </div>
+          <span class="text-brand-400 text-xl group-hover:translate-x-1 transition"><i class="fa-solid fa-arrow-right"></i></span>
+        </div>
+      </a>
+    </section>
+
+  </main>
+
+  <script>
+    /* ===================== Dados compartilhados ===================== */
+    const DIMS = [
+      { key: 'Glicose',  desc: 'diabetes, glicemia, glicose, insulina' },
+      { key: 'Jejum',    desc: 'restrição alimentar, horas de preparo' },
+      { key: 'Lipídios', desc: 'colesterol, triglicérides, frações' },
+      { key: 'Sangue',   desc: 'glóbulos, hemácias, leucócitos' },
+      { key: 'Urina',    desc: 'urina, jato médio, sedimento, renal' },
+      { key: 'Tempo',    desc: 'tabela, duração, procedimento, horas' }
+    ];
+
+    const DOCS = [
+      { id: 'D1', title: 'Hemograma',       text: 'hemograma completo sem jejum',                                    raw: [0.05, 0.11, 0.05, 0.98, 0.05, 0.16], color: '#38bdf8' },
+      { id: 'D2', title: 'Glicemia',        text: 'glicemia de jejum exige jejum de 8 horas',                        raw: [0.72, 0.58, 0.08, 0.15, 0.02, 0.32], color: '#10b981' },
+      { id: 'D3', title: 'Colesterol',      text: 'colesterol total e frações com jejum de 12 horas antes da coleta', raw: [0.08, 0.54, 0.74, 0.12, 0.02, 0.36], color: '#f59e0b' },
+      { id: 'D4', title: 'Urina',           text: 'exame de urina primeira urina da manhã',                          raw: [0.02, 0.05, 0.02, 0.05, 0.96, 0.25], color: '#a855f7' },
+      { id: 'D5', title: 'Tabela de jejum', text: 'tabela de jejum jejum de 8 horas jejum de 12 horas',              raw: [0.10, 0.72, 0.10, 0.05, 0.02, 0.67], color: '#f43f5e' }
+    ];
+
+    const QUERIES = [
+      { text: 'açúcar no sangue em jejum',     raw: [0.73, 0.59, 0.05, 0.25, 0.02, 0.18] },
+      { text: 'contagem de glóbulos e células', raw: [0.05, 0.05, 0.05, 0.96, 0.05, 0.15] },
+      { text: 'perfil lipídico e gordura',      raw: [0.08, 0.20, 0.94, 0.10, 0.05, 0.15] }
+    ];
+
+    /* ===================== Álgebra ===================== */
+    const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+    const norm = v => Math.sqrt(dot(v, v));
+    const unit = v => { const n = norm(v) || 1; return v.map(x => x / n); };
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const cos = (a, b) => clamp(dot(a, b) / ((norm(a) * norm(b)) || 1), -1, 1);
+    const thetaDeg = c => Math.acos(clamp(c, -1, 1)) * 180 / Math.PI;
+    const fmt = (n, d = 3) => n.toFixed(d).replace('.', ',');
+
+    DOCS.forEach(d => { d.vec = unit(d.raw); });
+    QUERIES.forEach(q => { q.vec = unit(q.raw); });
+
+    /* ===================== BM25 real sobre os 5 laudos ===================== */
+    const STOP = new Set(['de','da','do','e','em','no','na','o','a','os','as','com','sem','um','uma','que','antes','para','ao','pela']);
+    const tokenize = s => s.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .split(/[^a-z0-9]+/).filter(t => t && !STOP.has(t));
+
+    const DOC_TOKENS = DOCS.map(d => tokenize(d.text));
+    const AVGDL = DOC_TOKENS.reduce((s, t) => s + t.length, 0) / DOC_TOKENS.length;
+
+    function bm25(queryText) {
+      const k1 = 1.5, b = 0.75;
+      const qt = [...new Set(tokenize(queryText))];
+      return DOCS.map((doc, di) => {
+        const toks = DOC_TOKENS[di];
+        let score = 0;
+        const hits = [];
+        qt.forEach(t => {
+          const tf = toks.filter(x => x === t).length;
+          if (!tf) return;
+          hits.push(t);
+          const df = DOC_TOKENS.filter(dt => dt.includes(t)).length;
+          const idf = Math.log(1 + (DOCS.length - df + 0.5) / (df + 0.5));
+          score += idf * (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * toks.length / AVGDL));
+        });
+        return { doc, score, hits };
+      });
+    }
+
+    /* ===================== Estado ===================== */
+    const state = { qIndex: 0, selectedDoc: 'D2' };
+
+    function currentQuery() { return QUERIES[state.qIndex]; }
+
+    function scoreboard() {
+      const q = currentQuery();
+      return DOCS
+        .map(d => { const c = cos(q.vec, d.vec); return { doc: d, cos: c, theta: thetaDeg(c) }; })
+        .sort((a, b) => b.cos - a.cos);
+    }
+
+    /* ===================== Módulo 01 ===================== */
+    function renderQueryButtons() {
+      ['query-buttons', 'query-buttons-2'].forEach(id => {
+        const host = document.getElementById(id);
+        host.innerHTML = QUERIES.map((q, i) => `
+          <button data-q="${i}" class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition border ${
+            i === state.qIndex
+              ? 'bg-brand-500 border-brand-400 text-white font-bold'
+              : 'bg-surface-950 border-slate-800 text-slate-300 hover:border-slate-600'
+          }">“${q.text}”</button>`).join('');
+        host.querySelectorAll('[data-q]').forEach(btn => {
+          btn.onclick = () => { state.qIndex = Number(btn.dataset.q); refresh(); };
+        });
+      });
+    }
+
+    function renderLexical() {
+      const q = currentQuery();
+      const rows = bm25(q.text);
+      const max = Math.max(...rows.map(r => r.score));
+      const withHits = rows.filter(r => r.score > 0).length;
+
+      document.getElementById('lex-cards').innerHTML = rows
+        .slice().sort((a, b) => b.score - a.score)
+        .map(r => {
+          const pct = max > 0 ? (r.score / max) * 100 : 0;
+          const toks = r.hits.length
+            ? r.hits.map(t => `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-200 font-mono text-[10px]">${t}</span>`).join(' ')
+            : '<span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 font-mono text-[10px]">nenhum termo em comum</span>';
+          return `<div class="p-2.5 rounded-lg bg-surface-950 border border-slate-800">
+            <div class="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+              <span class="text-[11px]"><strong class="text-rose-300 font-mono">${r.doc.id}</strong> <span class="text-slate-400">${r.doc.title}</span></span>
+              <span class="font-mono text-[11px] ${r.score > 0 ? 'text-rose-300' : 'text-slate-600'}">BM25 ${fmt(r.score, 2)}</span>
+            </div>
+            <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden mb-1.5"><div class="h-full rounded-full bg-rose-500/70" style="width:${pct}%"></div></div>
+            <div class="flex flex-wrap gap-1">${toks}</div>
+          </div>`;
+        }).join('');
+
+      document.getElementById('lex-comment').innerHTML = withHits === 0
+        ? `<i class="fa-solid fa-ban text-rose-400 mr-1"></i> <strong class="text-rose-300">Zero resultados.</strong> Nenhuma palavra da consulta “${q.text}” aparece literalmente no acervo — o índice invertido devolve lista vazia.`
+        : `<i class="fa-solid fa-triangle-exclamation text-rose-400 mr-1"></i> Apenas <strong class="text-rose-300">${withHits} de 5</strong> laudos pontuam, e só pelo termo em comum. O conceito central da consulta não tem correspondência léxica nenhuma.`;
+    }
+
+    function renderDense() {
+      const board = scoreboard();
+      const top = board[0];
+      document.getElementById('dense-cards').innerHTML = board.map((r, i) => {
+        const pct = clamp(r.cos * 100, 0, 100);
+        return `<div class="p-2.5 rounded-lg bg-surface-950 border ${i === 0 ? 'border-emerald-500/40' : 'border-slate-800'}">
+          <div class="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+            <span class="text-[11px]"><span class="font-mono text-slate-500">${i + 1}º</span>
+              <strong class="${i === 0 ? 'text-emerald-300' : 'text-brand-300'} font-mono ml-1">${r.doc.id}</strong>
+              <span class="text-slate-400">${r.doc.title}</span></span>
+            <span class="font-mono text-[11px] ${i === 0 ? 'text-emerald-300 font-bold' : 'text-slate-400'}">cos ${fmt(r.cos)} · θ ${r.theta.toFixed(0)}°</span>
+          </div>
+          <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full ${i === 0 ? 'bg-emerald-500' : 'bg-brand-500/60'}" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('dense-comment').innerHTML =
+        `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> <strong class="text-emerald-300">${top.doc.id} (${top.doc.title})</strong>
+         lidera com $\\cos(\\theta) = ${fmt(top.cos)}$, ou seja $\\theta = ${top.theta.toFixed(0)}°$ — sem depender de uma única palavra repetida.`;
+      Guia.renderMath(document.getElementById('dense-comment'));
+    }
+
+    /* ===================== Módulo 02 ===================== */
+    function renderSparse() {
+      const q = currentQuery();
+      const toks = [...new Set(tokenize(q.text))];
+      // posições determinísticas: hash simples do token no vocabulário fictício de 40 eixos
+      const on = new Set(toks.map(t => {
+        let h = 0;
+        for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) % 40;
+        return h;
+      }));
+      document.getElementById('sparse-strip').innerHTML = Array.from({ length: 40 }, (_, i) =>
+        `<div class="h-4 rounded-sm ${on.has(i) ? 'bg-rose-500' : 'bg-slate-800'}"></div>`).join('');
+      document.getElementById('sparse-caption').textContent =
+        `${on.size} de 40 eixos acesos (${(on.size / 40 * 100).toFixed(1)}% de ocupação) — num vocabulário real de 20.000 termos seria ${(on.size / 20000 * 100).toFixed(3)}%.`;
+    }
+
+    function renderMatrix() {
+      const q = currentQuery();
+      const rows = [{ label: `Consulta: “${q.text}”`, vec: q.vec, isQuery: true }]
+        .concat(DOCS.map(d => ({ label: `${d.id} · ${d.title}`, vec: d.vec, isQuery: false })));
+
+      document.getElementById('matrix-body').innerHTML = rows.map(r => {
+        const cells = r.vec.map(v => {
+          const pct = Math.round(Math.abs(v) * 100);
+          const tone = r.isQuery ? 'bg-brand-500/50' : 'bg-cyan-500/40';
+          return `<td class="px-1 py-1.5">
+            <div class="relative h-6 rounded bg-surface-950 border border-slate-800 flex items-center justify-center overflow-hidden">
+              <div class="absolute inset-y-0 left-0 ${tone}" style="width:${pct}%"></div>
+              <span class="relative text-[10px] text-slate-100">${fmt(v, 2)}</span>
+            </div></td>`;
+        }).join('');
+        return `<tr class="${r.isQuery ? 'bg-brand-500/5' : ''}">
+          <td class="py-1.5 pr-3 text-[11px] ${r.isQuery ? 'text-brand-300 font-bold' : 'text-slate-400'} whitespace-nowrap">${r.label}</td>
+          ${cells}
+          <td class="py-1.5 pl-2 text-[11px] text-right text-emerald-400">${fmt(norm(r.vec), 4)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    /* ===================== Módulo 03 — Bússola Semântica ===================== */
+    let canvas, ctx;
+    const QUERY_ANGLE = 52 * Math.PI / 180; // direção fixa da consulta na tela
+
+    // Base ortogonal para projetar 6D em 2D preservando exatamente o ângulo com q
+    function planeBasis(qv) {
+      const ref = [0.1, -0.4, 0.7, -0.5, 0.2, -0.2];
+      const proj = dot(ref, qv);
+      return unit(ref.map((r, i) => r - proj * qv[i]));
+    }
+
+    function docAngles() {
+      const q = currentQuery();
+      const e2 = planeBasis(q.vec);
+      return DOCS.map(d => {
+        const c = cos(q.vec, d.vec);
+        const t = Math.acos(clamp(c, -1, 1));
+        const sign = dot(e2, d.vec) >= 0 ? 1 : -1;
+        return { doc: d, cos: c, theta: t, screenAngle: QUERY_ANGLE + sign * t };
+      });
+    }
+
+    function sizeCanvas() {
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.parentElement.clientWidth - 24;
+      if (w <= 0) return;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(360 * dpr);
+      canvas.style.width = w + 'px';
+      canvas.style.height = '360px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawCompass();
+    }
+
+    function arrow(x0, y0, x1, y1, color, width) {
+      const ang = Math.atan2(y1 - y0, x1 - x0), head = 9;
+      ctx.save();
+      ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 - head * Math.cos(ang - Math.PI / 6), y1 - head * Math.sin(ang - Math.PI / 6));
+      ctx.lineTo(x1 - head * Math.cos(ang + Math.PI / 6), y1 - head * Math.sin(ang + Math.PI / 6));
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawCompass() {
+      if (!canvas || !ctx || !canvas.width) return;
+      const dpr = window.devicePixelRatio || 1;
+      const W = canvas.width / dpr, H = canvas.height / dpr;
+      const cx = W / 2, cy = H / 2 + 10, R = Math.min(W, H) * 0.36;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // círculos de referência
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+      [1, 0.66, 0.33].forEach(f => {
+        ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, Math.PI * 2); ctx.stroke();
+      });
+      ctx.beginPath(); ctx.moveTo(cx - R * 1.15, cy); ctx.lineTo(cx + R * 1.15, cy);
+      ctx.moveTo(cx, cy - R * 1.15); ctx.lineTo(cx, cy + R * 1.15);
+      ctx.strokeStyle = '#243044'; ctx.stroke();
+
+      const items = docAngles();
+      const best = items.reduce((a, b) => (b.cos > a.cos ? b : a));
+      const sel = items.find(i => i.doc.id === state.selectedDoc) || best;
+
+      const qx = cx + R * Math.cos(QUERY_ANGLE), qy = cy - R * Math.sin(QUERY_ANGLE);
+
+      // setor do ângulo θ entre q e o documento selecionado
+      const a0 = -QUERY_ANGLE, a1 = -sel.screenAngle;
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, R * 0.45, Math.min(a0, a1), Math.max(a0, a1));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(16,185,129,0.14)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(16,185,129,0.55)'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.restore();
+
+      const midAng = (QUERY_ANGLE + sel.screenAngle) / 2;
+      ctx.fillStyle = '#34d399';
+      ctx.font = 'bold 12px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('θ = ' + (sel.theta * 180 / Math.PI).toFixed(1) + '°',
+        cx + R * 0.62 * Math.cos(midAng), cy - R * 0.62 * Math.sin(midAng));
+      ctx.textAlign = 'left';
+
+      // documentos
+      items.forEach(it => {
+        const isSel = it.doc.id === sel.doc.id;
+        const len = R * (isSel ? 0.98 : 0.86);
+        const x = cx + len * Math.cos(it.screenAngle), y = cy - len * Math.sin(it.screenAngle);
+        arrow(cx, cy, x, y, isSel ? it.doc.color : 'rgba(148,163,184,0.55)', isSel ? 2.6 : 1.4);
+        ctx.beginPath(); ctx.arc(x, y, isSel ? 5 : 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = isSel ? it.doc.color : '#64748b'; ctx.fill();
+
+        const right = x >= cx;
+        ctx.textAlign = right ? 'left' : 'right';
+        ctx.fillStyle = isSel ? '#e2e8f0' : '#94a3b8';
+        ctx.font = (isSel ? 'bold ' : '') + '11px Inter, sans-serif';
+        ctx.fillText(it.doc.id + ' · ' + it.doc.title, x + (right ? 9 : -9), y + (y > cy ? 14 : -8));
+        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.fillStyle = isSel ? it.doc.color : '#475569';
+        ctx.fillText('cos ' + fmt(it.cos, 2), x + (right ? 9 : -9), y + (y > cy ? 26 : 4));
+      });
+      ctx.textAlign = 'left';
+
+      // consulta
+      arrow(cx, cy, qx, qy, '#818cf8', 3.2);
+      ctx.beginPath(); ctx.arc(qx, qy, 6, 0, Math.PI * 2); ctx.fillStyle = '#818cf8'; ctx.fill();
+      ctx.fillStyle = '#c7d2fe'; ctx.font = 'bold 12px Inter, sans-serif';
+      ctx.fillText('q (consulta)', qx + 10, qy - 8);
+
+      ctx.fillStyle = '#475569'; ctx.font = '10px JetBrains Mono, monospace';
+      ctx.fillText('origem 0⃗', cx + 8, cy + 16);
+    }
+
+    function pickDocFromCanvas(ev) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const W = canvas.width / dpr, H = canvas.height / dpr;
+      const cx = W / 2, cy = H / 2 + 10;
+      const mx = ev.clientX - rect.left - cx, my = cy - (ev.clientY - rect.top);
+      if (Math.hypot(mx, my) < 12) return;
+      const ang = Math.atan2(my, mx);
+      let best = null, bestDelta = Infinity;
+      docAngles().forEach(it => {
+        let delta = Math.abs(((ang - it.screenAngle + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
+        if (delta < bestDelta) { bestDelta = delta; best = it; }
+      });
+      if (best) { state.selectedDoc = best.doc.id; renderModule3(); }
+    }
+
+    function renderRankList() {
+      const board = scoreboard();
+      document.getElementById('rank-list').innerHTML = board.map((r, i) => {
+        const on = r.doc.id === state.selectedDoc;
+        return `<button data-doc="${r.doc.id}" class="w-full text-left p-2.5 rounded-lg border transition ${
+          on ? 'bg-surface-950 border-emerald-500/50' : 'bg-surface-950 border-slate-800 hover:border-slate-600'}">
+          <div class="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+            <span class="text-[11px] flex items-center gap-1.5">
+              <span class="font-mono text-slate-500">${i + 1}º</span>
+              <span class="w-2 h-2 rounded-full inline-block" style="background:${r.doc.color}"></span>
+              <strong class="font-mono text-slate-200">${r.doc.id}</strong>
+              <span class="text-slate-400">${r.doc.title}</span>
+            </span>
+            <span class="font-mono text-[11px] ${on ? 'text-emerald-300 font-bold' : 'text-slate-400'}">${fmt(r.cos)} · θ ${r.theta.toFixed(1)}°</span>
+          </div>
+          <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+            <div class="h-full rounded-full" style="width:${clamp(r.cos * 100, 0, 100)}%;background:${r.doc.color}"></div>
+          </div>
+        </button>`;
+      }).join('');
+      document.querySelectorAll('#rank-list [data-doc]').forEach(b => {
+        b.onclick = () => { state.selectedDoc = b.dataset.doc; renderModule3(); };
+      });
+    }
+
+    function renderDecomposition() {
+      const q = currentQuery();
+      const doc = DOCS.find(d => d.id === state.selectedDoc) || DOCS[0];
+      let total = 0;
+      document.getElementById('decomp-body').innerHTML = DIMS.map((dim, i) => {
+        const qi = q.vec[i], di = doc.vec[i], p = qi * di;
+        total += p;
+        const hot = p > 0.12;
+        return `<tr class="border-b border-slate-800/60">
+          <td class="py-1 text-slate-400" title="${dim.desc}">${dim.key}</td>
+          <td class="py-1 text-right text-brand-300">${fmt(qi)}</td>
+          <td class="py-1 text-right text-cyan-300">${fmt(di)}</td>
+          <td class="py-1 text-right ${hot ? 'text-emerald-300 font-bold' : 'text-slate-500'}">${fmt(p)}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('decomp-total').innerHTML =
+        `Σ q<sub>i</sub>d<sub>i</sub> = <span class="text-base font-bold">${fmt(total)}</span>
+         <span class="text-slate-500">→ θ = ${thetaDeg(total).toFixed(1)}°</span>
+         <div class="text-[10px] text-slate-500 mt-1">${doc.id} · ${doc.title}</div>`;
+    }
+
+    function renderModule3() { renderRankList(); renderDecomposition(); drawCompass(); }
+
+    /* ===================== Módulo 04 — calculadora ANN ===================== */
+    const MACS_PER_SEC = 2e9;
+
+    function human(sec) {
+      if (sec < 1e-3) return (sec * 1e6).toFixed(0) + ' µs';
+      if (sec < 1) return (sec * 1e3).toFixed(1) + ' ms';
+      if (sec < 60) return sec.toFixed(1) + ' s';
+      return (sec / 60).toFixed(1) + ' min';
+    }
+    function humanBytes(b) {
+      const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let i = 0;
+      while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+      return b.toFixed(b < 10 ? 2 : 0) + ' ' + u[i];
+    }
+    function humanCount(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(1) + ' bi';
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + ' mi';
+      if (n >= 1e3) return (n / 1e3).toFixed(0) + ' mil';
+      return n.toFixed(0);
+    }
+
+    function renderANN() {
+      const N = Math.round(Math.pow(10, parseFloat(document.getElementById('ann-n').value)));
+      const d = parseInt(document.getElementById('ann-d').value, 10);
+      const ef = parseInt(document.getElementById('ann-ef').value, 10);
+
+      document.getElementById('ann-n-label').textContent = humanCount(N) + ' chunks';
+      document.getElementById('ann-d-label').textContent = d + ' dims';
+      document.getElementById('ann-ef-label').textContent = 'ef = ' + ef;
+
+      const bruteOps = N * d;
+      const hnswComparisons = ef * Math.log2(Math.max(N, 2));
+      const hnswOps = hnswComparisons * d;
+
+      document.getElementById('ann-brute-time').textContent = human(bruteOps / MACS_PER_SEC);
+      document.getElementById('ann-brute-ops').textContent = `${humanCount(bruteOps)} multiplicações · ${humanCount(N)} vetores varridos`;
+      document.getElementById('ann-hnsw-time').textContent = human(hnswOps / MACS_PER_SEC);
+      document.getElementById('ann-hnsw-ops').textContent = `${humanCount(hnswOps)} multiplicações · ~${hnswComparisons.toFixed(0)} vetores visitados`;
+      document.getElementById('ann-mem').textContent = humanBytes(N * d * 4);
+      document.getElementById('ann-speedup').textContent = `HNSW é ${humanCount(bruteOps / hnswOps)}× mais barato por consulta`;
+    }
+
+    /* ===================== Orquestração ===================== */
+    function refresh() {
+      renderQueryButtons();
+      renderLexical();
+      renderDense();
+      renderSparse();
+      renderMatrix();
+      renderModule3();
+    }
+
+    Guia.ready(() => {
+      canvas = document.getElementById('cos-canvas');
+      ctx = canvas.getContext('2d');
+      canvas.addEventListener('click', pickDocFromCanvas);
+      window.addEventListener('resize', sizeCanvas);
+
+      ['ann-n', 'ann-d', 'ann-ef'].forEach(id => {
+        document.getElementById(id).addEventListener('input', renderANN);
+      });
+
+      refresh();
+      renderANN();
+      sizeCanvas();
+      Guia.toast('Escolha uma consulta e clique nos laudos da bússola.', 'fa-compass');
+    });
+
+    // canvas precisa de largura > 0: redesenha sempre que o módulo 03 (índice 2) aparece
+    Guia.onSlide(2, sizeCanvas);
+  </script>
+</body>
+</html>

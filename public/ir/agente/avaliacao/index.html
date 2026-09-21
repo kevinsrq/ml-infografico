@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medir se está funcionando: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Medir se está funcionando"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Separar a culpa entre recuperação e geração antes de tentar melhorar"
+      data-icon="fa-ruler-combined"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 ══════════════ -->
+    <section class="slide-section" data-nav="Duas contas" data-icon="fa-code-branch">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-code-branch"></i> Módulo 01 • Diagnóstico
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Duas contas <span class="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">separadas</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A resposta saiu errada. Antes de trocar de modelo, de mexer no prompt ou de culpar o
+          <em>embedding</em>, responda a uma pergunta binária: <strong class="text-slate-200">o trecho
+          certo chegou ao contexto?</strong> Se não chegou, é problema de
+          <a href="../../index.html" class="text-cyan-400 hover:underline">recuperação</a> e nenhuma
+          instrução de sistema conserta. Se chegou e o modelo passou por cima, é problema de geração —
+          e aí <a href="../grounding/index.html" class="text-emerald-400 hover:underline">grounding</a>
+          e citação obrigatória são o caminho. Uma métrica agregada única mistura os dois casos e some
+          com a informação de que você precisa.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-table-cells-large text-amber-400"></i> A matriz de culpa
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Clique em um quadrante para ver o caso concreto, a métrica que o denuncia e onde se conserta.</p>
+          </div>
+          <span class="text-[10px] font-mono text-slate-600 uppercase tracking-widest">linhas: o trecho chegou? · colunas: a resposta prestou?</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5" id="matriz-grid"></div>
+
+        <div id="matriz-detalhe" class="rounded-xl border p-4 transition-all duration-300"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-5">
+          <h4 class="font-bold text-cyan-300 text-sm flex items-center gap-2 mb-2"><i class="fa-solid fa-magnifying-glass"></i> Conta 1 — Recuperação</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Mede o <em>ranking</em>, não o texto final. Entra consulta, sai uma lista ordenada de trechos; a pergunta é se o trecho anotado como relevante está lá e em que posição. É a conta que todo o <a href="../../index.html" class="text-cyan-400 hover:underline">capítulo 1</a> tenta melhorar.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5">
+          <h4 class="font-bold text-emerald-300 text-sm flex items-center gap-2 mb-2"><i class="fa-solid fa-quote-right"></i> Conta 2 — Geração</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Mede a resposta <strong class="text-slate-200">dado</strong> o contexto que chegou. A pergunta muda: cada afirmação sai de algum trecho? A resposta responde o que foi perguntado? Aqui não se avalia busca, se avalia obediência ao material.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5">
+          <h4 class="font-bold text-rose-300 text-sm flex items-center gap-2 mb-2"><i class="fa-solid fa-blender"></i> O que a média esconde</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">"72% de acerto" é compatível com recuperação perfeita e gerador desobediente, e também com o contrário. As duas doenças pedem remédios opostos — trocar o <em>chunking</em> ou trocar o prompt — e a média não diz qual.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 ══════════════ -->
+    <section class="slide-section" data-nav="Recuperação" data-icon="fa-magnifying-glass-chart">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-magnifying-glass-chart"></i> Módulo 02 • Métricas de recuperação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Quatro números sobre <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">a lista ordenada</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Seja $R$ o conjunto de trechos anotados como relevantes para uma consulta e $T_k$ os $k$
+          primeiros trechos devolvidos pelo pipeline. Tudo que vem a seguir sai dessas duas listas.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/40 p-5">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-2"><i class="fa-solid fa-star text-cyan-400"></i> recall@k — a que mais importa num RAG</h3>
+          <div class="text-center py-2 text-slate-200">$$\text{recall@}k = \frac{|R \cap T_k|}{|R|}$$</div>
+          <p class="text-xs text-slate-400 leading-relaxed">Dos trechos que realmente respondiam, quantos entraram no contexto. <strong class="text-slate-200">O que não é recuperado não pode ser gerado</strong>: um trecho fora do top-$k$ é, para o modelo, um trecho que não existe. Ruído a mais no contexto ainda dá para tratar com <a href="../../densos/cross-encoder/index.html" class="text-cyan-400 hover:underline">re-ranking</a>; ausência, não.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-2"><i class="fa-solid fa-filter text-slate-400"></i> precision@k — o custo do lixo</h3>
+          <div class="text-center py-2 text-slate-200">$$\text{precision@}k = \frac{|R \cap T_k|}{k}$$</div>
+          <p class="text-xs text-slate-400 leading-relaxed">Que fração do contexto era útil. Não manda no acerto como o recall, mas manda no <strong class="text-slate-200">custo por token</strong> e na chance de o modelo costurar duas fontes numa afirmação falsa. Note que ela cai naturalmente ao aumentar $k$, mesmo com a busca intacta.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-2"><i class="fa-solid fa-ranking-star text-slate-400"></i> MRR — quão cedo aparece o primeiro certo</h3>
+          <div class="text-center py-2 text-slate-200">$$\text{MRR} = \frac{1}{|Q|}\sum_{q \in Q} \frac{1}{\text{rank}_q}$$</div>
+          <p class="text-xs text-slate-400 leading-relaxed">$\text{rank}_q$ é a posição do primeiro relevante. Só olha o primeiro acerto: serve quando uma única passagem basta para responder. Na bancada abaixo ela é calculada dentro do top-$k$ (zero se nenhum relevante entrou), o que costuma ser escrito $\text{MRR@}k$.</p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-2"><i class="fa-solid fa-chart-simple text-slate-400"></i> nDCG@k — posição com desconto</h3>
+          <div class="text-center py-2 text-slate-200">$$\text{nDCG@}k = \frac{\text{DCG@}k}{\text{IDCG@}k}, \quad \text{DCG@}k = \sum_{i=1}^{k} \frac{rel_i}{\log_2(i+1)}$$</div>
+          <p class="text-xs text-slate-400 leading-relaxed">Järvelin &amp; Kekäläinen (2002). Cada acerto vale menos conforme desce na lista, e o total é normalizado pelo ranking ideal — por isso fica entre 0 e 1 e dá para comparar consultas com número diferente de relevantes. Com relevância binária ($rel_i \in \{0,1\}$), como aqui, ela perde granularidade: um trecho "essencial" e um "tangencial" valem igual.</p>
+        </div>
+      </div>
+
+      <!-- ── BANCADA ── -->
+      <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-5 sm:p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-flask-vial text-amber-400"></i> Bancada de avaliação — BM25 vs. Híbrido com RRF
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Conjunto de exemplo — 8 consultas fictícias sobre um índice fictício de 20 documentos, com os relevantes anotados à mão. Os números abaixo são calculados na hora a partir dos dois <em>rankings</em>; o dado é ilustrativo, a conta é real.</p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <label for="k-slider" class="text-xs text-slate-400 font-medium whitespace-nowrap">Corte $k$:</label>
+            <input id="k-slider" type="range" min="1" max="10" value="5" oninput="setK(this.value)" class="w-36 accent-amber-500">
+            <span id="k-label" class="font-mono text-sm font-bold text-amber-300 w-8 text-center">5</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 py-5" id="agregado-grid"></div>
+
+        <p class="text-[11px] text-slate-500 mb-3"><i class="fa-solid fa-circle-info mr-1"></i> Médias macro: cada consulta pesa igual, independentemente de quantos relevantes tem. Clique numa linha para ver as contas dela.</p>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-xs min-w-[880px]">
+            <thead>
+              <tr class="bg-surface-950/70 text-left">
+                <th class="px-3 py-2.5 font-mono text-[10px] uppercase tracking-widest text-slate-500">Consulta</th>
+                <th class="px-3 py-2.5 font-mono text-[10px] uppercase tracking-widest text-slate-500">Relevantes</th>
+                <th class="px-3 py-2.5 font-mono text-[10px] uppercase tracking-widest text-slate-500">Ranking — BM25</th>
+                <th class="px-3 py-2.5 font-mono text-[10px] uppercase tracking-widest text-slate-500">Ranking — Híbrido + RRF</th>
+              </tr>
+            </thead>
+            <tbody id="bancada-corpo" class="divide-y divide-slate-800"></tbody>
+          </table>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-5 mt-3 text-[11px] text-slate-500">
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-400/70"></span> relevante dentro do corte</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-500/20 border border-rose-400/50"></span> relevante que ficou fora do corte</span>
+          <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-surface-950 border border-slate-700"></span> não relevante</span>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-slate-800">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-square-root-variable text-amber-400"></i> As contas da consulta selecionada
+            <span id="consulta-sel-rotulo" class="font-mono text-[11px] text-slate-500 font-normal"></span>
+          </h4>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="formulas-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 ══════════════ -->
+    <section class="slide-section" data-nav="Geração" data-icon="fa-quote-right">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-quote-right"></i> Módulo 03 • Métricas de geração
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A resposta <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">obedeceu ao contexto?</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Aqui o ranking já aconteceu. O que se mede agora é o que o gerador fez com o material que
+          recebeu. As quatro métricas abaixo são a forma mais difundida de quebrar isso — o arcabouço
+          ficou conhecido com o RAGAS (Es et al., 2023), mas a ideia de decompor a resposta em
+          afirmações e checar cada uma contra a fonte é anterior e independente da ferramenta.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div class="rounded-xl bg-surface-900 border border-emerald-500/40 p-4">
+          <h4 class="font-bold text-emerald-300 text-xs flex items-center gap-2 mb-1.5"><i class="fa-solid fa-anchor"></i> Fidelidade</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Fração das afirmações da resposta que podem ser deduzidas do contexto. <strong class="text-slate-200">Pega alucinação extrínseca</strong>: a frase bem escrita que não está em lugar nenhum.</p>
+        </div>
+        <div class="rounded-xl bg-surface-900 border border-slate-800 p-4">
+          <h4 class="font-bold text-cyan-300 text-xs flex items-center gap-2 mb-1.5"><i class="fa-solid fa-filter"></i> Precisão de contexto</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Fração dos trechos entregues que era mesmo útil. <strong class="text-slate-200">Pega contexto inflado</strong>: paga-se token e aumenta-se a chance de confusão à toa. A versão do RAGAS ainda pondera pela posição.</p>
+        </div>
+        <div class="rounded-xl bg-surface-900 border border-slate-800 p-4">
+          <h4 class="font-bold text-amber-300 text-xs flex items-center gap-2 mb-1.5"><i class="fa-solid fa-box-open"></i> Recall de contexto</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Fração da resposta de referência que o contexto conseguia sustentar. <strong class="text-slate-200">Pega a lacuna</strong> — e é a ponte com o módulo anterior: quando ele cai, a culpa é do retrieval.</p>
+        </div>
+        <div class="rounded-xl bg-surface-900 border border-slate-800 p-4">
+          <h4 class="font-bold text-purple-300 text-xs flex items-center gap-2 mb-1.5"><i class="fa-solid fa-bullseye"></i> Relevância da resposta</h4>
+          <p class="text-[11px] text-slate-400 leading-relaxed">Quanto do que foi dito responde a pergunta feita. <strong class="text-slate-200">Pega a evasiva fiel</strong>: um resumo correto do documento que não responde nada. Alta fidelidade não implica utilidade.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-emerald-400"></i> O contexto encolhe, a fidelidade cai junto
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Pergunta de RH: <span class="text-slate-200">"Trabalho em casa três dias por semana. Tenho direito a auxílio internet e como comprovo?"</span></p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 shrink-0">
+            <div class="flex items-center gap-2">
+              <label for="n-slider" class="text-xs text-slate-400 whitespace-nowrap">Trechos no contexto:</label>
+              <input id="n-slider" type="range" min="1" max="5" value="3" oninput="setN(this.value)" class="w-28 accent-emerald-500">
+              <span id="n-label" class="font-mono text-sm font-bold text-emerald-300 w-6 text-center">3</span>
+            </div>
+            <div class="flex gap-1.5" id="resposta-grp"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 pt-5">
+          <div class="lg:col-span-2">
+            <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Trechos recuperados, em ordem de score</p>
+            <div class="space-y-2" id="trechos-lista"></div>
+          </div>
+          <div class="lg:col-span-3">
+            <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Resposta, quebrada em afirmações</p>
+            <div class="space-y-2" id="afirmacoes-lista"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4" id="metricas-ger"></div>
+            <div id="ger-nota" class="mt-3 text-[11px] rounded-xl border p-3 leading-relaxed"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 ══════════════ -->
+    <section class="slide-section" data-nav="Conjunto de avaliação" data-icon="fa-clipboard-check">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-clipboard-check"></i> Módulo 04 • O conjunto de avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Nenhuma métrica vale mais que <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">o conjunto onde ela roda</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Um conjunto montado com perguntas que você mesmo inventou olhando para os documentos mede a
+          sua imaginação, não o sistema. Item que presta tem quatro campos — e um deles quase sempre
+          falta.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-3"><i class="fa-solid fa-list-check text-amber-400"></i> Anatomia de um item</h3>
+          <div class="space-y-2.5 text-xs">
+            <div class="rounded-lg bg-surface-950 border border-slate-800 p-3">
+              <p class="font-mono text-[10px] text-cyan-400 mb-1">1 · pergunta real</p>
+              <p class="text-slate-400 leading-relaxed">Tirada do log de atendimento, do chat interno, dos tíquetes abertos. Com a bagunça original: sigla, erro de digitação, pergunta dupla. Pergunta limpa demais é pergunta que ninguém faz.</p>
+            </div>
+            <div class="rounded-lg bg-surface-950 border border-slate-800 p-3">
+              <p class="font-mono text-[10px] text-emerald-400 mb-1">2 · resposta de referência</p>
+              <p class="text-slate-400 leading-relaxed">Escrita por quem sabe o assunto, não pelo modelo. Serve de gabarito para relevância da resposta e recall de contexto.</p>
+            </div>
+            <div class="rounded-lg bg-surface-950 border border-slate-800 p-3">
+              <p class="font-mono text-[10px] text-purple-400 mb-1">3 · trechos anotados como relevantes</p>
+              <p class="text-slate-400 leading-relaxed">O $R$ do módulo 2. Sem esse campo não existe recall@k, nDCG nem separação de culpa: você volta a ter um número só.</p>
+            </div>
+            <div class="rounded-lg bg-surface-950 border border-rose-500/30 p-3">
+              <p class="font-mono text-[10px] text-rose-400 mb-1">4 · casos sem resposta na base</p>
+              <p class="text-slate-400 leading-relaxed">Perguntas cuja resposta correta é <strong class="text-slate-200">"não está aqui"</strong>. O gabarito é a abstenção. Sem esses itens, um agente que inventa com confiança pontua igual a um que admite o vazio — e é exatamente essa diferença que o <a href="../index.html" class="text-rose-300 hover:underline">capítulo</a> inteiro persegue.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-3"><i class="fa-solid fa-chart-area text-amber-400"></i> Quantos itens? A incerteza tem conta</h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            Não existe número mágico na literatura, e quem promete um está chutando. Mas dá para
+            inverter a pergunta: com $n$ itens e uma taxa observada $\hat{p}$, a margem de erro
+            aproximada (intervalo de Wald, 95%) é
+          </p>
+          <div class="text-center text-slate-200 mb-4">$$\varepsilon \approx 1{,}96 \sqrt{\frac{\hat{p}(1-\hat{p})}{n}}$$</div>
+
+          <div class="space-y-3 mb-4">
+            <div class="flex items-center gap-3">
+              <label for="n-itens" class="text-xs text-slate-400 w-32 shrink-0">Itens no conjunto</label>
+              <input id="n-itens" type="range" min="10" max="500" step="5" value="60" oninput="renderAmostra()" class="flex-1 accent-amber-500">
+              <span id="n-itens-label" class="font-mono text-sm font-bold text-amber-300 w-10 text-right">60</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <label for="p-taxa" class="text-xs text-slate-400 w-32 shrink-0">Taxa observada</label>
+              <input id="p-taxa" type="range" min="50" max="99" value="80" oninput="renderAmostra()" class="flex-1 accent-amber-500">
+              <span id="p-taxa-label" class="font-mono text-sm font-bold text-amber-300 w-10 text-right">80%</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <label for="taxa-revisao" class="text-xs text-slate-400 w-32 shrink-0">Revisão humana</label>
+              <input id="taxa-revisao" type="range" min="5" max="100" step="5" value="20" oninput="renderAmostra()" class="flex-1 accent-amber-500">
+              <span id="taxa-revisao-label" class="font-mono text-sm font-bold text-amber-300 w-10 text-right">20%</span>
+            </div>
+          </div>
+
+          <div id="amostra-saida" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+        <h3 class="font-bold text-white text-sm flex items-center gap-2 mb-3"><i class="fa-solid fa-user-check text-amber-400"></i> Revisão humana por amostragem — o que ela existe para pegar</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+            <p class="font-semibold text-slate-200 mb-1">Anotação errada</p>
+            <p class="text-slate-400 leading-relaxed">O trecho marcado como relevante não responde a pergunta. O pipeline "piorou" porque o gabarito estava torto.</p>
+          </div>
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+            <p class="font-semibold text-slate-200 mb-1">Juiz automático enviesado</p>
+            <p class="text-slate-400 leading-relaxed">Quando um LLM pontua a fidelidade, ele tem preferências próprias — respostas longas, estilo parecido com o dele. A concordância com humanos varia por domínio e não é garantida.</p>
+          </div>
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+            <p class="font-semibold text-slate-200 mb-1">Conjunto envelhecido</p>
+            <p class="text-slate-400 leading-relaxed">A base mudou, a política foi revista, e o gabarito ficou para trás. A métrica cai sem que nada no sistema tenha piorado.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 ══════════════ -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que medir decide <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">o que você conserta</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Cada linha abaixo liga um sintoma a uma métrica e a um método do capítulo 1. É assim que
+          "melhorar o RAG" deixa de ser chute.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 overflow-hidden mb-6">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[720px]">
+            <thead>
+              <tr class="bg-surface-950/60 text-left">
+                <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">Sintoma</th>
+                <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">Métrica que denuncia</th>
+                <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">Onde mexer</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 text-slate-300">Agente responde fora do assunto sobre um código de erro exato</td>
+                <td class="px-4 py-3"><span class="font-mono text-cyan-300">recall@k</span> baixo só nessas consultas</td>
+                <td class="px-4 py-3 text-slate-400">Falta perna léxica: <a href="../../esparsos/bm25/index.html" class="text-cyan-300 hover:underline">BM25</a> ou <a href="../../esparsos/sparse-encoder/index.html" class="text-cyan-300 hover:underline">SPLADE</a> na fusão</td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 text-slate-300">Usuário pergunta com outras palavras e não vem nada</td>
+                <td class="px-4 py-3"><span class="font-mono text-cyan-300">recall@k</span> baixo em paráfrases</td>
+                <td class="px-4 py-3 text-slate-400">Falta perna densa: <a href="../../densos/embeddings/index.html" class="text-emerald-300 hover:underline">embeddings</a> e <a href="../../rrf/index.html" class="text-purple-300 hover:underline">RRF</a></td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 text-slate-300">O trecho certo vem, mas em 8º lugar</td>
+                <td class="px-4 py-3"><span class="font-mono text-cyan-300">MRR</span> e <span class="font-mono text-cyan-300">nDCG@k</span> baixos com recall alto</td>
+                <td class="px-4 py-3 text-slate-400"><a href="../../densos/cross-encoder/index.html" class="text-emerald-300 hover:underline">Cross-encoder</a> re-ordenando o top-50</td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 text-slate-300">Contexto enorme, resposta confusa, conta cara</td>
+                <td class="px-4 py-3"><span class="font-mono text-amber-300">precisão de contexto</span> baixa</td>
+                <td class="px-4 py-3 text-slate-400">Reduzir $k$ após re-ranking; <a href="../../densos/multi-vector/index.html" class="text-emerald-300 hover:underline">ColBERT</a> para achar a passagem, não o documento</td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 text-slate-300">O trecho está no contexto e a resposta diz outra coisa</td>
+                <td class="px-4 py-3"><span class="font-mono text-emerald-300">fidelidade</span> baixa com recall alto</td>
+                <td class="px-4 py-3 text-slate-400">Não é busca: <a href="../grounding/index.html" class="text-emerald-300 hover:underline">grounding e citação obrigatória</a></td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 text-slate-300">Responde tudo, inclusive o que não está na base</td>
+                <td class="px-4 py-3"><span class="font-mono text-rose-300">taxa de abstenção</span> nos itens sem resposta</td>
+                <td class="px-4 py-3 text-slate-400">Critério de parada e desistência no <a href="../laco/index.html" class="text-cyan-300 hover:underline">laço do agente</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 mb-6">
+        <h3 class="font-bold text-rose-300 text-sm flex items-center gap-2 mb-3"><i class="fa-solid fa-triangle-exclamation"></i> Limitações do que foi ensinado aqui</h3>
+        <ul class="text-xs text-slate-400 space-y-2 leading-relaxed list-disc pl-5">
+          <li><strong class="text-slate-200">Relevância binária é uma simplificação.</strong> Na bancada, um trecho ou é relevante ou não é. Escalas graduadas (0–3) existem justamente porque nDCG foi feito para elas, mas anotar graduado custa caro e concorda menos entre anotadores.</li>
+          <li><strong class="text-slate-200">Métrica offline não é satisfação.</strong> recall@10 perfeito convive com usuários insatisfeitos: tom, formato, latência e confiança não aparecem em nenhuma das quatro contas.</li>
+          <li><strong class="text-slate-200">Juiz automático tem variância.</strong> Pontuar fidelidade com um LLM muda de resultado entre execuções e entre versões do modelo. Fixe modelo e prompt de juiz, versione os dois, e não compare números obtidos com juízes diferentes. O grau de concordância com humanos depende do domínio — trate como sinal, não como verdade.</li>
+          <li><strong class="text-slate-200">O conjunto envelhece.</strong> Ele é uma foto da base num dia. Sem revisão periódica, você otimiza para um passado.</li>
+          <li><strong class="text-slate-200">Média esconde cauda.</strong> Olhe a distribuição por domínio e por tipo de consulta: um pipeline que ganha na média pode ter destruído justamente as consultas com código exato, como acontece na consulta Q4 da bancada.</li>
+        </ul>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre separar a culpa e montar o conjunto.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Um agente jurídico erra o prazo de guarda de contratos. Você mede e vê: recall@10 = 0 nessa consulta, fidelidade = 1,0. Onde está a falha?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) No gerador — ele inventou o prazo e precisa de um prompt mais rígido.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'Fidelidade 1,0 significa que tudo que ele disse saiu do contexto. Como o trecho certo nem chegou (recall 0), ele respondeu fielmente a partir do material errado.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Na recuperação — o trecho certo não entrou no contexto e o modelo foi fiel ao material errado.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Nas duas, em partes iguais — por isso a média de 50% de acerto.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Em lugar nenhum — fidelidade 1,0 já garante resposta correta.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Por que recall@k costuma pesar mais que precision@k num RAG?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Porque precision@k não é calculável quando há mais de um trecho relevante.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Porque recall@k sobe junto com $k$ e é mais fácil de exibir bem.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'Ausência é irreversível na geração; excesso de ruído ainda se corrige com re-ranking e corte menor de k.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Porque o que não foi recuperado não pode ser gerado, enquanto ruído extra ainda dá para filtrar com re-ranking.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Porque precision@k só faz sentido em busca web, não em base corporativa.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Qual o efeito de não incluir perguntas sem resposta na base no conjunto de avaliação?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button data-correct onclick="Guia.answer(this, true, 'Sem item de abstenção, o gabarito nunca premia o &quot;não sei&quot; — e a única falha que o capítulo quer evitar deixa de ser medida.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) A abstenção nunca é medida: quem inventa com confiança pontua igual a quem admite o vazio.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) O nDCG@k fica matematicamente indefinido.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Nenhum — esses itens só existem para inflar o tamanho do conjunto.</button>
+              <button onclick="Guia.answer(this, false)" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) A margem de erro do intervalo de confiança dobra.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <a href="../ganhos/index.html" class="group block rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-purple-500/30 hover:border-purple-500/60 p-5 sm:p-6 transition">
+        <div class="flex items-start gap-4">
+          <span class="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0"><i class="fa-solid fa-gift"></i></span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-600">próximo · 1.4.5</span>
+            <h4 class="font-bold text-white text-base group-hover:text-purple-300 transition">Os outros ganhos</h4>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed max-w-2xl">Agora que dá para medir, vale perguntar o que mais se ganha além de não inventar: conhecimento atualizável sem retreinar, permissão por documento, auditoria de "por que respondeu isso" e correção de erro editando um arquivo.</p>
+          </div>
+          <i class="fa-solid fa-arrow-right text-slate-600 group-hover:text-purple-400 transition ml-auto self-center"></i>
+        </div>
+      </a>
+    </section>
+
+  </main>
+
+  <script>
+    /* ════════ Módulo 1 — matriz de culpa ════════ */
+    const QUADRANTES = [
+      { id: 'B', titulo: 'Trecho não chegou · resposta errada', tag: 'Falha de recuperação', cor: 'cyan', icone: 'fa-magnifying-glass-minus',
+        caso: 'Suporte técnico: "erro VPN-0x8007 ao conectar". O artigo que resolve existe, mas o índice quebrou o código em pedaços e nenhuma perna da busca o trouxe no top-5.',
+        metrica: 'recall@k = 0 nessa consulta, fidelidade alta (o modelo foi fiel ao material errado).',
+        conserto: 'Perna léxica na fusão (BM25/SPLADE), revisão do chunking, k maior. Mexer no prompt não resolve nada aqui.' },
+      { id: 'C', titulo: 'Trecho chegou · resposta errada', tag: 'Falha de geração', cor: 'rose', icone: 'fa-ghost',
+        caso: 'Saúde: o trecho diz "8 horas de jejum, água liberada"; a resposta diz "12 horas, sem água". O material certo estava na primeira posição do contexto.',
+        metrica: 'recall@k = 1, fidelidade baixa. A afirmação não é dedutível de nenhum trecho entregue.',
+        conserto: 'Citação por afirmação, instrução de abstenção, menos ruído no contexto via re-ranking. Trocar o retriever aqui é desperdício.' },
+      { id: 'D', titulo: 'Trecho não chegou · agente se absteve', tag: 'Comportamento desejado', cor: 'emerald', icone: 'fa-hand',
+        caso: 'RH: "qual o limite de diária para viagem internacional?". A política não cobre o tema e o agente responde que não encontrou e sugere falar com Compliance.',
+        metrica: 'recall@k = 0 e a resposta está certa. Uma métrica de acurácia cega conta isso como erro.',
+        conserto: 'Nada a consertar no sistema — consertar o conjunto de avaliação, que precisa ter o gabarito "abstenção".' },
+      { id: 'A', titulo: 'Trecho chegou · resposta certa', tag: 'Caminho feliz', cor: 'slate', icone: 'fa-check',
+        caso: 'Jurídico: "por quanto tempo guardar contrato assinado?" — o trecho da política de retenção vem em 1º e a resposta o cita.',
+        metrica: 'recall@k = 1, fidelidade = 1, relevância alta. O caso que não ensina nada sozinho.',
+        conserto: 'Serve de linha de base. O valor dele é comparativo: é contra ele que se mede a regressão da próxima mudança.' },
+    ];
+    let quadranteSel = 'B';
+
+    function renderMatriz() {
+      document.getElementById('matriz-grid').innerHTML = QUADRANTES.map(q => {
+        const on = q.id === quadranteSel;
+        return '<button onclick="selQuadrante(\'' + q.id + '\')" class="text-left rounded-xl p-4 border transition ' +
+          (on ? 'bg-' + q.cor + '-500/10 border-' + q.cor + '-500/50' : 'bg-surface-950 border-slate-800 hover:border-slate-700') + '">' +
+          '<div class="flex items-center gap-2 mb-1.5"><i class="fa-solid ' + q.icone + ' text-' + q.cor + '-400 text-xs"></i>' +
+          '<span class="text-[10px] font-mono uppercase tracking-widest text-' + q.cor + '-400">' + q.tag + '</span></div>' +
+          '<p class="text-xs font-semibold ' + (on ? 'text-white' : 'text-slate-300') + '">' + q.titulo + '</p></button>';
+      }).join('');
+
+      const q = QUADRANTES.find(x => x.id === quadranteSel);
+      const box = document.getElementById('matriz-detalhe');
+      box.className = 'rounded-xl border p-4 transition-all duration-300 bg-surface-950 border-' + q.cor + '-500/40';
+      box.innerHTML =
+        '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">' +
+        '<div><p class="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">Caso concreto</p><p class="text-slate-300 leading-relaxed">' + q.caso + '</p></div>' +
+        '<div><p class="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">Como a medição denuncia</p><p class="text-' + q.cor + '-300 leading-relaxed">' + q.metrica + '</p></div>' +
+        '<div><p class="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-1.5">Onde se conserta</p><p class="text-slate-300 leading-relaxed">' + q.conserto + '</p></div>' +
+        '</div>';
+    }
+    function selQuadrante(id) { quadranteSel = id; renderMatriz(); }
+
+    /* ════════ Módulo 2 — bancada de avaliação ════════ */
+    const DOCS = {
+      D01: 'Preparo para glicemia de jejum',      D02: 'Coleta de urina de 24 horas',
+      D03: 'Preparo para perfil lipídico',        D04: 'Contraindicações do contraste iodado',
+      D05: 'Política de reembolso de despesas',   D06: 'Banco de horas e compensação',
+      D07: 'Licença-paternidade estendida',       D08: 'Home office e auxílio internet',
+      D09: 'Cláusula de rescisão antecipada',     D10: 'LGPD — bases legais de tratamento',
+      D11: 'Prazo de guarda de contratos',        D12: 'Multa por descumprimento de SLA',
+      D13: 'Erro VPN-0x8007 no cliente Windows',  D14: 'Reset de token MFA após troca de aparelho',
+      D15: 'Impressora não aparece na rede',      D16: 'Certificado expirado no portal',
+      D17: 'Manual do portal do colaborador',     D18: 'Glossário de siglas internas',
+      D19: 'FAQ geral de benefícios',             D20: 'Checklist de onboarding',
+    };
+
+    const CONSULTAS = [
+      { id: 'Q1', dom: 'Saúde', txt: 'quantas horas de jejum para exame de glicemia', rel: ['D01'],
+        bm25: ['D01','D03','D02','D19','D17','D20','D18','D04','D13','D05'],
+        rrf:  ['D01','D03','D04','D02','D17','D19','D18','D20','D05','D13'] },
+      { id: 'Q2', dom: 'Saúde', txt: 'posso beber água antes de tirar sangue de manhã?', rel: ['D01'],
+        bm25: ['D02','D19','D17','D04','D20','D18','D03','D05','D13','D01'],
+        rrf:  ['D01','D03','D02','D04','D19','D17','D18','D20','D05','D13'] },
+      { id: 'Q3', dom: 'RH', txt: 'prazo para pedir reembolso de despesa de viagem', rel: ['D05'],
+        bm25: ['D05','D19','D17','D06','D20','D18','D08','D11','D09','D12'],
+        rrf:  ['D05','D19','D06','D17','D08','D20','D18','D11','D12','D09'] },
+      { id: 'Q4', dom: 'Suporte', txt: 'erro VPN-0x8007', rel: ['D13'],
+        bm25: ['D13','D14','D16','D15','D18','D17','D20','D19','D05','D06'],
+        rrf:  ['D14','D13','D16','D15','D17','D18','D19','D20','D06','D05'] },
+      { id: 'Q5', dom: 'Jurídico', txt: 'por quanto tempo preciso guardar contratos assinados', rel: ['D11'],
+        bm25: ['D09','D11','D12','D10','D17','D18','D20','D19','D05','D06'],
+        rrf:  ['D11','D09','D10','D12','D17','D18','D19','D20','D05','D06'] },
+      { id: 'Q6', dom: 'RH', txt: 'trabalho de casa, tenho ajuda de custo para internet?', rel: ['D08','D19'],
+        bm25: ['D06','D17','D19','D20','D18','D05','D08','D11','D09','D12'],
+        rrf:  ['D08','D19','D06','D05','D17','D20','D18','D11','D12','D09'] },
+      { id: 'Q7', dom: 'Jurídico', txt: 'quais bases legais permitem tratar dado pessoal de cliente', rel: ['D10'],
+        bm25: ['D10','D18','D17','D09','D11','D12','D20','D19','D05','D06'],
+        rrf:  ['D10','D09','D11','D18','D17','D12','D19','D20','D05','D06'] },
+      { id: 'Q8', dom: 'Suporte', txt: 'meu segundo fator parou depois que troquei de celular', rel: ['D14'],
+        bm25: ['D16','D13','D15','D18','D17','D20','D19','D14','D05','D06'],
+        rrf:  ['D14','D16','D13','D15','D17','D18','D20','D19','D06','D05'] },
+    ];
+
+    const PIPES = [
+      { chave: 'bm25', nome: 'BM25 puro', cor: 'cyan', icone: 'fa-scale-balanced', href: '../../esparsos/bm25/index.html' },
+      { chave: 'rrf',  nome: 'Híbrido + RRF', cor: 'amber', icone: 'fa-code-merge', href: '../../rrf/index.html' },
+    ];
+
+    let K = 5;
+    let consultaSel = 'Q2';
+
+    function metricas(ranking, rel, k) {
+      const topk = ranking.slice(0, k);
+      const acertos = topk.filter(d => rel.includes(d));
+      let rank = 0;
+      for (let i = 0; i < topk.length; i++) { if (rel.includes(topk[i])) { rank = i + 1; break; } }
+      let dcg = 0;
+      const termos = [];
+      topk.forEach((d, i) => {
+        if (rel.includes(d)) { dcg += 1 / Math.log2(i + 2); termos.push(i + 1); }
+      });
+      let idcg = 0;
+      const nIdeal = Math.min(rel.length, k);
+      for (let i = 0; i < nIdeal; i++) idcg += 1 / Math.log2(i + 2);
+      return {
+        acertos: acertos.length,
+        recall: acertos.length / rel.length,
+        precision: acertos.length / k,
+        rr: rank ? 1 / rank : 0,
+        rank: rank,
+        dcg: dcg,
+        idcg: idcg,
+        ndcg: idcg > 0 ? dcg / idcg : 0,
+        posRel: termos,
+        nIdeal: nIdeal,
+      };
+    }
+
+    function media(chave, campo) {
+      const s = CONSULTAS.reduce((a, c) => a + metricas(c[chave], c.rel, K)[campo], 0);
+      return s / CONSULTAS.length;
+    }
+
+    const f3 = x => x.toFixed(3).replace('.', ',');
+    const pp = x => (x >= 0 ? '+' : '−') + Math.abs(x * 100).toFixed(1).replace('.', ',');
+
+    function setK(v) {
+      K = parseInt(v, 10);
+      document.getElementById('k-label').textContent = K;
+      renderBancada();
+    }
+    function selConsulta(id) { consultaSel = id; renderBancada(); }
+
+    function renderBancada() {
+      /* cartões agregados */
+      const campos = [
+        ['recall', 'recall@k', 'fa-star'],
+        ['precision', 'precision@k', 'fa-filter'],
+        ['rr', 'MRR@k', 'fa-ranking-star'],
+        ['ndcg', 'nDCG@k', 'fa-chart-simple'],
+      ];
+      document.getElementById('agregado-grid').innerHTML = PIPES.map(p => {
+        const outra = p.chave === 'bm25' ? 'rrf' : 'bm25';
+        const tiles = campos.map(([campo, rot, ico]) => {
+          const v = media(p.chave, campo);
+          const d = v - media(outra, campo);
+          const corD = Math.abs(d) < 1e-9 ? 'text-slate-600' : (d > 0 ? 'text-emerald-400' : 'text-rose-400');
+          return '<div class="rounded-lg bg-surface-950 border border-slate-800 p-2.5">' +
+            '<p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1"><i class="fa-solid ' + ico + ' mr-1"></i>' + rot + '</p>' +
+            '<p class="font-mono text-lg font-bold text-' + p.cor + '-300">' + f3(v) + '</p>' +
+            '<p class="font-mono text-[9px] ' + corD + '">' + pp(d) + ' p.p.</p></div>';
+        }).join('');
+        return '<div class="rounded-xl bg-surface-950/50 border border-' + p.cor + '-500/30 p-4">' +
+          '<div class="flex items-center justify-between mb-3">' +
+          '<h4 class="font-bold text-' + p.cor + '-300 text-sm flex items-center gap-2"><i class="fa-solid ' + p.icone + '"></i>' + p.nome + '</h4>' +
+          '<a href="' + p.href + '" class="text-[10px] font-mono text-slate-500 hover:text-slate-300 transition">ver método <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>' +
+          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">' + tiles + '</div></div>';
+      }).join('');
+
+      /* tabela */
+      const chips = (ranking, rel) => '<div class="flex items-center gap-1">' + ranking.map((d, i) => {
+        const dentro = i < K;
+        const r = rel.includes(d);
+        const cls = r
+          ? (dentro ? 'bg-emerald-500/25 border-emerald-400/70 text-emerald-200' : 'bg-rose-500/15 border-rose-400/50 text-rose-300')
+          : (dentro ? 'bg-surface-900 border-slate-700 text-slate-400' : 'bg-surface-950 border-slate-800 text-slate-700');
+        return '<span title="' + DOCS[d] + '" class="px-1 py-1 rounded border font-mono text-[9px] leading-none ' + cls + '">' + d + '</span>' +
+          (i === K - 1 ? '<span class="w-px h-5 bg-amber-500/70 mx-0.5" title="corte k"></span>' : '');
+      }).join('') + '</div>';
+
+      document.getElementById('bancada-corpo').innerHTML = CONSULTAS.map(c => {
+        const on = c.id === consultaSel;
+        return '<tr onclick="selConsulta(\'' + c.id + '\')" class="cursor-pointer transition ' + (on ? 'bg-amber-500/10' : 'hover:bg-surface-850/50') + '">' +
+          '<td class="px-3 py-2.5 align-top"><span class="font-mono text-[10px] ' + (on ? 'text-amber-300' : 'text-slate-600') + '">' + c.id + ' · ' + c.dom + '</span>' +
+          '<p class="text-slate-300 leading-snug mt-0.5">' + c.txt + '</p></td>' +
+          '<td class="px-3 py-2.5 align-top"><div class="flex flex-col gap-1">' + c.rel.map(d =>
+            '<span title="' + DOCS[d] + '" class="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-mono text-[9px] w-fit">' + d + '</span>').join('') + '</div></td>' +
+          '<td class="px-3 py-2.5 align-top">' + chips(c.bm25, c.rel) + '</td>' +
+          '<td class="px-3 py-2.5 align-top">' + chips(c.rrf, c.rel) + '</td></tr>';
+      }).join('');
+
+      /* fórmulas da consulta selecionada */
+      const c = CONSULTAS.find(x => x.id === consultaSel);
+      document.getElementById('consulta-sel-rotulo').textContent = '— ' + c.id + ' · "' + c.txt + '"';
+
+      document.getElementById('formulas-grid').innerHTML = PIPES.map(p => {
+        const m = metricas(c[p.chave], c.rel, K);
+        const dcgTermos = m.posRel.length
+          ? m.posRel.map(i => '\\frac{1}{\\log_2(' + i + '+1)}').join(' + ')
+          : '0';
+        const idcgTermos = m.nIdeal
+          ? Array.from({ length: m.nIdeal }, (_, i) => '\\frac{1}{\\log_2(' + (i + 1) + '+1)}').join(' + ')
+          : '0';
+        const rrLinha = m.rank
+          ? '$$\\text{RR@}k = \\frac{1}{\\text{rank}} = \\frac{1}{' + m.rank + '} = ' + f3(m.rr) + '$$'
+          : '$$\\text{RR@}k = 0 \\quad \\text{(nenhum relevante no top-}k\\text{)}$$';
+        return '<div class="rounded-xl bg-surface-950 border border-' + p.cor + '-500/30 p-4 space-y-1 overflow-x-auto">' +
+          '<h5 class="font-bold text-' + p.cor + '-300 text-xs flex items-center gap-2 mb-2"><i class="fa-solid ' + p.icone + '"></i>' + p.nome + '</h5>' +
+          '<div class="text-slate-200 text-sm">$$\\text{recall@}k = \\frac{|R \\cap T_k|}{|R|} = \\frac{' + m.acertos + '}{' + c.rel.length + '} = ' + f3(m.recall) + '$$</div>' +
+          '<div class="text-slate-200 text-sm">$$\\text{precision@}k = \\frac{' + m.acertos + '}{' + K + '} = ' + f3(m.precision) + '$$</div>' +
+          '<div class="text-slate-200 text-sm">' + rrLinha + '</div>' +
+          '<div class="text-slate-200 text-sm">$$\\text{DCG@}k = ' + dcgTermos + ' = ' + f3(m.dcg) + '$$</div>' +
+          '<div class="text-slate-200 text-sm">$$\\text{IDCG@}k = ' + idcgTermos + ' = ' + f3(m.idcg) + '$$</div>' +
+          '<div class="text-slate-200 text-sm">$$\\text{nDCG@}k = \\frac{' + f3(m.dcg) + '}{' + f3(m.idcg) + '} = ' + f3(m.ndcg) + '$$</div>' +
+          '<p class="text-[10px] text-slate-500 pt-1 border-t border-slate-800">Posições dos relevantes dentro do corte: ' +
+          (m.posRel.length ? m.posRel.join(', ') : 'nenhuma') + '.</p></div>';
+      }).join('');
+
+      Guia.renderMath(document.getElementById('formulas-grid'));
+    }
+
+    /* ════════ Módulo 3 — métricas de geração ════════ */
+    const TRECHOS = [
+      { id: 'T1', gold: true,  tit: 'Home office e auxílio internet §2', txt: 'Colaboradores em regime híbrido com dois ou mais dias remotos por semana recebem auxílio internet de R$ 120 por mês.' },
+      { id: 'T2', gold: true,  tit: 'Home office e auxílio internet §5', txt: 'O auxílio é solicitado no portal, aba Benefícios, anexando a fatura do provedor em nome do colaborador.' },
+      { id: 'T3', gold: false, tit: 'Banco de horas e compensação §1',   txt: 'O banco de horas é apurado no último dia útil de cada trimestre.' },
+      { id: 'T4', gold: false, tit: 'FAQ geral de benefícios',           txt: 'Dúvidas sobre benefícios podem ser abertas como chamado para a equipe de Pessoas.' },
+      { id: 'T5', gold: false, tit: 'Checklist de onboarding',           txt: 'No primeiro dia, o colaborador recebe notebook, crachá e acesso ao portal.' },
+    ];
+
+    const RESPOSTAS = {
+      A: { nome: 'Resposta A — conservadora', icone: 'fa-shield-halved', cor: 'emerald',
+        afirm: [
+          { t: 'Sim, com dois ou mais dias remotos por semana você tem direito ao auxílio internet.', ancora: 'T1', responde: true },
+          { t: 'O valor é de R$ 120 por mês.', ancora: 'T1', responde: true },
+          { t: 'A solicitação é feita no portal, na aba Benefícios.', ancora: 'T2', responde: true },
+          { t: 'É preciso anexar a fatura do provedor em seu nome.', ancora: 'T2', responde: true },
+        ] },
+      B: { nome: 'Resposta B — fluente', icone: 'fa-comment-dots', cor: 'rose',
+        afirm: [
+          { t: 'Sim, o regime híbrido dá direito ao auxílio internet.', ancora: 'T1', responde: true },
+          { t: 'O valor é reajustado anualmente pelo IPCA.', ancora: null, responde: true },
+          { t: 'Basta abrir um chamado para a equipe de Pessoas que eles processam em até 48 horas.', ancora: null, responde: true },
+          { t: 'Vale lembrar que o banco de horas é apurado a cada trimestre.', ancora: 'T3', responde: false },
+        ] },
+    };
+
+    let N_CTX = 3;
+    let respSel = 'A';
+
+    function setN(v) {
+      N_CTX = parseInt(v, 10);
+      document.getElementById('n-label').textContent = N_CTX;
+      renderGer();
+    }
+    function selResposta(id) { respSel = id; renderGer(); }
+
+    function renderGer() {
+      const ctx = TRECHOS.slice(0, N_CTX);
+      const ids = ctx.map(t => t.id);
+      const r = RESPOSTAS[respSel];
+
+      document.getElementById('resposta-grp').innerHTML = Object.entries(RESPOSTAS).map(([k, v]) =>
+        '<button onclick="selResposta(\'' + k + '\')" class="px-3 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-2 ' +
+        (respSel === k ? 'bg-' + v.cor + '-600 border-' + v.cor + '-500 text-white' : 'bg-surface-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700') +
+        '"><i class="fa-solid ' + v.icone + ' text-[10px]"></i>' + k + '</button>').join('');
+
+      document.getElementById('trechos-lista').innerHTML = TRECHOS.map((t, i) => {
+        const dentro = i < N_CTX;
+        return '<div class="rounded-xl border p-3 transition-all duration-300 ' +
+          (dentro ? (t.gold ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-surface-950 border-slate-800') : 'bg-surface-950 border-slate-900 opacity-35') + '">' +
+          '<div class="flex items-center justify-between gap-2 mb-1">' +
+          '<span class="font-mono text-[10px] ' + (dentro && t.gold ? 'text-emerald-400' : 'text-slate-600') + '">' + t.id + ' · ' + t.tit + '</span>' +
+          (dentro ? '' : '<span class="text-[9px] font-mono text-slate-600">fora do corte</span>') + '</div>' +
+          '<p class="text-[11px] ' + (dentro ? 'text-slate-300' : 'text-slate-600') + ' leading-snug">' + t.txt + '</p></div>';
+      }).join('');
+
+      const sust = r.afirm.filter(a => a.ancora && ids.includes(a.ancora));
+      document.getElementById('afirmacoes-lista').innerHTML = r.afirm.map((a, i) => {
+        const ok = a.ancora && ids.includes(a.ancora);
+        const motivo = ok ? 'ancorada em ' + a.ancora
+          : (a.ancora ? 'a âncora ' + a.ancora + ' ficou fora do contexto' : 'sem âncora em nenhum trecho');
+        return '<div class="rounded-xl border p-3 ' + (ok ? 'bg-emerald-950/25 border-emerald-500/40' : 'bg-rose-950/25 border-rose-500/40') + '">' +
+          '<div class="flex items-start gap-2">' +
+          '<i class="fa-solid ' + (ok ? 'fa-link text-emerald-400' : 'fa-link-slash text-rose-400') + ' text-[11px] mt-0.5"></i>' +
+          '<div><p class="text-xs ' + (ok ? 'text-slate-200' : 'text-rose-100') + ' leading-snug">' + a.t + '</p>' +
+          '<p class="text-[10px] font-mono mt-1 ' + (ok ? 'text-emerald-400/80' : 'text-rose-400/80') + '">' + motivo +
+          (a.responde ? '' : ' · não responde a pergunta') + '</p></div></div></div>';
+      }).join('');
+
+      const goldTotal = TRECHOS.filter(t => t.gold).length;
+      const goldNoCtx = ctx.filter(t => t.gold).length;
+      const fidelidade = sust.length / r.afirm.length;
+      const ctxPrec = goldNoCtx / N_CTX;
+      const ctxRec = goldNoCtx / goldTotal;
+      const relevancia = r.afirm.filter(a => a.responde).length / r.afirm.length;
+
+      const tile = (rot, val, cor, ico) =>
+        '<div class="rounded-lg bg-surface-950 border border-slate-800 p-2.5">' +
+        '<p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1"><i class="fa-solid ' + ico + ' mr-1"></i>' + rot + '</p>' +
+        '<p class="font-mono text-base font-bold text-' + cor + '-300">' + f3(val) + '</p></div>';
+
+      document.getElementById('metricas-ger').innerHTML =
+        tile('Fidelidade', fidelidade, fidelidade >= 0.75 ? 'emerald' : 'rose', 'fa-anchor') +
+        tile('Precisão ctx.', ctxPrec, ctxPrec >= 0.5 ? 'cyan' : 'amber', 'fa-filter') +
+        tile('Recall ctx.', ctxRec, ctxRec >= 0.99 ? 'emerald' : 'amber', 'fa-box-open') +
+        tile('Relevância', relevancia, relevancia >= 0.75 ? 'purple' : 'amber', 'fa-bullseye');
+
+      const nota = document.getElementById('ger-nota');
+      const semAncora = r.afirm.filter(a => !a.ancora).length;
+      let msg;
+      if (ctxRec < 1 && fidelidade < 1) {
+        msg = '<strong class="text-amber-300">Recall de contexto abaixo de 1 com fidelidade caindo junto.</strong> Parte da culpa é da recuperação: afirmações corretas viraram não sustentadas só porque o trecho que as ancorava ficou fora do corte. Prompt nenhum conserta isso — é $k$, chunking ou fusão.'
+          + (semAncora
+            ? ' <strong class="text-rose-300">Mas ' + semAncora + ' afirmação' + (semAncora > 1 ? 'ões não teriam âncora' : ' não teria âncora') + ' nem com o contexto completo</strong> — essa parte é geração, e aumentar $k$ não resolve. Aumente o corte até o recall de contexto chegar a 1 e veja o que sobra.'
+            : '');
+      } else if (ctxRec === 1 && fidelidade < 1) {
+        msg = '<strong class="text-rose-300">Contexto completo e fidelidade abaixo de 1.</strong> Todo material necessário chegou, e ainda assim há afirmação sem âncora. Agora sim é geração: citação obrigatória por afirmação e instrução de abstenção.';
+      } else if (ctxPrec < 0.5) {
+        msg = '<strong class="text-amber-300">Fidelidade cheia, precisão de contexto baixa.</strong> A resposta está correta, mas metade ou mais do contexto era ruído pago em token — e ruído é convite para o modelo costurar fontes. Corte $k$ depois do re-ranking.';
+      } else {
+        msg = '<strong class="text-emerald-300">Todas as quatro em ordem.</strong> Guarde este ponto como linha de base: é contra ele que a próxima mudança de pipeline será comparada.';
+      }
+      nota.className = 'mt-3 text-[11px] rounded-xl border p-3 leading-relaxed bg-surface-950 border-slate-800 text-slate-400';
+      nota.innerHTML = msg;
+      Guia.renderMath(nota);
+    }
+
+    /* ════════ Módulo 4 — tamanho do conjunto ════════ */
+    function renderAmostra() {
+      const n = parseInt(document.getElementById('n-itens').value, 10);
+      const p = parseInt(document.getElementById('p-taxa').value, 10) / 100;
+      const taxa = parseInt(document.getElementById('taxa-revisao').value, 10) / 100;
+
+      document.getElementById('n-itens-label').textContent = n;
+      document.getElementById('p-taxa-label').textContent = Math.round(p * 100) + '%';
+      document.getElementById('taxa-revisao-label').textContent = Math.round(taxa * 100) + '%';
+
+      const eps = 1.96 * Math.sqrt(p * (1 - p) / n);
+      const lo = Math.max(0, p - eps), hi = Math.min(1, p + eps);
+      const revisar = Math.ceil(n * taxa);
+      const minutos = revisar * 4;
+
+      const pct = x => (x * 100).toFixed(1).replace('.', ',') + '%';
+      const largo = eps * 200;
+
+      let veredito, cor;
+      if (largo > 20) { veredito = 'Intervalo largo demais: com esse tamanho você não distingue uma melhora real de ruído. Serve para achar bug grosseiro, não para decidir entre dois pipelines.'; cor = 'rose'; }
+      else if (largo > 10) { veredito = 'Dá para ver movimento grande, não ajuste fino. Uma diferença de poucos pontos entre pipelines aqui é indistinguível de sorte.'; cor = 'amber'; }
+      else { veredito = 'Intervalo estreito o bastante para comparar variantes de pipeline com alguma confiança — desde que as perguntas sejam representativas do uso real.'; cor = 'emerald'; }
+
+      document.getElementById('amostra-saida').innerHTML =
+        '<div class="grid grid-cols-3 gap-2">' +
+        '<div class="rounded-lg bg-surface-950 border border-slate-800 p-2.5"><p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Margem</p><p class="font-mono text-base font-bold text-amber-300">&plusmn;' + pct(eps) + '</p></div>' +
+        '<div class="rounded-lg bg-surface-950 border border-slate-800 p-2.5"><p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Intervalo 95%</p><p class="font-mono text-xs font-bold text-slate-200 mt-1.5">' + pct(lo) + ' – ' + pct(hi) + '</p></div>' +
+        '<div class="rounded-lg bg-surface-950 border border-slate-800 p-2.5"><p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Revisar à mão</p><p class="font-mono text-base font-bold text-slate-200">' + revisar + '</p><p class="text-[9px] font-mono text-slate-600">~' + minutos + ' min</p></div>' +
+        '</div>' +
+        '<div class="rounded-xl border border-' + cor + '-500/40 bg-' + cor + '-950/20 p-3"><p class="text-[11px] text-' + cor + '-200 leading-relaxed">' + veredito + '</p></div>' +
+        '<p class="text-[10px] text-slate-500 leading-relaxed"><i class="fa-solid fa-circle-info mr-1"></i>' +
+        'O intervalo de Wald é aproximado e fica ruim com $n$ pequeno ou taxa perto de 0 ou 1 — nesses casos use Wilson ou Clopper-Pearson. ' +
+        'Ele também só cobre o erro de amostragem: nada aqui protege contra um conjunto de perguntas que não representa o uso real, e esse costuma ser o erro maior. ' +
+        'Os 4 minutos por item são uma estimativa grosseira de conferência com o documento aberto, não um dado de literatura.</p>';
+
+      Guia.renderMath(document.getElementById('amostra-saida'));
+    }
+
+    Guia.ready(() => {
+      renderMatriz();
+      renderBancada();
+      renderGer();
+      renderAmostra();
+    });
+  </script>
+</body>
+</html>

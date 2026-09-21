@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cross-Attention: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../../assets/guia.css">
+  <script src="../../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Cross-Attention"
+      data-badge="Infográfico Interativo"
+      data-subtitle="A única ponte entre encoder e decoder"
+      data-icon="fa-arrow-right-arrow-left"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — ONDE FICA ══════════════ -->
+    <section class="slide-section" data-nav="Onde fica" data-icon="fa-diagram-project">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-diagram-project"></i> Módulo 01 • Localização na Arquitetura
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O sublayer do meio: <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">o único lugar onde os dois lados se falam</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O bloco do encoder tem dois sublayers. O bloco do decoder tem três — e o do meio é a
+          cross-attention. Tire essa peça e o decoder continua gerando texto, só que sem nunca ter
+          lido a frase de origem.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
+
+        <!-- Pilha do encoder -->
+        <div class="lg:col-span-2 rounded-2xl bg-surface-900 border border-slate-800 p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-right-to-bracket text-cyan-400"></i> Bloco do encoder
+            </h3>
+            <span class="text-[10px] font-mono text-slate-500">2 sublayers</span>
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="font-semibold text-slate-200">Positionwise FFN</div>
+              <div class="text-[11px] text-slate-500">processa cada posição isoladamente</div>
+            </div>
+            <div class="text-center text-slate-700"><i class="fa-solid fa-arrow-up"></i></div>
+            <div class="p-3 rounded-xl bg-surface-950 border border-blue-500/30">
+              <div class="font-semibold text-blue-200">Multi-head self-attention</div>
+              <div class="text-[11px] text-slate-500">$Q$, $K$ e $V$ saem todos da mesma sequência</div>
+            </div>
+          </div>
+          <div class="mt-auto pt-4">
+            <div class="p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/30 text-[11px] text-slate-400 leading-relaxed">
+              A pilha inteira devolve <span class="font-mono text-cyan-300">$H^{enc}$</span>: uma matriz
+              com um vetor contextual por token de origem. Ela é calculada <strong class="text-slate-200">uma vez</strong>
+              e fica parada ali.
+            </div>
+          </div>
+        </div>
+
+        <!-- Ponte -->
+        <div class="lg:col-span-1 flex lg:flex-col items-center justify-center gap-3 py-2">
+          <div class="text-brand-400 text-2xl lg:rotate-0 rotate-90">
+            <i class="fa-solid fa-arrow-right-long"></i>
+          </div>
+          <div class="text-[10px] font-mono text-brand-300 text-center leading-tight">
+            $H^{enc}$<br>vira $K$ e $V$
+          </div>
+        </div>
+
+        <!-- Pilha do decoder -->
+        <div class="lg:col-span-2 rounded-2xl bg-surface-900 border border-brand-500/30 p-5 glow-indigo">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-right-from-bracket text-brand-400"></i> Bloco do decoder
+            </h3>
+            <span class="text-[10px] font-mono text-brand-300">3 sublayers</span>
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="font-semibold text-slate-200">3 · Positionwise FFN</div>
+              <div class="text-[11px] text-slate-500">idêntica à do encoder</div>
+            </div>
+            <div class="text-center text-slate-700"><i class="fa-solid fa-arrow-up"></i></div>
+            <div class="p-3 rounded-xl bg-brand-500/10 border border-brand-500/50 relative overflow-hidden">
+              <div class="absolute -right-6 -top-6 w-20 h-20 bg-brand-500/20 rounded-full blur-2xl pointer-events-none"></div>
+              <div class="font-bold text-brand-200 flex items-center gap-2 relative">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> 2 · Cross-attention
+              </div>
+              <div class="text-[11px] text-brand-300/80 relative">$Q$ do decoder, $K$ e $V$ do encoder</div>
+            </div>
+            <div class="text-center text-slate-700"><i class="fa-solid fa-arrow-up"></i></div>
+            <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="font-semibold text-slate-200">1 · Masked self-attention</div>
+              <div class="text-[11px] text-slate-500">olha só para os tokens já gerados</div>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+            Cada um dos três é seguido por <strong class="text-slate-300">Add &amp; Norm</strong> — a
+            conexão residual mais a normalização. O desenho acima omite essas três caixas para não
+            poluir a ordem dos sublayers.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="text-xs font-mono text-cyan-400 mb-1">entra por baixo</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">A atenção mascarada</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Antes da cross-attention, o decoder já misturou os tokens que ele mesmo gerou — com a
+            máscara triangular que proíbe olhar para frente. O tópico
+            <a href="../../decoder/masked-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4.1</a>
+            trata só disso.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1">o meio</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">A cross-attention</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Recebe esse estado e deixa cada posição do decoder consultar a sequência de origem
+            inteira. É a única aresta do grafo que atravessa de um lado ao outro da arquitetura.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="text-xs font-mono text-slate-400 mb-1">sai por cima</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">A FFN</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            O resultado segue para a rede feed-forward por posição
+            (<a href="../../bloco/ffn/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.3</a>),
+            que processa cada posição sem olhar para as vizinhas.
+          </p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-slate-800 p-5 text-xs text-slate-400 leading-relaxed">
+        <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-map text-brand-400"></i> No diagrama da arquitetura
+        </h3>
+        <p>
+          Volte ao <a href="../../index.html" class="text-brand-400 hover:underline">mapa da seção 2.1</a>:
+          na coluna da direita (o decoder), subindo de baixo para cima, você encontra
+          <em>masked multi-head attention</em> → <em>add &amp; norm</em> →
+          <strong class="text-slate-200">multi-head attention</strong> → <em>add &amp; norm</em> →
+          <em>positionwise FFN</em>. Aquela multi-head attention do meio, a que recebe uma seta vindo
+          da coluna da esquerda, é esta página. É a única caixa do diagrama com duas entradas de
+          origens diferentes — todas as outras recebem apenas o que veio de baixo.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — A ASSIMETRIA ══════════════ -->
+    <section class="slide-section" data-nav="A assimetria" data-icon="fa-arrows-split-up-and-left">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-arrows-split-up-and-left"></i> Módulo 02 • A Assimetria
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Uma fórmula conhecida, <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">com duas entradas em vez de uma</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Não há operação nova aqui. A conta é exatamente a mesma da self-attention. O que muda é
+          de onde vem cada uma das três projeções — e essa mudança de origem é tudo.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-rotate-left text-slate-400"></i> Self-attention (encoder, ou sublayer 1 do decoder)
+          </h3>
+          <p class="text-xs text-slate-400 mb-4">Uma sequência só, $X$, gera as três projeções:</p>
+          <p class="text-center my-4 text-[13px]">
+            $$Q = XW^Q, \quad K = XW^K, \quad V = XW^V$$
+          </p>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400">
+            Cada token pergunta e cada token responde. As perguntas e as respostas vêm do mesmo lugar,
+            e é por isso que a matriz resultante é quadrada.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6 glow-indigo">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-right-arrow-left text-brand-400"></i> Cross-attention (sublayer 2 do decoder)
+          </h3>
+          <p class="text-xs text-slate-400 mb-4">Duas sequências. A origem de cada projeção é explícita:</p>
+          <p class="text-center my-4 text-[13px]">
+            $$Q = \underbrace{H^{dec}}_{\text{decoder}} W^Q, \quad
+              K = \underbrace{H^{enc}}_{\text{encoder}} W^K, \quad
+              V = \underbrace{H^{enc}}_{\text{encoder}} W^V$$
+          </p>
+          <div class="p-3 rounded-xl bg-brand-500/5 border border-brand-500/30 text-[11px] text-brand-200/90">
+            Quem pergunta é o texto sendo gerado. Quem responde é o texto de origem. As duas metades
+            da arquitetura nunca trocam nada além disto.
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-brand-400"></i> A fórmula completa, com as origens dentro dela
+        </h3>
+        <div class="overflow-x-auto py-2">
+          <p class="text-center text-[13px] min-w-[320px]">
+            $$\mathrm{CrossAttn}(H^{dec}, H^{enc}) =
+              \mathrm{softmax}\!\left(\frac{(H^{dec}W^Q)\,(H^{enc}W^K)^{\top}}{\sqrt{d_k}}\right)(H^{enc}W^V)$$
+          </p>
+        </div>
+        <div class="overflow-x-auto mt-5">
+          <table class="w-full text-[11px] min-w-[460px]">
+            <thead class="text-slate-500 border-b border-slate-800">
+              <tr>
+                <th class="text-left py-2 pr-3 font-mono">termo</th>
+                <th class="text-left py-2 pr-3 font-mono">de onde vem</th>
+                <th class="text-left py-2 font-mono">o que significa</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 text-slate-400">
+              <tr>
+                <td class="py-2.5 pr-3 font-mono text-brand-300 align-top">$H^{dec}W^Q$</td>
+                <td class="py-2.5 pr-3 align-top text-slate-300">estado do decoder,<br>após a atenção mascarada</td>
+                <td class="py-2.5">A <strong class="text-slate-200">pergunta</strong>: "estou prestes a escrever a próxima palavra; do que eu preciso?"</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 font-mono text-cyan-300 align-top">$H^{enc}W^K$</td>
+                <td class="py-2.5 pr-3 align-top text-slate-300">saída da pilha<br>do encoder</td>
+                <td class="py-2.5">O <strong class="text-slate-200">índice</strong> da frase de origem: com o que cada token de origem se deixa encontrar.</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 font-mono text-cyan-300 align-top">$H^{enc}W^V$</td>
+                <td class="py-2.5 pr-3 align-top text-slate-300">saída da pilha<br>do encoder</td>
+                <td class="py-2.5">O <strong class="text-slate-200">conteúdo</strong> devolvido: o que de fato é copiado para dentro do decoder, ponderado pelos pesos.</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 font-mono text-slate-300 align-top">$\sqrt{d_k}$</td>
+                <td class="py-2.5 pr-3 align-top text-slate-300">constante</td>
+                <td class="py-2.5">Mesma escala da self-attention, pela mesma razão: sem ela o produto interno cresce com $d_k$ e o softmax satura.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/30">
+          <h4 class="font-bold text-white text-sm mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-box-archive text-emerald-400"></i> $K$ e $V$ são calculados uma vez só
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            $H^{enc}$ não muda durante a geração: a frase de origem já foi lida. Logo $H^{enc}W^K$ e
+            $H^{enc}W^V$ podem ser calculados uma única vez, antes do primeiro token, e reusados em
+            todos os passos de decodificação. É por isso que, em inferência, o custo da cross-attention
+            por token novo é uma multiplicação de matriz contra um cache que já existe, e não uma
+            releitura da entrada.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <h4 class="font-bold text-white text-sm mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-amber-400"></i> Cada bloco do decoder tem a sua
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A cross-attention não acontece uma vez: ela se repete em <em>todos</em> os $n$ blocos da
+            pilha do decoder, cada um com seus próprios $W^Q$, $W^K$ e $W^V$. Todos leem a
+            <strong class="text-slate-200">mesma</strong> saída $H^{enc}$ — a do topo do encoder —
+            mas cada camada aprende a extrair dela uma coisa diferente.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — AS FORMAS + SIMULADOR ══════════════ -->
+    <section class="slide-section" data-nav="Matriz de alinhamento" data-icon="fa-table-cells-large">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-table-cells-large"></i> Módulo 03 • As Formas
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Uma matriz <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">retangular</span>, e o que ela é de verdade
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A matriz de pesos da cross-attention é $n_{dec} \times n_{enc}$: uma linha por token gerado,
+          uma coluna por token de origem. Isso não é um detalhe de implementação — é literalmente
+          uma matriz de alinhamento entre duas sequências.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-ruler-combined text-cyan-400"></i> As formas, uma a uma
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[11px] font-mono min-w-[320px]">
+              <thead class="text-slate-500 border-b border-slate-800">
+                <tr><th class="text-left py-1.5 pr-3">objeto</th><th class="text-left pr-3">forma</th><th class="text-left">indexado por</th></tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800 text-slate-300">
+                <tr><td class="py-2 pr-3 text-brand-300">$Q$</td><td class="pr-3">$n_{dec} \times d_k$</td><td class="text-slate-500">posição gerada</td></tr>
+                <tr><td class="py-2 pr-3 text-cyan-300">$K$</td><td class="pr-3">$n_{enc} \times d_k$</td><td class="text-slate-500">token de origem</td></tr>
+                <tr><td class="py-2 pr-3 text-cyan-300">$V$</td><td class="pr-3">$n_{enc} \times d_v$</td><td class="text-slate-500">token de origem</td></tr>
+                <tr class="bg-brand-500/5"><td class="py-2 pr-3 text-white">$QK^{\top}$</td><td class="pr-3 text-white">$n_{dec} \times n_{enc}$</td><td class="text-slate-400">os dois</td></tr>
+                <tr><td class="py-2 pr-3 text-slate-300">saída</td><td class="pr-3">$n_{dec} \times d_v$</td><td class="text-slate-500">posição gerada</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+            Repare no que <em>não</em> aparece: nada obriga $n_{dec} = n_{enc}$. A frase de origem pode
+            ter 30 tokens e a tradução 42. Na self-attention isso seria impossível — lá a matriz é
+            sempre quadrada, porque as duas dimensões são a mesma sequência.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> A tradição do alinhamento
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Muito antes de redes neurais, a tradução automática estatística já trabalhava com uma
+            matriz de alinhamento entre a frase de origem e a frase de destino: qual palavra
+            corresponde a qual. Os modelos IBM (Brown et al., 1993) estimavam essa correspondência
+            explicitamente, como variável latente do sistema.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            A atenção neural de Bahdanau et al. (2015) trouxe a ideia para dentro da rede: em vez de
+            comprimir a frase inteira em um vetor único, o decodificador passou a calcular, a cada
+            passo, uma distribuição sobre os estados do codificador. O Transformer herdou essa
+            operação e manteve o nome.
+          </p>
+          <div class="p-3 rounded-xl bg-amber-500/5 border border-amber-500/30 text-[11px] text-slate-400 leading-relaxed">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>
+            Com uma diferença de status importante: o alinhamento aqui não é supervisionado nem
+            garantido. Ele <em>emerge</em> porque ajuda a prever o próximo token — e não porque
+            alguém o exigiu. Voltamos a isso no último módulo.
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════ SIMULADOR ═══════ -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-table-cells text-brand-400"></i> Simulador · A matriz de alinhamento, linha por linha
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Avance a geração token a token. A cada passo, uma nova linha da matriz é calculada em
+              JavaScript: produto interno, divisão por $\sqrt{d_k}$ e softmax de verdade.
+              <strong class="text-slate-300">Clique em qualquer célula</strong> para ver a conta inteira daquele peso.
+            </p>
+          </div>
+          <div id="sim-forma" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-brand-500/40 text-xs font-mono text-brand-300 whitespace-nowrap"></div>
+        </div>
+
+        <!-- Controles -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div class="flex items-center gap-2">
+            <button id="sim-prev" onclick="simPasso(-1)" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs flex items-center gap-1.5 transition disabled:opacity-30 disabled:pointer-events-none">
+              <i class="fa-solid fa-arrow-left"></i> Voltar
+            </button>
+            <button id="sim-next" onclick="simPasso(1)" class="px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-30 disabled:pointer-events-none">
+              Gerar próximo token <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <button onclick="simReset()" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-rotate-left"></i> Reiniciar
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] text-slate-400 font-medium">Origem de $K$ e $V$:</span>
+            <div class="flex items-center gap-1 bg-surface-950 px-1.5 py-1.5 rounded-lg border border-slate-800">
+              <button id="modo-cross" onclick="simModo('cross')" class="px-2.5 py-1 text-[11px] rounded font-mono transition">encoder</button>
+              <button id="modo-self" onclick="simModo('self')" class="px-2.5 py-1 text-[11px] rounded font-mono transition">decoder</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sequências -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-cyan-500/30">
+            <div class="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mb-2">sequência de origem · encoder</div>
+            <div id="sim-src" class="flex flex-wrap gap-1.5"></div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-brand-500/30">
+            <div class="text-[10px] font-mono text-brand-400 uppercase tracking-widest mb-2">sequência gerada · decoder</div>
+            <div id="sim-dec" class="flex flex-wrap gap-1.5"></div>
+          </div>
+        </div>
+
+        <!-- Matriz -->
+        <div class="bg-surface-950 rounded-xl border border-slate-800 p-3 sm:p-4">
+          <div class="flex items-center justify-between mb-3 text-[11px] text-slate-400">
+            <span id="sim-legenda-titulo">Pesos de atenção $\alpha_{tj}$ — cada linha soma 1</span>
+            <span class="flex items-center gap-2 font-mono shrink-0">
+              <span class="text-slate-600">0</span>
+              <span class="w-20 h-2.5 rounded-full inline-block" style="background:linear-gradient(90deg,#0b1220,#6366f1)"></span>
+              <span class="text-brand-300">1</span>
+            </span>
+          </div>
+          <div class="overflow-x-auto">
+            <table id="sim-tabela" class="text-[11px] font-mono border-separate border-spacing-1"></table>
+          </div>
+        </div>
+
+        <!-- Detalhe da célula -->
+        <div id="sim-detalhe" class="mt-4 p-4 rounded-xl bg-surface-950 border border-brand-500/30 text-xs"></div>
+
+        <!-- Nota honesta -->
+        <div id="sim-nota" class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400 leading-relaxed"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — QUEM TEM E QUEM NÃO TEM ══════════════ -->
+    <section class="slide-section" data-nav="Quem tem, quem não tem" data-icon="fa-code-compare">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-code-compare"></i> Módulo 04 • Quem Tem e Quem Não Tem
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A maioria dos modelos que você usa <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">não tem cross-attention</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A cross-attention pertence à família encoder-decoder. Modelos encoder-only e decoder-only
+          simplesmente não a possuem — e cada um resolve de um jeito diferente o problema que ela
+          resolveria.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-300 text-[10px] font-mono border border-cyan-500/30">encoder-only</span>
+            <span class="text-[10px] font-mono text-rose-400"><i class="fa-solid fa-xmark mr-1"></i>sem cross-attention</span>
+          </div>
+          <h3 class="font-bold text-white text-sm mb-2">Família BERT</h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Só existe a pilha da esquerda. Todo token vê todos os outros por self-attention
+            bidirecional, e o modelo devolve vetores contextuais — não gera texto.
+          </p>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400">
+            <strong class="text-slate-200">No lugar dela:</strong> nada. Não há sequência de destino
+            sendo produzida, então não há o que alinhar. Quando precisa relacionar dois textos, ele
+            <em>concatena</em> os dois na mesma entrada e deixa a self-attention atravessar o separador.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-brand-500/10 text-brand-300 text-[10px] font-mono border border-brand-500/30">decoder-only</span>
+            <span class="text-[10px] font-mono text-rose-400"><i class="fa-solid fa-xmark mr-1"></i>sem cross-attention</span>
+          </div>
+          <h3 class="font-bold text-white text-sm mb-2">Família GPT</h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Só existe a pilha da direita, e o bloco volta a ter dois sublayers: atenção mascarada e
+            FFN. O sublayer do meio some.
+          </p>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400">
+            <strong class="text-slate-200">No lugar dela:</strong> a condição entra no próprio prompt.
+            Origem e destino viram uma sequência só, e a atenção mascarada faz as duas coisas ao mesmo
+            tempo — o token gerado olha para o contexto e para o que já foi gerado pela mesma operação.
+            A separação arquitetural vira separação posicional.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 glow-indigo">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-brand-500/20 text-brand-200 text-[10px] font-mono border border-brand-500/40">encoder-decoder</span>
+            <span class="text-[10px] font-mono text-emerald-400"><i class="fa-solid fa-check mr-1"></i>com cross-attention</span>
+          </div>
+          <h3 class="font-bold text-white text-sm mb-2">O desenho original</h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            As duas pilhas existem e a ponte existe. É a configuração do paper original de 2017, pensada
+            para tradução: uma sequência entra, outra sai, e elas têm papéis diferentes.
+          </p>
+          <div class="p-3 rounded-xl bg-brand-500/5 border border-brand-500/30 text-[11px] text-slate-400">
+            <strong class="text-slate-200">O que se ganha:</strong> a entrada é lida uma vez, de forma
+            bidirecional, e fica disponível como um cache fixo. O custo da atenção se separa: $n_{enc}^2$
+            pago <em>uma vez</em> no encoder, mais $n_{dec}^2$ (dentro do destino) e
+            $n_{dec} \cdot n_{enc}$ (a ponte) a cada passo — em vez de um único termo
+            $(n_{enc}+n_{dec})^2$ sobre a sequência concatenada. A comparação é de ordem de grandeza,
+            não de tempo medido.
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Cuidado com o nome: <em>cross-encoder</em> não é cross-attention
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            O <a href="../../../../ir/densos/cross-encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">cross-encoder</a>
+            de recuperação de informação recebe consulta e documento <strong class="text-slate-200">concatenados</strong>
+            numa entrada só e roda self-attention sobre o texto inteiro. Não há duas pilhas, não há
+            duas projeções de origens diferentes, não há matriz retangular.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Os dois nomes descrevem o mesmo objetivo — fazer dois textos se olharem — por mecanismos
+            distintos. "Cross" no cross-encoder é sobre o <em>par</em> que ele pontua; "cross" na
+            cross-attention é sobre a <em>ponte</em> entre duas pilhas.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-shuffle text-emerald-400"></i> Onde a ideia reaparece
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            A operação não morreu com a tradução. Sempre que existe um bloco de informação
+            <em>externo</em> à sequência sendo gerada, e que não convém concatenar, a cross-attention
+            é o encaixe natural:
+          </p>
+          <ul class="space-y-2 text-[11px] text-slate-400">
+            <li class="flex gap-2">
+              <i class="fa-solid fa-circle-nodes text-emerald-400 mt-0.5 shrink-0"></i>
+              <span><strong class="text-slate-200">Fundir modalidades:</strong> um encoder de imagem, de áudio ou de vídeo produz uma sequência de vetores, e o modelo de linguagem consulta essa sequência por $K$ e $V$ enquanto escreve. Os dois lados não precisam nem compartilhar tokenização.</span>
+            </li>
+            <li class="flex gap-2">
+              <i class="fa-solid fa-circle-nodes text-emerald-400 mt-0.5 shrink-0"></i>
+              <span><strong class="text-slate-200">Condicionar geração em conteúdo externo:</strong> uma descrição textual guiando a síntese de uma imagem, ou um conjunto de trechos recuperados guiando uma resposta.</span>
+            </li>
+            <li class="flex gap-2">
+              <i class="fa-solid fa-circle-nodes text-emerald-400 mt-0.5 shrink-0"></i>
+              <span><strong class="text-slate-200">Comprimir contexto longo:</strong> manter a fonte fora da sequência gerada evita que ela pague o custo quadrático junto com o texto de saída.</span>
+            </li>
+          </ul>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+            Essa é uma descrição qualitativa do padrão arquitetural, não um levantamento de quais
+            modelos específicos o adotam — cada família faz escolhas próprias.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese & Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Uma peça só, <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">e o que ela não promete</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A cross-attention é a mesma conta da self-attention com uma troca de endereço em duas das
+          três projeções. Dessa troca sai tudo o mais: a forma retangular, o cache, a leitura como
+          alinhamento.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1">a assimetria</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$Q$ do decoder, $K$ e $V$ do encoder</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Quem pergunta é o texto em construção; quem responde é a frase de origem. Nenhuma outra caixa da arquitetura mistura duas origens.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-1">a forma</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$n_{dec} \times n_{enc}$</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Retangular por construção. Uma linha por token gerado, uma coluna por token de origem: uma matriz de alinhamento entre duas sequências.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1">a ausência</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Encoder-only e decoder-only</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Não têm essa peça. Um não gera; o outro concatena a condição no próprio prompt e resolve tudo com atenção mascarada.</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation text-rose-400"></i> Os limites do que foi ensinado aqui
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400 leading-relaxed">
+          <div class="space-y-3">
+            <p>
+              <strong class="text-slate-200">Uma cabeça só, quatro dimensões.</strong> O simulador usa
+              $d_k = 4$ e uma única cabeça de atenção. Num modelo real são várias cabeças por bloco,
+              cada uma com sua própria matriz de pesos — não existe <em>a</em> matriz de alinhamento,
+              existem dezenas delas, e elas discordam entre si.
+            </p>
+            <p>
+              <strong class="text-slate-200">Os vetores foram escolhidos a dedo.</strong> As afinidades
+              da página foram desenhadas para produzir um alinhamento legível. Num modelo treinado,
+              $Q$, $K$ e $V$ saem de matrizes aprendidas, e boa parte das linhas não tem um pico
+              claro em lugar nenhum.
+            </p>
+          </div>
+          <div class="space-y-3">
+            <p>
+              <strong class="text-slate-200">Peso alto não é explicação.</strong> O alinhamento emerge
+              porque ajuda a prever o próximo token, não porque o treino o exige. Ler a matriz como
+              "o modelo traduziu <em>black</em> a partir de <em>preto</em>" é uma interpretação
+              plausível, não um fato verificado — a literatura discute ativamente até que ponto pesos
+              de atenção servem como explicação.
+            </p>
+            <p>
+              <strong class="text-slate-200">Sem máscara no modo self.</strong> Ao trocar a origem de
+              $K$ e $V$ para o decoder, o simulador mostra a matriz quadrada completa, sem a máscara
+              causal. A máscara é o assunto de
+              <a href="../../decoder/masked-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4.1</a>;
+              aqui o ponto era só a mudança de forma.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Onde isso se encaixa e para onde ir
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Esta peça fecha a leitura do <a href="../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">encoder (2.1.3)</a>:
+          agora se sabe o que a pilha da esquerda produz e quem consome essa saída. O próximo tópico é
+          a pilha do outro lado —
+          <a href="../../decoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4 Decoder</a>,
+          onde os três sublayers aparecem montados e a geração autorregressiva é vista de ponta a ponta;
+          dentro dela,
+          <a href="../../decoder/masked-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4.1 Masked Attention</a>
+          explica a máscara que ficou de fora aqui.
+          Para rever a mecânica de $Q$, $K$ e $V$ em si, volte a
+          <a href="../../bloco/multi-head-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.1 Multi-head Attention</a>;
+          para o quadro completo, ao <a href="../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">mapa da seção 2.1</a>
+          ou ao capítulo <a href="../../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2. Redes Neurais</a>.
+          A visão de fora, pelo que interessa à busca, está em
+          <a href="../../../../ir/densos/transformer/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.4 Arquitetura Transformer</a>.
+        </p>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que realmente distingue a cross-attention.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Numa cross-attention, de onde vem cada projeção?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Isso inverteria os papéis: quem pergunta seria a frase de origem, que já foi lida e não está sendo gerada.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) $Q$ do encoder; $K$ e $V$ do decoder.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'O decoder pergunta a partir do estado que já tem, e a saída do encoder responde com índice (K) e conteúdo (V).')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) $Q$ do decoder; $K$ e $V$ da saída do encoder.
+              </button>
+              <button onclick="Guia.answer(this, false, 'As três virem da mesma sequência é exatamente a definição de self-attention.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) As três da saída do encoder.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Q e K precisam viver no mesmo espaço para o produto interno fazer sentido; misturar assim quebraria a conta e o papel de cada projeção.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) $Q$ e $K$ do decoder; só $V$ do encoder.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              A frase de origem tem 30 tokens e a tradução tem 42. Qual é a forma da matriz de pesos da cross-attention?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Quadrada é a forma da self-attention, em que as duas dimensões são a mesma sequência.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) $30 \times 30$, porque a matriz sempre acompanha a entrada.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Uma linha por posição do decoder (42) e uma coluna por token de origem (30). Nada exige que sejam iguais.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) $42 \times 30$ — linhas do decoder, colunas do encoder.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Concatenar as duas sequências é o que fazem um cross-encoder ou um modelo decoder-only, não a cross-attention.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) $72 \times 72$, sobre a concatenação das duas sequências.
+              </button>
+              <button onclick="Guia.answer(this, false, 'd_v é a dimensão da saída depois de multiplicar por V, não a forma da matriz de pesos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) $42 \times d_v$, porque a saída tem a dimensão dos valores.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Um modelo decoder-only não tem cross-attention. Como ele condiciona a geração num texto de entrada?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Não há pilha de encoder num modelo decoder-only: existe uma pilha só.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Roda um encoder separado e soma a saída ao embedding de cada token.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A máscara causal continua lá — é justamente ela que permite treinar prevendo o próximo token.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Desliga a máscara causal para poder ler a entrada inteira.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Entrada e saída viram uma sequência única: a separação deixa de ser arquitetural e passa a ser posicional, resolvida pela própria atenção mascarada.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Concatena a entrada no prompt, e a atenção mascarada cuida das duas partes de uma vez.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Ele não deixa de condicionar: só o faz por outro caminho, dentro da própria sequência.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Não condiciona: gera texto livremente e depois filtra o resultado.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ════════════════════════════════════════════════════════════════
+       Simulador da matriz de alinhamento.
+
+       Os vetores abaixo são didáticos e foram escolhidos à mão para
+       produzir um alinhamento legível — a página diz isso ao leitor.
+       Tudo o que aparece na tela (produto interno, escala, softmax,
+       vetor de contexto) é calculado aqui, a partir destes números.
+       ════════════════════════════════════════════════════════════════ */
+
+    const DK = 4;
+
+    /* Saída do encoder: um k e um v por token da frase de origem. */
+    const SRC = [
+      { tok: 'o',      k: [3.0, 0.2, 0.1, 0.0], v: [0.9, 0.1, 0.0, 0.0] },
+      { tok: 'gato',   k: [0.2, 3.2, 0.5, 0.1], v: [0.1, 0.9, 0.2, 0.1] },
+      { tok: 'preto',  k: [0.1, 0.6, 3.1, 0.0], v: [0.0, 0.2, 0.9, 0.0] },
+      { tok: 'dormiu', k: [0.0, 0.3, 0.1, 3.0], v: [0.0, 0.1, 0.0, 0.9] },
+    ];
+
+    /* Estado do decoder em cada passo: q sempre é usado; k e v só no modo self. */
+    const DEC = [
+      { tok: 'the',   q: [3.2, 0.4, 0.1, 0.2], k: [3.1, 0.3, 0.2, 0.1], v: [0.8, 0.1, 0.1, 0.1] },
+      { tok: 'black', q: [0.3, 0.5, 3.4, 0.1], k: [0.2, 0.4, 3.3, 0.2], v: [0.1, 0.2, 0.9, 0.1] },
+      { tok: 'cat',   q: [0.4, 3.3, 0.7, 0.1], k: [0.3, 3.2, 0.8, 0.2], v: [0.1, 0.9, 0.3, 0.1] },
+      { tok: 'slept', q: [0.1, 0.4, 0.1, 3.3], k: [0.2, 0.5, 0.2, 3.2], v: [0.1, 0.2, 0.1, 0.9] },
+    ];
+
+    let simModoAtual = 'cross';   // 'cross' = K,V do encoder · 'self' = K,V do decoder
+    let simPassoAtual = 0;        // quantos tokens já foram gerados (0 = nada ainda)
+    let simSel = null;            // célula selecionada: { t, j }
+
+    /* ---------- utilidades numéricas ---------- */
+    function dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+
+    function softmax(xs) {
+      const m = Math.max(...xs);
+      const e = xs.map(x => Math.exp(x - m));
+      const s = e.reduce((a, b) => a + b, 0);
+      return { exp: e, soma: s, pesos: e.map(x => x / s) };
+    }
+
+    /* pt-BR: vírgula decimal. */
+    function num(x, casas) {
+      return x.toFixed(casas === undefined ? 3 : casas).replace('.', ',');
+    }
+
+    /* A fonte de K e V muda com o toggle — é essa troca que muda a forma da matriz. */
+    function fonteKV() { return simModoAtual === 'cross' ? SRC : DEC; }
+
+    /* Linha t da matriz: scores brutos, escalados, exponenciais e pesos. */
+    function linha(t) {
+      const kv = fonteKV();
+      const q = DEC[t].q;
+      const brutos = kv.map(c => dot(q, c.k));
+      const escalados = brutos.map(x => x / Math.sqrt(DK));
+      const sm = softmax(escalados);
+      const z = new Array(DK).fill(0);
+      kv.forEach((c, j) => { for (let d = 0; d < DK; d++) z[d] += sm.pesos[j] * c.v[d]; });
+      return { brutos, escalados, exp: sm.exp, soma: sm.soma, pesos: sm.pesos, z };
+    }
+
+    /* ---------- render ---------- */
+    function simRenderSequencias() {
+      const usado = simModoAtual === 'cross';
+      document.getElementById('sim-src').innerHTML = SRC.map(c => {
+        return `<span class="px-2 py-1 rounded-lg text-[11px] font-mono border ${
+          usado ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-200' : 'bg-surface-900 border-slate-800 text-slate-600 line-through'
+        }">${c.tok}</span>`;
+      }).join('') + (simModoAtual === 'cross'
+        ? '<span class="text-[10px] text-slate-500 self-center ml-1">fornece $K$ e $V$</span>'
+        : '<span class="text-[10px] text-rose-400/80 self-center ml-1">ignorada neste modo</span>');
+
+      document.getElementById('sim-dec').innerHTML = DEC.map((c, t) => {
+        const gerado = t < simPassoAtual;
+        const atual = t === simPassoAtual - 1;
+        return `<span class="px-2 py-1 rounded-lg text-[11px] font-mono border ${
+          atual ? 'bg-brand-500/25 border-brand-400 text-white'
+                : gerado ? 'bg-brand-500/10 border-brand-500/40 text-brand-200'
+                         : 'bg-surface-900 border-slate-800 text-slate-600'
+        }">${gerado ? c.tok : '·····'}</span>`;
+      }).join('') + `<span class="text-[10px] text-slate-500 self-center ml-1">${
+        simModoAtual === 'cross' ? 'fornece $Q$' : 'fornece $Q$, $K$ e $V$'
+      }</span>`;
+    }
+
+    function simRenderTabela() {
+      const kv = fonteKV();
+      const rotuloCol = simModoAtual === 'cross' ? 'origem →' : 'decoder →';
+      let html = '<thead><tr><th class="text-right pr-2 text-[10px] text-slate-500 font-normal whitespace-nowrap">' + rotuloCol + '</th>';
+      kv.forEach(c => {
+        html += `<th class="px-1 pb-1 text-[10px] font-normal ${simModoAtual === 'cross' ? 'text-cyan-300' : 'text-brand-300'} whitespace-nowrap">${c.tok}</th>`;
+      });
+      html += '<th class="pl-2 text-[10px] text-slate-500 font-normal whitespace-nowrap">soma</th></tr></thead><tbody>';
+
+      DEC.forEach((d, t) => {
+        const visivel = t < simPassoAtual;
+        const atual = t === simPassoAtual - 1;
+        html += `<tr><td class="text-right pr-2 text-[10px] whitespace-nowrap ${
+          atual ? 'text-white font-semibold' : visivel ? 'text-brand-300' : 'text-slate-600'
+        }">${visivel ? 'gerando <span class="text-slate-400">' + d.tok + '</span>' : 'passo ' + (t + 1)}</td>`;
+
+        if (!visivel) {
+          html += `<td colspan="${kv.length + 1}" class="text-[10px] text-slate-700 px-2 py-2 border border-dashed border-slate-800 rounded text-center">linha ainda não calculada</td></tr>`;
+          return;
+        }
+
+        const L = linha(t);
+        L.pesos.forEach((w, j) => {
+          const sel = simSel && simSel.t === t && simSel.j === j;
+          html += `<td class="p-0"><button onclick="simSelecionar(${t},${j})"
+            class="w-full min-w-[54px] px-2 py-2 rounded text-[11px] font-mono transition border ${
+              sel ? 'border-white text-white' : 'border-transparent text-slate-200 hover:border-slate-500'
+            }" style="background: rgba(99,102,241,${(0.06 + 0.9 * w).toFixed(3)})"
+            title="clique para ver a conta">${num(w, 3)}</button></td>`;
+        });
+        const soma = L.pesos.reduce((a, b) => a + b, 0);
+        html += `<td class="pl-2 text-[10px] text-emerald-400 font-mono whitespace-nowrap">${num(soma, 3)}</td></tr>`;
+      });
+
+      html += '</tbody>';
+      document.getElementById('sim-tabela').innerHTML = html;
+
+      const nLinhas = simPassoAtual;
+      document.getElementById('sim-forma').textContent =
+        (simModoAtual === 'cross'
+          ? `matriz ${nLinhas} × ${SRC.length} (n_dec × n_enc)`
+          : `matriz ${nLinhas} × ${DEC.length} (n_dec × n_dec)`);
+    }
+
+    function simRenderDetalhe() {
+      const el = document.getElementById('sim-detalhe');
+      if (!simSel) {
+        el.innerHTML = '<p class="text-slate-500 text-[11px]"><i class="fa-solid fa-hand-pointer mr-1.5"></i>Gere ao menos um token e clique numa célula para abrir a conta daquele peso.</p>';
+        return;
+      }
+      const { t, j } = simSel;
+      const kv = fonteKV();
+      const q = DEC[t].q, k = kv[j].k;
+      const L = linha(t);
+
+      const termos = q.map((qi, d) => `${num(qi, 1)} × ${num(k[d], 1)}`).join(' + ');
+      const parcelas = q.map((qi, d) => num(qi * k[d], 2)).join(' + ');
+      const listaExp = L.exp.map((e, jj) =>
+        `<span class="${jj === j ? 'text-brand-300 font-semibold' : 'text-slate-500'}">${num(e, 3)}</span>`).join(' + ');
+      const contexto = L.z.map(x => num(x, 3)).join('; ');
+
+      el.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-800">
+          <div class="font-semibold text-white text-sm">
+            Peso $\\alpha_{${t + 1},${j + 1}}$ — linha <span class="font-mono text-brand-300">gerando "${DEC[t].tok}"</span>,
+            coluna <span class="font-mono ${simModoAtual === 'cross' ? 'text-cyan-300' : 'text-brand-300'}">"${kv[j].tok}"</span>
+          </div>
+          <span class="font-mono text-brand-300 text-sm">${num(L.pesos[j], 4)}</span>
+        </div>
+        <div class="space-y-2.5 text-[11px] text-slate-400 font-mono leading-relaxed">
+          <div><span class="text-slate-500">1. produto interno</span> $q \\cdot k$ = ${termos}
+            = ${parcelas} = <span class="text-slate-200">${num(L.brutos[j], 3)}</span></div>
+          <div><span class="text-slate-500">2. escala</span> $e = \\dfrac{q \\cdot k}{\\sqrt{d_k}}$ =
+            ${num(L.brutos[j], 3)} / ${num(Math.sqrt(DK), 3)} = <span class="text-slate-200">${num(L.escalados[j], 3)}</span></div>
+          <div><span class="text-slate-500">3. exponencial</span> $\\exp(e)$ = <span class="text-slate-200">${num(L.exp[j], 3)}</span>
+            <span class="text-slate-600">(normalizada, o softmax subtrai o máximo da linha — o resultado é o mesmo)</span></div>
+          <div><span class="text-slate-500">4. normalização</span> ${num(L.exp[j], 3)} / ( ${listaExp} )
+            = ${num(L.exp[j], 3)} / ${num(L.soma, 3)} = <span class="text-brand-300 font-semibold">${num(L.pesos[j], 4)}</span></div>
+          <div class="pt-2 border-t border-slate-800"><span class="text-slate-500">5. saída da linha</span>
+            $z_{${t + 1}} = \\sum_j \\alpha_{${t + 1}j} v_j$ = <span class="text-emerald-300">[ ${contexto} ]</span></div>
+        </div>`;
+      Guia.renderMath(el);
+    }
+
+    function simRenderNota() {
+      const el = document.getElementById('sim-nota');
+      el.innerHTML = simModoAtual === 'cross'
+        ? `<i class="fa-solid fa-circle-info text-brand-400 mr-1"></i>
+           A matriz é <strong class="text-slate-200">retangular</strong>: ${DEC.length} linhas de destino
+           contra ${SRC.length} colunas de origem. Repare que o pico de cada linha não está na diagonal —
+           "black" busca "preto" na terceira posição e "cat" busca "gato" na segunda, porque português e
+           inglês ordenam substantivo e adjetivo ao contrário. É exatamente isso que faz dela uma
+           <strong class="text-slate-200">matriz de alinhamento</strong>: ela sabe que a ordem das duas
+           sequências não coincide.`
+        : `<i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>
+           Com $K$ e $V$ vindos do próprio decoder, a frase de origem sai da conta por completo e a matriz
+           fica <strong class="text-slate-200">quadrada</strong> (${DEC.length} × ${DEC.length}): as duas
+           dimensões passam a ser a mesma sequência. Não há mais nada a alinhar — isto é self-attention, e
+           o modelo perdeu o único canal por onde a entrada chegava até ele. (Aqui sem máscara causal, que
+           é assunto do tópico 2.1.4.1.)`;
+      Guia.renderMath(el);
+    }
+
+    function simRender() {
+      simRenderSequencias();
+      simRenderTabela();
+      simRenderDetalhe();
+      simRenderNota();
+
+      document.getElementById('sim-prev').disabled = simPassoAtual === 0;
+      document.getElementById('sim-next').disabled = simPassoAtual >= DEC.length;
+
+      const ativo = 'bg-brand-500 text-white font-semibold';
+      const inerte = 'text-slate-400 hover:text-white';
+      document.getElementById('modo-cross').className =
+        'px-2.5 py-1 text-[11px] rounded font-mono transition ' + (simModoAtual === 'cross' ? ativo : inerte);
+      document.getElementById('modo-self').className =
+        'px-2.5 py-1 text-[11px] rounded font-mono transition ' + (simModoAtual === 'self' ? ativo : inerte);
+
+      Guia.renderMath(document.getElementById('sim-src'));
+      Guia.renderMath(document.getElementById('sim-dec'));
+      Guia.renderMath(document.getElementById('sim-forma').parentElement);
+    }
+
+    /* ---------- controles ---------- */
+    function simPasso(delta) {
+      const novo = simPassoAtual + delta;
+      if (novo < 0 || novo > DEC.length) return;
+      simPassoAtual = novo;
+      // Seleciona automaticamente o pico da linha recém-gerada: é o que o leitor quer ver.
+      if (delta > 0) {
+        const L = linha(simPassoAtual - 1);
+        simSel = { t: simPassoAtual - 1, j: L.pesos.indexOf(Math.max(...L.pesos)) };
+      } else if (simSel && simSel.t >= simPassoAtual) {
+        simSel = null;
+      }
+      simRender();
+      if (simPassoAtual === DEC.length) {
+        Guia.toast('Matriz completa. Clique nas células para abrir cada conta.', 'fa-table-cells');
+      }
+    }
+
+    function simReset() {
+      simPassoAtual = 0;
+      simSel = null;
+      simRender();
+    }
+
+    function simModo(modo) {
+      if (modo === simModoAtual) return;
+      simModoAtual = modo;
+      // A seleção pode apontar para uma coluna que não existe mais no outro modo.
+      if (simSel && simSel.j >= fonteKV().length) simSel = null;
+      simRender();
+      Guia.toast(
+        modo === 'cross'
+          ? 'K e V voltaram ao encoder: a matriz é retangular outra vez.'
+          : 'K e V agora vêm do decoder: a matriz virou quadrada e deixou de ser alinhamento.',
+        modo === 'cross' ? 'fa-arrow-right-arrow-left' : 'fa-rotate'
+      );
+    }
+
+    function simSelecionar(t, j) {
+      simSel = { t, j };
+      simRender();
+    }
+
+    Guia.ready(() => {
+      simPassoAtual = 1;
+      const L = linha(0);
+      simSel = { t: 0, j: L.pesos.indexOf(Math.max(...L.pesos)) };
+      simRender();
+    });
+  </script>
+</body>
+</html>

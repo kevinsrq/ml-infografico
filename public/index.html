@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guia Técnico</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/guia.css">
+  <script src="assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Guia Técnico"
+      data-badge="Índice Geral"
+      data-subtitle="Consulta rápida para cientistas de dados: métodos de ML explicados"
+      data-icon="fa-compass"
+      data-up="index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- Hero -->
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-4">
+        <i class="fa-solid fa-book-open"></i> Data Science
+      </div>
+      <h2 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+        Os métodos por trás da <span class="bg-gradient-to-r from-brand-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">esteira de dados</span>
+      </h2>
+      <p class="text-slate-400 mt-4 max-w-3xl text-sm sm:text-base leading-relaxed">
+        Cada metodologia é um <strong class="text-slate-200">infográfico interativo</strong>: módulos navegáveis,
+        fórmulas em KaTeX e pelo menos um simulador ao vivo — você mexe nos controles e os números recalculam na hora.
+        Material de consulta rápida para cientistas de dados: serve tanto para quem implementa quanto para quem precisa entender uma decisão técnica sem abrir o paper.
+      </p>
+    </div>
+
+    <!-- Como usar -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div class="rounded-xl bg-surface-900 border border-slate-800 p-4 flex items-start gap-3">
+        <i class="fa-solid fa-bars text-brand-400 mt-0.5"></i>
+        <div>
+          <h3 class="text-sm font-bold text-white">Sumário lateral</h3>
+          <p class="text-xs text-slate-400 mt-1">O botão <i class="fa-solid fa-bars text-[10px]"></i> no topo abre o índice completo em qualquer página. Atalho: tecla <kbd class="px-1 py-0.5 rounded bg-surface-950 border border-slate-700 font-mono text-[10px]">S</kbd>.</p>
+        </div>
+      </div>
+      <div class="rounded-xl bg-surface-900 border border-slate-800 p-4 flex items-start gap-3">
+        <i class="fa-solid fa-layer-group text-cyan-400 mt-0.5"></i>
+        <div>
+          <h3 class="text-sm font-bold text-white">Dois modos de leitura</h3>
+          <p class="text-xs text-slate-400 mt-1">Apresentação (um módulo por vez, setas <kbd class="px-1 py-0.5 rounded bg-surface-950 border border-slate-700 font-mono text-[10px]">←</kbd> <kbd class="px-1 py-0.5 rounded bg-surface-950 border border-slate-700 font-mono text-[10px]">→</kbd>) ou infográfico contínuo.</p>
+        </div>
+      </div>
+      <div class="rounded-xl bg-surface-900 border border-slate-800 p-4 flex items-start gap-3">
+        <i class="fa-solid fa-sliders text-emerald-400 mt-0.5"></i>
+        <div>
+          <h3 class="text-sm font-bold text-white">Nada é figura estática</h3>
+          <p class="text-xs text-slate-400 mt-1">Todo score exibido é calculado em JS a partir dos inputs visíveis. Mexa nos sliders e veja o ranking mudar.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Capítulo 1 -->
+    <div class="flex items-center gap-3 mb-5">
+      <h3 class="text-xs font-mono text-slate-500 uppercase tracking-widest">Capítulos</h3>
+      <div class="flex-1 h-px bg-slate-800"></div>
+    </div>
+
+    <article class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 overflow-hidden">
+      <a href="ir/index.html" class="block p-6 sm:p-8 hover:bg-brand-500/5 transition border-b border-slate-800">
+        <div class="flex items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-xl shrink-0">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-mono text-xs text-brand-400">Capítulo 1</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono">16 páginas</span>
+            </div>
+            <h4 class="text-2xl font-extrabold text-white tracking-tight">Information Retrieval (RAG)</h4>
+            <p class="text-slate-400 text-sm mt-2 leading-relaxed max-w-3xl">
+              O que é recuperação de informação e por que ela decide se um RAG funciona ou alucina.
+              Inclui demo comparando busca léxica × semântica sobre a mesma base.
+            </p>
+          </div>
+        </div>
+      </a>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-800">
+
+        <!-- 1.1 -->
+        <section class="p-5 sm:p-6">
+          <a href="ir/esparsos/index.html" class="group flex items-center gap-2.5 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+              <i class="fa-solid fa-table-cells"></i>
+            </span>
+            <div>
+              <span class="font-mono text-[10px] text-slate-500">1.1</span>
+              <h5 class="font-bold text-white text-sm group-hover:text-cyan-300 transition">Modelos Esparsos</h5>
+            </div>
+          </a>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">Casam <strong class="text-slate-300">palavra com palavra</strong> sobre um índice invertido. Rápidos, explicáveis, imbatíveis em código e nome próprio.</p>
+          <ul class="space-y-1.5">
+            <li><a href="ir/esparsos/tf-idf/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.1.1</span> TF-IDF</a></li>
+            <li><a href="ir/esparsos/bm25/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.1.2</span> BM25</a></li>
+            <li><a href="ir/esparsos/sparse-encoder/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.1.3</span> Sparse Encoder (SPLADE)</a></li>
+          </ul>
+        </section>
+
+        <!-- 1.2 -->
+        <section class="p-5 sm:p-6">
+          <a href="ir/densos/index.html" class="group flex items-center gap-2.5 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs shrink-0">
+              <i class="fa-solid fa-vector-square"></i>
+            </span>
+            <div>
+              <span class="font-mono text-[10px] text-slate-500">1.2</span>
+              <h5 class="font-bold text-white text-sm group-hover:text-emerald-300 transition">Modelos Densos</h5>
+            </div>
+          </a>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">Casam <strong class="text-slate-300">significado com significado</strong> em espaço vetorial. Acham "febre" quando a query diz "aumento de temperatura corporal".</p>
+          <ul class="space-y-1.5">
+            <li><a href="ir/densos/embeddings/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.1</span> Embeddings em IR</a></li>
+            <li><a href="ir/densos/word2vec/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.2</span> Word2Vec</a></li>
+            <li><a href="ir/densos/fundamentos/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.3</span> Origem &amp; Além da Linguagem</a></li>
+            <li><a href="ir/densos/transformer/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.4</span> Arquitetura Transformer</a></li>
+            <li><a href="ir/densos/cross-encoder/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.5</span> Cross-Encoder</a></li>
+            <li><a href="ir/densos/multi-vector/index.html" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-surface-800 transition"><span class="font-mono text-[10px] text-slate-600">1.2.6</span> Multi-Vector (ColBERT)</a></li>
+          </ul>
+        </section>
+
+        <!-- 1.3 -->
+        <section class="p-5 sm:p-6">
+          <a href="ir/rrf/index.html" class="group flex items-center gap-2.5 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xs shrink-0">
+              <i class="fa-solid fa-code-merge"></i>
+            </span>
+            <div>
+              <span class="font-mono text-[10px] text-slate-500">1.3</span>
+              <h5 class="font-bold text-white text-sm group-hover:text-purple-300 transition">Busca Híbrida e RRF</h5>
+            </div>
+          </a>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">Esparso e denso erram em situações diferentes, então rode os dois e funda os rankings <strong class="text-slate-300">por posição</strong> — sem tentar comparar scores incomparáveis. Aqui o pipeline de recuperação fica pronto.</p>
+          <a href="ir/rrf/index.html" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold transition">
+            Reciprocal Rank Fusion <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </section>
+
+      </div>
+
+      <!-- 1.4 -->
+      <section class="p-5 sm:p-6 border-t border-slate-800">
+        <a href="ir/agente/index.html" class="group flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-xs shrink-0">
+            <i class="fa-solid fa-shield-halved"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-500">1.4</span>
+            <h5 class="font-bold text-white text-sm group-hover:text-brand-300 transition">Do Retrieval ao Agente Confiável</h5>
+          </div>
+        </a>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4 max-w-4xl">
+          Com o pipeline de recuperação pronto, o que muda na ponta: por que o modelo inventa, como exigir que
+          cada afirmação saia de um trecho citável, quando o agente decide buscar de novo, como medir se está
+          funcionando — e os ganhos que vêm junto além de não alucinar.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          <a href="ir/agente/alucinacao/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-rose-500/40 transition group">
+            <i class="fa-solid fa-ghost text-rose-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">1.4.1</span><span class="text-xs text-slate-300 group-hover:text-white transition">Por que o modelo alucina</span></span>
+          </a>
+          <a href="ir/agente/grounding/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-emerald-500/40 transition group">
+            <i class="fa-solid fa-anchor text-emerald-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">1.4.2</span><span class="text-xs text-slate-300 group-hover:text-white transition">Grounding e citação</span></span>
+          </a>
+          <a href="ir/agente/laco/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-cyan-500/40 transition group">
+            <i class="fa-solid fa-rotate text-cyan-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">1.4.3</span><span class="text-xs text-slate-300 group-hover:text-white transition">O laço do agente</span></span>
+          </a>
+          <a href="ir/agente/avaliacao/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-amber-500/40 transition group">
+            <i class="fa-solid fa-ruler-combined text-amber-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">1.4.4</span><span class="text-xs text-slate-300 group-hover:text-white transition">Medir se está funcionando</span></span>
+          </a>
+          <a href="ir/agente/ganhos/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-purple-500/40 transition group">
+            <i class="fa-solid fa-gift text-purple-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">1.4.5</span><span class="text-xs text-slate-300 group-hover:text-white transition">Os outros ganhos</span></span>
+          </a>
+        </div>
+      </section>
+    </article>
+
+
+
+    <article class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-cyan-500/30 overflow-hidden mt-6">
+      <a href="redes-neurais/index.html" class="block p-6 sm:p-8 hover:bg-cyan-500/5 transition border-b border-slate-800">
+        <div class="flex items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl shrink-0">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-mono text-xs text-cyan-400">Capítulo 2</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono">12 páginas</span>
+            </div>
+            <h4 class="text-2xl font-extrabold text-white tracking-tight">Redes Neurais</h4>
+            <p class="text-slate-400 text-sm mt-2 leading-relaxed max-w-3xl">
+              O capítulo 1 usa os modelos; este abre a caixa. Quais peças existem, o que cada uma calcula,
+              por que estão nessa ordem e o que acontece se você mexer em cada uma.
+            </p>
+          </div>
+        </div>
+      </a>
+
+      <div class="p-5 sm:p-6">
+        <a href="redes-neurais/transformers/index.html" class="group flex items-center gap-2.5 mb-3">
+          <span class="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-xs shrink-0">
+            <i class="fa-solid fa-diagram-project"></i>
+          </span>
+          <div>
+            <span class="font-mono text-[10px] text-slate-500">2.1</span>
+            <h5 class="font-bold text-white text-sm group-hover:text-brand-300 transition">Transformers</h5>
+          </div>
+        </a>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4 max-w-4xl">
+          A arquitetura encoder-decoder desenhada como um mapa clicável: cada bloco do diagrama abre a página
+          que o explica.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          <a href="redes-neurais/transformers/positional-encoding/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-cyan-500/40 transition group">
+            <i class="fa-solid fa-wave-square text-cyan-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.1</span><span class="text-xs text-slate-300 group-hover:text-white transition">Positional Encoding</span></span>
+          </a>
+          <a href="redes-neurais/transformers/bloco/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-brand-500/40 transition group">
+            <i class="fa-solid fa-cube text-brand-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.2</span><span class="text-xs text-slate-300 group-hover:text-white transition">Bloco Transformer</span></span>
+          </a>
+          <a href="redes-neurais/transformers/bloco/multi-head-attention/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-brand-500/40 transition group">
+            <i class="fa-solid fa-network-wired text-brand-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.2.1</span><span class="text-xs text-slate-300 group-hover:text-white transition">Multi-head Attention</span></span>
+          </a>
+          <a href="redes-neurais/transformers/bloco/add-norm/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-emerald-500/40 transition group">
+            <i class="fa-solid fa-layer-group text-emerald-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.2.2</span><span class="text-xs text-slate-300 group-hover:text-white transition">Add & Norm</span></span>
+          </a>
+          <a href="redes-neurais/transformers/bloco/ffn/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-cyan-500/40 transition group">
+            <i class="fa-solid fa-arrows-left-right-to-line text-cyan-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.2.3</span><span class="text-xs text-slate-300 group-hover:text-white transition">Positionwise FFN</span></span>
+          </a>
+          <a href="redes-neurais/transformers/encoder/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-cyan-500/40 transition group">
+            <i class="fa-solid fa-right-to-bracket text-cyan-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.3</span><span class="text-xs text-slate-300 group-hover:text-white transition">Encoder</span></span>
+          </a>
+          <a href="redes-neurais/transformers/encoder/cross-attention/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-brand-500/40 transition group">
+            <i class="fa-solid fa-arrow-right-arrow-left text-brand-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.3.1</span><span class="text-xs text-slate-300 group-hover:text-white transition">Cross-attention</span></span>
+          </a>
+          <a href="redes-neurais/transformers/decoder/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-purple-500/40 transition group">
+            <i class="fa-solid fa-right-from-bracket text-purple-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.4</span><span class="text-xs text-slate-300 group-hover:text-white transition">Decoder</span></span>
+          </a>
+          <a href="redes-neurais/transformers/decoder/masked-attention/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-rose-500/40 transition group">
+            <i class="fa-solid fa-eye-slash text-rose-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.4.1</span><span class="text-xs text-slate-300 group-hover:text-white transition">Masked Multi-head Attention</span></span>
+          </a>
+          <a href="redes-neurais/transformers/fc/index.html" class="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 hover:border-cyan-500/40 transition group">
+            <i class="fa-solid fa-square-poll-vertical text-cyan-400 text-[11px] mt-0.5"></i>
+            <span><span class="font-mono text-[10px] text-slate-600 block">2.1.5</span><span class="text-xs text-slate-300 group-hover:text-white transition">Camada de Saída (FC)</span></span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <p class="text-xs text-slate-600 mt-8 font-mono">
+      Novo conteúdo segue o padrão descrito em <code class="text-slate-500">CLAUDE.md</code> na raiz do repositório.
+    </p>
+
+  </main>
+</body>
+</html>

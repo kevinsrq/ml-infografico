@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Os outros ganhos: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Os outros ganhos"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Atualidade, custo, governança, auditoria e conhecimento que se corrige editando um arquivo"
+      data-icon="fa-gift"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════════ MÓDULO 1 ══════════════════ -->
+    <section class="slide-section" data-nav="Sem retreinar" data-icon="fa-rotate-right">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-rotate-right"></i> Módulo 01 • Conhecimento atualizável
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O peso congela numa data. <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">A base, não.</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A <a href="../index.html" class="text-brand-400 hover:underline">introdução do capítulo</a> disse que
+          recuperação troca <em>lembrar</em> por <em>consultar</em>. A consequência menos comentada dessa troca é
+          administrativa, não estatística: o que o agente sabe passa a ser um arquivo que alguém edita, e não um
+          parâmetro que alguém treina.
+        </p>
+      </div>
+
+      <!-- Cutoff vs base viva -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-3 py-1 rounded-lg bg-rose-500/10 text-rose-400 text-xs font-mono font-semibold border border-rose-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-lock"></i> Conhecimento nos pesos
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">estático</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Data de corte do treino</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Tudo o que o modelo "sabe" sozinho foi fixado no momento em que o treino terminou. Uma norma revista
+            depois disso não existe para ele — e, pior, a versão revogada continua existindo, porque ela estava no
+            corpus. O modelo não tem um carimbo de validade por fato: ele tem uma distribuição de continuações
+            prováveis, e a redação antiga costuma ser a mais provável, porque circulou mais tempo na internet.
+          </p>
+          <div class="mt-4 rounded-xl bg-surface-950 border border-slate-800 p-3 text-[11px] text-slate-400 leading-relaxed">
+            <i class="fa-solid fa-triangle-exclamation text-rose-400 mr-1"></i>
+            O sintoma clínico disso é a resposta <strong class="text-slate-200">correta em 2023 e errada hoje</strong>,
+            entregue com a mesma confiança das duas vezes.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold border border-emerald-500/20 flex items-center gap-1.5">
+              <i class="fa-solid fa-pen-to-square"></i> Conhecimento no índice
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">vivo</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Base que alguém edita</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            O fato passa a morar num documento versionado. Trocar a resposta do agente vira trocar um parágrafo e
+            reindexar aquele <em>chunk</em>. Não há treino, não há avaliação de regressão em todas as outras
+            capacidades, não há janela de deploy de modelo — e quem faz a edição é o dono do assunto, não o time
+            de ML.
+          </p>
+          <div class="mt-4 rounded-xl bg-surface-950 border border-slate-800 p-3 text-[11px] text-slate-400 leading-relaxed">
+            <i class="fa-solid fa-circle-info text-emerald-400 mr-1"></i>
+            Isso só vale se a recuperação <strong class="text-slate-200">achar</strong> o documento editado —
+            é para isso que existe o <a href="../../index.html" class="text-brand-400 hover:underline">capítulo 1</a> inteiro.
+          </div>
+        </div>
+      </div>
+
+      <!-- Simulador: caminho da correção -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-code-branch text-purple-400"></i> O caminho da correção
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Escolha um fato que mudou. As duas colunas mostram o que é preciso fazer para o agente parar de
+              responder a versão velha.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-5" id="cen-grp"></div>
+
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-4 mb-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-1">Resposta antiga</p>
+              <p class="text-rose-300 leading-snug" id="cen-antes"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-1">Resposta correta hoje</p>
+              <p class="text-emerald-300 leading-snug" id="cen-depois"></p>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 pt-3 border-t border-slate-800 font-mono" id="cen-doc"></p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="rounded-xl bg-surface-950 border border-rose-500/25 p-4" id="via-treino"></div>
+          <div class="rounded-xl bg-surface-950 border border-emerald-500/25 p-4" id="via-edicao"></div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5" id="cen-placar"></div>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-amber-500/25 p-5 text-xs text-slate-400 leading-relaxed">
+        <p class="font-semibold text-amber-300 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-scale-unbalanced"></i> Onde fine-tuning continua sendo a ferramenta certa
+        </p>
+        <p>
+          Nada aqui diz que treinar é inútil. Fine-tuning é bom em ensinar <strong class="text-slate-200">forma</strong>:
+          formato de saída, tom institucional, vocabulário de um domínio fechado, seguir um esquema de JSON sem errar.
+          É ruim em guardar <strong class="text-slate-200">fatos que mudam</strong>, porque cada mudança exige repetir o
+          ciclo inteiro e porque não existe garantia de que o fato novo sobrescreveu o velho dentro dos pesos — só uma
+          probabilidade maior. A divisão prática: forma nos pesos, fato no índice.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════════ MÓDULO 2 ══════════════════ -->
+    <section class="slide-section" data-nav="Custo e janela" data-icon="fa-calculator">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-calculator"></i> Módulo 02 • Custo e janela de contexto
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          "Joga tudo no prompt" <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">não escala</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Com janelas de um milhão de tokens, a pergunta voltou: para que recuperar, se dá para colar a base inteira?
+          A resposta tem três partes — o que cabe, o que custa, e o que o modelo consegue de fato usar do que foi colado.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-amber-400"></i> Calculadora de contexto e custo
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Mexa nos quatro controles. Tudo abaixo recalcula na hora.</p>
+          </div>
+          <button onclick="resetCalc()" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs flex items-center gap-2 transition shrink-0">
+            <i class="fa-solid fa-rotate-left"></i> Restaurar
+          </button>
+        </div>
+
+        <!-- Controles -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 mb-6">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="sl-docs" class="text-xs text-slate-300 font-medium">Documentos na base</label>
+              <span class="font-mono text-xs text-amber-300" id="out-docs">—</span>
+            </div>
+            <input id="sl-docs" type="range" min="0" max="40" step="1" value="24" class="w-full" oninput="calcular()">
+            <p class="text-[10px] text-slate-600 mt-1 font-mono">escala logarítmica · 10 a 100.000</p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="sl-td" class="text-xs text-slate-300 font-medium">Tokens por documento</label>
+              <span class="font-mono text-xs text-amber-300" id="out-td">—</span>
+            </div>
+            <input id="sl-td" type="range" min="100" max="4000" step="100" value="800" class="w-full" oninput="calcular()">
+            <p class="text-[10px] text-slate-600 mt-1 font-mono">um chunk de 800 tokens ≈ 1 página</p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="sl-k" class="text-xs text-slate-300 font-medium">top-k recuperado</label>
+              <span class="font-mono text-xs text-amber-300" id="out-k">—</span>
+            </div>
+            <input id="sl-k" type="range" min="1" max="25" step="1" value="5" class="w-full" oninput="calcular()">
+            <p class="text-[10px] text-slate-600 mt-1 font-mono">quantos chunks entram no prompt</p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="sl-q" class="text-xs text-slate-300 font-medium">Perguntas por dia</label>
+              <span class="font-mono text-xs text-amber-300" id="out-q">—</span>
+            </div>
+            <input id="sl-q" type="range" min="0" max="40" step="1" value="24" class="w-full" oninput="calcular()">
+            <p class="text-[10px] text-slate-600 mt-1 font-mono">escala logarítmica · 10 a 100.000</p>
+          </div>
+        </div>
+
+        <!-- Fórmula -->
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-4 mb-6 overflow-x-auto">
+          <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-2">Tokens de entrada por consulta</p>
+          $$T_{\text{tudo}} = N \cdot t_d + t_q + t_{\text{sys}}
+            \qquad\qquad
+            T_{\text{RAG}} = \min(k,\,N) \cdot t_d + t_q + t_{\text{sys}}$$
+          <p class="text-[11px] text-slate-500 mt-2">
+            $N$ documentos, $t_d$ tokens por documento, $k$ recuperados, $t_q$ a pergunta e $t_{\text{sys}}$ o prompt
+            de sistema. O custo diário é $C = \frac{T \cdot q}{10^6} \cdot p$, com $q$ perguntas por dia e $p$ o preço
+            por milhão de tokens de entrada.
+          </p>
+        </div>
+
+        <!-- Resultado -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="rounded-xl bg-surface-950 border border-rose-500/30 p-4" id="box-tudo"></div>
+          <div class="rounded-xl bg-surface-950 border border-emerald-500/30 p-4" id="box-rag"></div>
+        </div>
+
+        <div class="rounded-xl bg-gradient-to-br from-surface-950 to-surface-900 border border-purple-500/30 p-4 mt-5" id="box-razao"></div>
+
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          <i class="fa-solid fa-circle-info mr-1 text-slate-600"></i>
+          <strong class="text-slate-400">O preço é um parâmetro, não um valor de fornecedor.</strong>
+          A constante <code class="font-mono text-slate-400">PRECO_POR_MILHAO_ENTRADA</code> está no topo do script
+          desta página, junto com <code class="font-mono text-slate-400">TOKENS_SISTEMA</code> e
+          <code class="font-mono text-slate-400">TOKENS_PERGUNTA</code>. Troque pelos números da sua conta antes de
+          levar qualquer resultado daqui para uma reunião. A conta também ignora de propósito o custo dos tokens de
+          saída (igual nas duas opções), o custo de embedar a pergunta (ordens de grandeza menor) e a indexação, que
+          é paga uma vez e não por consulta.
+        </p>
+      </div>
+
+      <!-- Perdido no meio -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-magnifying-glass-minus text-rose-400"></i> O terceiro problema: caber não é usar
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs text-slate-400 leading-relaxed">
+          <div class="space-y-3">
+            <p>
+              Mesmo quando a base inteira cabe na janela e o custo é aceitável, sobra o problema de atenção.
+              <em>Lost in the Middle</em> (Liu et al., 2023) mostrou que modelos recuperam bem uma informação
+              colocada no <strong class="text-slate-200">início</strong> ou no <strong class="text-slate-200">fim</strong>
+              do contexto, e pior quando ela está no meio — com a curva em U ficando mais acentuada conforme o contexto
+              cresce.
+            </p>
+            <p>
+              <strong class="text-slate-300">Seja honesto sobre o tamanho do efeito:</strong> ele varia bastante por
+              modelo, por tarefa e por geração, e modelos mais novos lidam melhor com contextos longos do que os
+              testados naquele artigo. O que se mantém é a direção — contexto longo e ruidoso é mais difícil de usar
+              do que contexto curto e denso em sinal — não uma porcentagem universal de queda.
+            </p>
+            <p>
+              É o mesmo argumento que justificou o
+              <a href="../../densos/cross-encoder/index.html" class="text-brand-400 hover:underline">cross-encoder</a>
+              no capítulo 1: reordenar para que os poucos trechos realmente úteis fiquem no topo vale mais do que
+              entregar muitos trechos mornos.
+            </p>
+          </div>
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-4 space-y-3">
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600">Três custos, não um</p>
+            <div class="flex items-start gap-3">
+              <span class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center text-[11px] shrink-0"><i class="fa-solid fa-coins"></i></span>
+              <p><strong class="text-slate-200">Dinheiro.</strong> Linear no número de tokens de entrada, multiplicado por toda pergunta que chega.</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-[11px] shrink-0"><i class="fa-solid fa-stopwatch"></i></span>
+              <p><strong class="text-slate-200">Latência.</strong> O tempo até o primeiro token cresce com o prompt. Num agente que busca, lê e busca de novo (<a href="../laco/index.html" class="text-brand-400 hover:underline">1.4.3</a>), esse atraso é pago a cada volta do laço.</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="w-7 h-7 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center text-[11px] shrink-0"><i class="fa-solid fa-brain"></i></span>
+              <p><strong class="text-slate-200">Atenção.</strong> Mais texto irrelevante competindo com o trecho certo — inclusive versões antigas do mesmo fato, que é como contexto longo vira <a href="../alucinacao/index.html" class="text-brand-400 hover:underline">alucinação por contradição</a>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════ MÓDULO 3 ══════════════════ -->
+    <section class="slide-section" data-nav="Governança" data-icon="fa-user-shield">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-user-shield"></i> Módulo 03 • Governança e permissão
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O filtro de permissão vive <span class="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">na recuperação</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Pedir ao modelo, no prompt de sistema, que "não revele a tabela salarial" é uma instrução — e instrução se
+          contorna. Não recuperar o documento é uma propriedade do sistema: o texto nunca chega ao gerador, então não
+          há o que vazar. Esse é o ganho de segurança que vem de graça com o pipeline do capítulo 1.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-filter text-cyan-400"></i> Mesma pergunta, mesmo índice, usuários diferentes
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Pergunta fixa: <span class="text-slate-200">"quais são as regras para o caso do paciente 8813-2 e quanto ganha quem assina o laudo?"</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-5" id="perfil-grp"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div class="lg:col-span-3">
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-2">Índice · clique em "remover" para tirar o documento da base</p>
+            <div class="space-y-2" id="acl-lista"></div>
+          </div>
+          <div class="lg:col-span-2 space-y-3">
+            <div class="grid grid-cols-3 gap-2" id="acl-placar"></div>
+            <div class="rounded-xl border p-4 text-xs leading-relaxed" id="acl-resposta"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/25 p-5">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-eraser text-emerald-400"></i> O caminho de saída de um documento
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Um titular exerce o direito de eliminação (LGPD, art. 18), um contrato é rescindido, um laudo foi anexado
+            ao paciente errado. Com o fato no índice, a saída existe e é banal: apagar o documento e os vetores
+            derivados dele. Na consulta seguinte, ele não é recuperável — e o que não é recuperado não é citado.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Com o mesmo fato absorvido num fine-tuning, não há operação equivalente. O dado virou peso, distribuído
+            por milhões de parâmetros. "Desaprender" é área de pesquisa ativa (<em>machine unlearning</em>), sem
+            garantia forte no caso geral; a saída prática continua sendo retreinar sem aquele dado — caro, lento e
+            que precisa ser repetido a cada pedido novo.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Três armadilhas de implementação
+          </h4>
+          <ul class="text-xs text-slate-400 space-y-2.5 leading-relaxed">
+            <li class="flex gap-2">
+              <i class="fa-solid fa-circle text-[5px] mt-1.5 text-amber-400 shrink-0"></i>
+              <span><strong class="text-slate-200">Filtrar depois de buscar não basta.</strong> Se o corte de permissão
+              acontece após o top-k, um usuário sem acesso recebe menos resultados — e o próprio número de resultados
+              faltantes já é informação sobre o que existe. O filtro precisa entrar como restrição da busca.</span>
+            </li>
+            <li class="flex gap-2">
+              <i class="fa-solid fa-circle text-[5px] mt-1.5 text-amber-400 shrink-0"></i>
+              <span><strong class="text-slate-200">O histórico da conversa também é base.</strong> De nada adianta
+              filtrar o índice se o trecho restrito ficou no turno anterior do diálogo, ou num cache compartilhado
+              entre usuários.</span>
+            </li>
+            <li class="flex gap-2">
+              <i class="fa-solid fa-circle text-[5px] mt-1.5 text-amber-400 shrink-0"></i>
+              <span><strong class="text-slate-200">Permissão muda depois da indexação.</strong> Alguém troca de área,
+              um projeto vira confidencial. Se a permissão foi copiada para dentro do vetor no dia da ingestão, ela
+              nasce desatualizada; o correto é consultar a fonte de verdade de acesso no momento da busca.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════ MÓDULO 4 ══════════════════ -->
+    <section class="slide-section" data-nav="Auditoria" data-icon="fa-magnifying-glass-chart">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-magnifying-glass-chart"></i> Módulo 04 • Auditoria e confiança
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          "Por que o agente disse isso?" <span class="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">tem resposta</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Um modelo sem recuperação é auditável apenas no que entrou e no que saiu. Com recuperação, existe um passo
+          intermediário materializado — a lista de trechos — e é isso que transforma "confie em mim" em algo que o
+          jurídico, a auditoria interna e o próprio usuário conseguem conferir.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-link text-brand-400"></i> Atribuição afirmação por afirmação
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Pergunta de um colaborador ao agente de RH: <span class="text-slate-200">"posso emendar a licença-paternidade com as férias?"</span>
+              Clique em cada afirmação da resposta para ver o que a sustenta.
+            </p>
+          </div>
+          <button onclick="alternarSemFonte()" class="px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 text-slate-300 hover:text-white text-xs flex items-center gap-2 transition shrink-0" id="btn-semfonte">
+            <i class="fa-solid fa-filter"></i> Esconder o que não tem fonte
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-2">Resposta do agente</p>
+            <div class="space-y-2" id="afirm-lista"></div>
+            <div class="grid grid-cols-2 gap-2 mt-3" id="afirm-placar"></div>
+          </div>
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-2">Evidência recuperada</p>
+            <div class="rounded-xl border p-4 text-xs leading-relaxed min-h-[120px]" id="afirm-fonte"></div>
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mt-4 mb-2">Trilha de auditoria</p>
+            <div class="rounded-xl bg-surface-950 border border-slate-800 p-3 font-mono text-[10px] text-slate-400 space-y-1 max-h-40 overflow-y-auto" id="afirm-log"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-user-check text-emerald-400"></i> Para quem usa
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Citar o trecho muda o custo de verificar. Sem fonte, conferir significa refazer a pesquisa inteira — e o
+            usuário ou confia cegamente ou abandona a ferramenta. Com fonte, conferir é ler um parágrafo. A adoção
+            costuma depender mais disso do que de um ponto a mais de acurácia, embora esse seja um padrão observado na
+            prática, não um número de benchmark: não há medida única e consolidada de "quanto a citação aumenta a
+            adoção".
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-screwdriver-wrench text-cyan-400"></i> Para quem mantém
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Com a lista de trechos registrada, um erro tem endereço. Ou o trecho certo não foi recuperado — problema
+            de busca, e o capítulo 1 tem as ferramentas — ou ele foi recuperado e a resposta o contrariou, que é
+            problema de geração. Sem esse registro, "o agente errou" é um relato sem ponto de entrada. É exatamente
+            a separação de culpa que <a href="../avaliacao/index.html" class="text-brand-400 hover:underline">1.4.4</a>
+            transforma em métrica.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-gavel text-purple-400"></i> Para quem responde por isso
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Em ambiente regulado, a pergunta não é "o agente acerta?", é "você consegue demonstrar em que base ele
+            respondeu naquele dia?". A trilha — query, versão do índice, identificadores dos trechos, quem perguntou —
+            é um artefato de conformidade. Guardar só o par pergunta/resposta não sustenta uma reconstituição, porque
+            a base mudou desde então.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════ MÓDULO 5 ══════════════════ -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-flag-checkered">
+
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-flag-checkered"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Não alucinar é o mais citado. <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">Não é o único.</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Cada método do capítulo 1 foi apresentado como uma peça de recuperação. Somados dentro de um agente, eles
+          entregam cinco coisas que nenhuma delas prometia isoladamente.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 overflow-hidden mb-8">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[720px]">
+            <thead>
+              <tr class="bg-surface-950/60 text-left">
+                <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">Ganho</th>
+                <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">O que fica impossível sem recuperação</th>
+                <th class="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-slate-500">De onde ele vem</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 font-semibold text-emerald-300"><i class="fa-solid fa-shield-halved mr-1.5"></i>Resposta ancorada</td>
+                <td class="px-4 py-3 text-slate-400">Distinguir "eu sei" de "eu escrevo algo plausível".</td>
+                <td class="px-4 py-3 text-slate-300">Pipeline inteiro — <a href="../../rrf/index.html" class="text-brand-400 hover:underline">RRF</a> garantindo recall, <a href="../../densos/cross-encoder/index.html" class="text-brand-400 hover:underline">cross-encoder</a> garantindo precisão.</td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 font-semibold text-purple-300"><i class="fa-solid fa-rotate-right mr-1.5"></i>Conhecimento atualizável</td>
+                <td class="px-4 py-3 text-slate-400">Corrigir um fato hoje sem montar dataset e retreinar.</td>
+                <td class="px-4 py-3 text-slate-300">O fato mora num documento indexado, não num peso.</td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 font-semibold text-amber-300"><i class="fa-solid fa-coins mr-1.5"></i>Custo e latência sob controle</td>
+                <td class="px-4 py-3 text-slate-400">Atender a base inteira sem pagar a base inteira por pergunta.</td>
+                <td class="px-4 py-3 text-slate-300">top-k recorta o contexto; <a href="../../esparsos/bm25/index.html" class="text-brand-400 hover:underline">BM25</a> e <a href="../../densos/embeddings/index.html" class="text-brand-400 hover:underline">embeddings</a> decidem o recorte.</td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 font-semibold text-cyan-300"><i class="fa-solid fa-user-shield mr-1.5"></i>Governança por documento</td>
+                <td class="px-4 py-3 text-slate-400">Duas respostas diferentes para dois usuários, por desenho.</td>
+                <td class="px-4 py-3 text-slate-300">Permissão vira filtro da busca; dado privado nunca vira peso.</td>
+              </tr>
+              <tr class="hover:bg-surface-850/50 transition">
+                <td class="px-4 py-3 font-semibold text-brand-300"><i class="fa-solid fa-magnifying-glass-chart mr-1.5"></i>Auditabilidade</td>
+                <td class="px-4 py-3 text-slate-400">Reconstituir em que base o agente respondeu naquele dia.</td>
+                <td class="px-4 py-3 text-slate-300">A lista de trechos é um artefato registrável, com identificador e versão.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Limitações -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/25 p-5 sm:p-6 mb-8">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-4">
+          <i class="fa-solid fa-circle-exclamation text-rose-400"></i> O que este tópico não resolve
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400 leading-relaxed">
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-4">
+            <p class="font-semibold text-rose-300 mb-1.5">Base errada é pior que base ausente</p>
+            <p>Conhecimento atualizável significa que alguém precisa atualizá-lo. Um documento obsoleto que continua
+            indexado tem o efeito oposto do prometido: ele dá ao erro a autoridade de uma citação. Governança de
+            conteúdo não é opcional — é a condição para o ganho existir.</p>
+          </div>
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-4">
+            <p class="font-semibold text-rose-300 mb-1.5">A calculadora é aritmética, não previsão</p>
+            <p>Ela compara tokens de entrada com preço linear. Ignora cache de prompt, preços por faixa, tokens de
+            saída, o custo de indexar e reindexar, e a operação de manter o índice vivo. Serve para mostrar a ordem
+            de grandeza da diferença, não para fechar um orçamento.</p>
+          </div>
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-4">
+            <p class="font-semibold text-rose-300 mb-1.5">Citar não é o mesmo que estar certo</p>
+            <p>Um agente pode citar o trecho correto e mesmo assim deturpá-lo na redação. A citação torna o erro
+            <em>verificável</em>, não impossível. Conferir se a afirmação realmente decorre do trecho é assunto de
+            <a href="../grounding/index.html" class="text-brand-400 hover:underline">1.4.2</a> e vira métrica em
+            <a href="../avaliacao/index.html" class="text-brand-400 hover:underline">1.4.4</a>.</p>
+          </div>
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-4">
+            <p class="font-semibold text-rose-300 mb-1.5">Complexidade operacional é um custo real</p>
+            <p>Ingestão, chunking, reindexação, monitoramento de qualidade da busca, filtro de permissão sincronizado
+            com o diretório de identidade. Nada disso aparece na conta de tokens, e tudo isso precisa de gente. RAG
+            troca um problema de treino por um problema de operação — melhor troca na maioria dos casos, não uma
+            troca gratuita.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três decisões de projeto que dependem de entender os ganhos, não só a alucinação.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300 shrink-0">
+            Pontuação: 0 / 3
+          </span>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Q1 -->
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Uma base de suporte tem 12.000 chunks de 800 tokens. O modelo contratado tem janela de 1M. Por que ainda assim não se cola a base inteira no prompt?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O modelo não perde a capacidade de ler; o problema é que 12.000 × 800 = 9,6M tokens simplesmente não cabem em 1M — e o custo por pergunta seguiria a conta mesmo se coubessem.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Porque modelos perdem a capacidade de ler texto acima de 100 mil tokens.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'São 9,6M tokens: estoura a janela. E mesmo numa janela maior, cada pergunta pagaria a base inteira em tokens e latência, com o trecho útil disputando atenção com 11.999 irrelevantes.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) Porque são 9,6M tokens — não cabe; e, mesmo cabendo, custo, latência e atenção escalam com o contexto inteiro a cada pergunta.</button>
+              <button onclick="Guia.answer(this, false, 'A janela é um limite por requisição, não um acumulador entre requisições. O problema é o tamanho por consulta.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Porque a janela é consumida acumulativamente ao longo do dia pelas várias perguntas.</button>
+              <button onclick="Guia.answer(this, false, 'Recuperação não é obrigatória por regra nenhuma — ela é escolhida porque resolve caber, custar e ser usável. Argumento de autoridade não é argumento de projeto.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Porque a boa prática de arquitetura exige recuperação em qualquer cenário.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <!-- Q2 -->
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Um paciente pede a eliminação dos dados dele. O que muda entre ter esses dados num índice de RAG e tê-los absorvidos num fine-tuning?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A instrução no prompt não apaga nada: o dado continua no sistema e depende do modelo obedecer. Isso é controle por promessa, não por desenho.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Nada muda: basta instruir o modelo a nunca mencionar aquele paciente.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'No índice, apagar o documento e seus vetores torna o dado não recuperável na consulta seguinte. Nos pesos, o dado está distribuído por milhões de parâmetros e a saída prática é retreinar sem ele.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) No índice existe uma operação de exclusão direta; nos pesos não existe equivalente confiável — resta retreinar sem aquele dado.</button>
+              <button onclick="Guia.answer(this, false, 'Não há botão de esquecimento em modelo treinado. Machine unlearning é pesquisa ativa, sem garantia forte no caso geral.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Nos dois casos existe um comando de "esquecer" que remove o dado em segundos.</button>
+              <button onclick="Guia.answer(this, false, 'O fine-tuning não isola o dado numa camada removível; o treino ajusta os parâmetros de forma difusa.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) No fine-tuning basta remover a última camada treinada com aquele lote.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <!-- Q3 -->
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              O agente jurídico deu uma resposta correta, verificada manualmente, mas sem apontar nenhum trecho. Qual é o problema?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Acertar uma vez não é o critério. O que se avalia é se o acerto é reconhecível sem refazer a pesquisa toda.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">A) Nenhum — se a resposta está certa, a citação é enfeite.</button>
+              <button onclick="Guia.answer(this, false, 'O consumo de tokens da citação é marginal e não é o ponto: o ponto é poder auditar.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">B) A citação economizaria tokens na resposta.</button>
+              <button data-correct onclick="Guia.answer(this, true, 'Sem âncora, a resposta certa e o palpite bem escrito são indistinguíveis para quem lê — e, quando algo der errado, não há como saber se falhou a busca ou a geração.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">C) Sem âncora verificável, essa resposta é indistinguível de um palpite bem escrito — e um erro futuro não terá onde ser diagnosticado.</button>
+              <button onclick="Guia.answer(this, false, 'Citar não deixa o modelo mais preciso por si só; deixa o resultado verificável e o erro localizável.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">D) Citar aumenta automaticamente a acurácia do modelo na próxima pergunta.</button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fecho -->
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-purple-500/30 p-5 sm:p-6">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-2">
+          <i class="fa-solid fa-flag-checkered text-purple-400"></i> Fim da seção 1.4 — e para onde ir agora
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          Este era o último tópico do capítulo. Ele fechou a lista de ganhos, mas cada um deles depende de algo que os
+          tópicos anteriores detalham: o ganho de atualidade não sobrevive a uma base contraditória
+          (<a href="../alucinacao/index.html" class="text-brand-400 hover:underline">1.4.1</a>), o ganho de auditoria só
+          é real se a resposta de fato se prende ao trecho
+          (<a href="../grounding/index.html" class="text-brand-400 hover:underline">1.4.2</a>), o ganho de custo depende
+          de o agente não buscar dez vezes quando uma bastava
+          (<a href="../laco/index.html" class="text-brand-400 hover:underline">1.4.3</a>), e nenhum deles é mais do que
+          discurso até virar número (<a href="../avaliacao/index.html" class="text-brand-400 hover:underline">1.4.4</a>).
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <a href="../avaliacao/index.html" class="group rounded-xl bg-surface-950 border border-slate-800 hover:border-amber-500/40 p-4 transition">
+            <span class="font-mono text-[10px] text-slate-600">1.4.4 · próximo passo natural</span>
+            <p class="font-bold text-white text-sm group-hover:text-amber-300 transition">Medir se está funcionando</p>
+            <p class="text-[11px] text-slate-400 mt-1">Transformar cada ganho descrito aqui numa métrica que alguém acompanha.</p>
+          </a>
+          <a href="../index.html" class="group rounded-xl bg-surface-950 border border-slate-800 hover:border-brand-500/40 p-4 transition">
+            <span class="font-mono text-[10px] text-slate-600">Seção 1.4 · índice</span>
+            <p class="font-bold text-white text-sm group-hover:text-brand-300 transition">Voltar ao mapa do capítulo</p>
+            <p class="text-[11px] text-slate-400 mt-1">Rever os cinco tópicos e a ponte com o capítulo 1.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════════ Parâmetros configuráveis da calculadora ═══════════════
+       Nenhum destes valores é preço de fornecedor: são parâmetros do exemplo.
+       Troque pelos números da sua conta antes de usar o resultado. */
+    const PRECO_POR_MILHAO_ENTRADA = 3.00;  // unidade monetária por 1.000.000 de tokens de entrada
+    const TOKENS_SISTEMA  = 400;            // prompt de sistema + instruções fixas
+    const TOKENS_PERGUNTA = 60;             // pergunta média do usuário
+    const JANELAS = [
+      { rotulo: '8k',   limite: 8000 },
+      { rotulo: '128k', limite: 128000 },
+      { rotulo: '1M',   limite: 1000000 },
+    ];
+
+    const nf  = new Intl.NumberFormat('pt-BR');
+    const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+    /* ═══════════════ Módulo 1 — caminho da correção ═══════════════ */
+
+    const CENARIOS = [
+      { id: 'saude', rotulo: 'Saúde', tema: 'Preparo de exame revisado',
+        antes:  'São necessárias 12 horas de jejum para glicemia, sem ingerir água.',
+        depois: 'São 8 horas de jejum para glicemia. Água está liberada.',
+        doc:    'MANUAL-EXAMES · seção 3.2 "Preparo — bioquímica"' },
+      { id: 'rh', rotulo: 'RH', tema: 'Benefício ampliado',
+        antes:  'A licença-paternidade é de 5 dias corridos.',
+        depois: 'A licença-paternidade passou a 20 dias corridos para quem adere ao programa.',
+        doc:    'POL-RH-12 · seção 4 "Licenças"' },
+      { id: 'juridico', rotulo: 'Jurídico', tema: 'Cláusula alterada',
+        antes:  'O aviso prévio de rescisão no contrato-modelo é de 30 dias.',
+        depois: 'O aviso prévio de rescisão no contrato-modelo passou a 60 dias.',
+        doc:    'CONTRATO-MODELO-PS · cláusula 9.1' },
+      { id: 'suporte', rotulo: 'Suporte', tema: 'Procedimento mudou com o firmware',
+        antes:  'Para resetar o roteador, segure o botão traseiro por 10 segundos.',
+        depois: 'No firmware 4.2, o reset exige o botão traseiro por 30 segundos com o cabo de força conectado.',
+        doc:    'RUNBOOK-044 · "Reset de fábrica"' },
+    ];
+
+    function etapasTreino(c) {
+      return [
+        { t: 'Reunir exemplos rotulados que ensinem a nova regra', time: 'Dados' },
+        { t: 'Montar o dataset e limpar contradições com a regra antiga', time: 'Dados' },
+        { t: 'Rodar o fine-tuning', time: 'ML' },
+        { t: 'Avaliar regressão — o modelo novo não pode piorar o resto', time: 'ML' },
+        { t: 'Aprovar e publicar a nova versão do modelo', time: 'MLOps' },
+        { t: 'Esperar a janela de deploy', time: 'MLOps' },
+        { t: 'Torcer para que o fato novo tenha sobrescrito o velho nos pesos', time: 'ML' },
+      ];
+    }
+
+    function etapasEdicao(c) {
+      return [
+        { t: 'Abrir ' + c.doc, time: 'Dono do documento' },
+        { t: 'Editar o parágrafo e versionar a mudança', time: 'Dono do documento' },
+        { t: 'Reindexar o chunk alterado', time: 'Automático' },
+      ];
+    }
+
+    let cenAtual = CENARIOS[0].id;
+
+    function selecionarCenario(id) { cenAtual = id; renderCenario(); }
+
+    function colunaEtapas(titulo, icone, cor, etapas, nota) {
+      const times = [...new Set(etapas.map(e => e.time))];
+      return `
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-bold text-${cor}-300 flex items-center gap-2"><i class="fa-solid ${icone}"></i> ${titulo}</h4>
+          <span class="font-mono text-[10px] text-slate-500">${etapas.length} etapas</span>
+        </div>
+        <ol class="space-y-2 mb-3">
+          ${etapas.map((e, i) => `
+            <li class="flex items-start gap-2 text-[11px]">
+              <span class="w-5 h-5 rounded-md bg-${cor}-500/10 border border-${cor}-500/30 text-${cor}-300 flex items-center justify-center font-mono text-[9px] shrink-0">${i + 1}</span>
+              <span class="text-slate-300 leading-snug">${esc(e.t)}
+                <span class="ml-1 text-[9px] font-mono px-1 py-0.5 rounded bg-surface-900 border border-slate-800 text-slate-500">${esc(e.time)}</span>
+              </span>
+            </li>`).join('')}
+        </ol>
+        <p class="text-[11px] text-slate-500 pt-2 border-t border-slate-800 leading-relaxed">
+          ${times.length} time${times.length > 1 ? 's' : ''} envolvido${times.length > 1 ? 's' : ''}: ${esc(times.join(', '))}. ${nota}
+        </p>`;
+    }
+
+    function renderCenario() {
+      const c = CENARIOS.find(x => x.id === cenAtual);
+      const eT = etapasTreino(c), eE = etapasEdicao(c);
+
+      document.getElementById('cen-grp').innerHTML = CENARIOS.map(x => `
+        <button onclick="selecionarCenario('${x.id}')" class="px-3 py-2 rounded-xl text-xs font-medium border transition text-left ${
+          x.id === cenAtual
+            ? 'bg-purple-600 border-purple-500 text-white'
+            : 'bg-surface-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'}">
+          <span class="font-mono text-[10px] opacity-70">${esc(x.rotulo)}</span><br>${esc(x.tema)}
+        </button>`).join('');
+
+      document.getElementById('cen-antes').textContent  = c.antes;
+      document.getElementById('cen-depois').textContent = c.depois;
+      document.getElementById('cen-doc').textContent    = 'Documento que descreve o fato: ' + c.doc;
+
+      document.getElementById('via-treino').innerHTML = colunaEtapas(
+        'Corrigir no modelo', 'fa-microchip', 'rose', eT,
+        'Enquanto o ciclo não fecha, o agente continua respondendo a versão antiga.');
+
+      document.getElementById('via-edicao').innerHTML = colunaEtapas(
+        'Corrigir no índice', 'fa-file-pen', 'emerald', eE,
+        'A próxima pergunta já recupera o texto novo.');
+
+      const timesT = new Set(eT.map(e => e.time)).size;
+      const timesE = new Set(eE.map(e => e.time)).size;
+      const placar = [
+        ['fa-list-check', 'Etapas · modelo', eT.length, 'rose'],
+        ['fa-list-check', 'Etapas · índice', eE.length, 'emerald'],
+        ['fa-users', 'Times · modelo', timesT, 'rose'],
+        ['fa-users', 'Times · índice', timesE, 'emerald'],
+      ];
+      document.getElementById('cen-placar').innerHTML = placar.map(([ico, rot, val, cor]) => `
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+          <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1"><i class="fa-solid ${ico} mr-1"></i>${rot}</p>
+          <p class="text-xl font-bold text-${cor}-300 font-mono">${val}</p>
+        </div>`).join('');
+    }
+
+    /* ═══════════════ Módulo 2 — calculadora ═══════════════ */
+
+    const logEscala = v => Math.round(Math.pow(10, 1 + v / 10));
+
+    function lerEntradas() {
+      return {
+        N:  logEscala(+document.getElementById('sl-docs').value),
+        td: +document.getElementById('sl-td').value,
+        k:  +document.getElementById('sl-k').value,
+        q:  logEscala(+document.getElementById('sl-q').value),
+      };
+    }
+
+    function chipsJanela(T) {
+      return JANELAS.map(j => {
+        const cabe = T <= j.limite;
+        const pct = Math.min(100, (T / j.limite) * 100);
+        return `<div class="rounded-lg border p-2 ${cabe ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-rose-950/30 border-rose-500/40'}">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-mono text-[10px] ${cabe ? 'text-emerald-300' : 'text-rose-300'}">${j.rotulo}</span>
+            <i class="fa-solid ${cabe ? 'fa-check text-emerald-400' : 'fa-xmark text-rose-400'} text-[10px]"></i>
+          </div>
+          <div class="h-1.5 rounded-full bg-surface-900 overflow-hidden">
+            <div class="h-full ${cabe ? 'bg-emerald-500' : 'bg-rose-500'}" style="width:${pct.toFixed(1)}%"></div>
+          </div>
+          <p class="text-[9px] font-mono text-slate-500 mt-1">${cabe ? (T / j.limite * 100).toFixed(1) + '% da janela' : (T / j.limite).toFixed(1) + '× acima'}</p>
+        </div>`;
+      }).join('');
+    }
+
+    function caixaOpcao(titulo, icone, cor, T, custoDia, detalhe) {
+      return `
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-sm font-bold text-${cor}-300 flex items-center gap-2"><i class="fa-solid ${icone}"></i> ${titulo}</h4>
+        </div>
+        <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600">Tokens de entrada por consulta</p>
+        <p class="text-3xl font-extrabold text-${cor}-300 font-mono leading-none my-1">${nf.format(T)}</p>
+        <p class="text-[11px] text-slate-500 mb-3">${detalhe}</p>
+        <div class="rounded-lg bg-surface-900 border border-slate-800 p-2.5 mb-3">
+          <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600">Custo por dia · entrada</p>
+          <p class="text-lg font-bold text-slate-100 font-mono">${nf2.format(custoDia)} <span class="text-[10px] text-slate-500 font-normal">un. monetárias</span></p>
+        </div>
+        <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-1.5">Cabe na janela de</p>
+        <div class="grid grid-cols-3 gap-2">${chipsJanela(T)}</div>`;
+    }
+
+    function calcular() {
+      const { N, td, k, q } = lerEntradas();
+      const kEfetivo = Math.min(k, N);
+
+      document.getElementById('out-docs').textContent = nf.format(N) + ' docs';
+      document.getElementById('out-td').textContent   = nf.format(td) + ' tokens';
+      document.getElementById('out-k').textContent    = 'k = ' + k + (kEfetivo < k ? ' (só há ' + N + ')' : '');
+      document.getElementById('out-q').textContent    = nf.format(q) + ' /dia';
+
+      const fixo  = TOKENS_PERGUNTA + TOKENS_SISTEMA;
+      const Ttudo = N * td + fixo;
+      const Trag  = kEfetivo * td + fixo;
+
+      const custo = T => (T * q / 1e6) * PRECO_POR_MILHAO_ENTRADA;
+      const cTudo = custo(Ttudo), cRag = custo(Trag);
+
+      document.getElementById('box-tudo').innerHTML = caixaOpcao(
+        'Tudo no prompt', 'fa-box-archive', 'rose', Ttudo, cTudo,
+        nf.format(N) + ' × ' + nf.format(td) + ' + ' + fixo + ' fixos');
+
+      document.getElementById('box-rag').innerHTML = caixaOpcao(
+        'RAG com top-k', 'fa-magnifying-glass', 'emerald', Trag, cRag,
+        kEfetivo + ' × ' + nf.format(td) + ' + ' + fixo + ' fixos');
+
+      const razao = Ttudo / Trag;
+      const economiaDia = cTudo - cRag;
+      const cabeTudo = JANELAS.filter(j => Ttudo <= j.limite).map(j => j.rotulo);
+      const cabeRag  = JANELAS.filter(j => Trag  <= j.limite).map(j => j.rotulo);
+
+      document.getElementById('box-razao').innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-1"><i class="fa-solid fa-divide mr-1"></i>Razão de contexto</p>
+            <p class="text-2xl font-extrabold text-purple-300 font-mono">${razao >= 100 ? nf.format(Math.round(razao)) : nf2.format(razao)}×</p>
+            <p class="text-[11px] text-slate-500 mt-1">tokens a mais por consulta na opção "tudo no prompt"</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-1"><i class="fa-solid fa-piggy-bank mr-1"></i>Diferença por dia</p>
+            <p class="text-2xl font-extrabold text-purple-300 font-mono">${nf2.format(economiaDia)}</p>
+            <p class="text-[11px] text-slate-500 mt-1">un. monetárias, ao preço configurado de ${nf2.format(PRECO_POR_MILHAO_ENTRADA)} por 1M tokens</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-widest text-slate-600 mb-1"><i class="fa-solid fa-window-maximize mr-1"></i>Onde cada uma cabe</p>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Tudo no prompt: <span class="font-mono ${cabeTudo.length ? 'text-emerald-300' : 'text-rose-300'}">${cabeTudo.length ? cabeTudo.join(', ') : 'nenhuma janela'}</span><br>
+              RAG top-k: <span class="font-mono ${cabeRag.length ? 'text-emerald-300' : 'text-rose-300'}">${cabeRag.length ? cabeRag.join(', ') : 'nenhuma janela'}</span>
+            </p>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 pt-3 border-t border-slate-800 leading-relaxed">
+          Repare no comportamento: a razão tende a <span class="font-mono text-slate-300">N / k</span> e cresce com a base,
+          enquanto o custo do RAG praticamente não se move quando você arrasta o slider de documentos. É por isso que
+          recuperação é uma decisão de arquitetura e não de economia pontual — ela desacopla o tamanho do acervo do
+          preço de cada resposta.
+        </p>`;
+    }
+
+    function resetCalc() {
+      document.getElementById('sl-docs').value = 24;
+      document.getElementById('sl-td').value   = 800;
+      document.getElementById('sl-k').value    = 5;
+      document.getElementById('sl-q').value    = 24;
+      calcular();
+      Guia.toast('Controles restaurados.', 'fa-rotate-left');
+    }
+
+    /* ═══════════════ Módulo 3 — permissão ═══════════════ */
+
+    const PERFIS = [
+      { id: 'medico',   rotulo: 'Médica assistente', icone: 'fa-user-doctor',     grupos: ['clinico', 'geral'] },
+      { id: 'rh',       rotulo: 'Analista de RH',    icone: 'fa-users',           grupos: ['rh', 'geral'] },
+      { id: 'juridico', rotulo: 'Advogado interno',  icone: 'fa-scale-balanced',  grupos: ['juridico', 'rh', 'geral'] },
+      { id: 'suporte',  rotulo: 'Suporte N1',        icone: 'fa-headset',         grupos: ['suporte', 'geral'] },
+    ];
+
+    const DOCS = [
+      { id: 'DOC-014', tit: 'Protocolo de sedação — centro cirúrgico', grupo: 'clinico',  txt: 'Sedação consciente exige monitorização contínua de SpO₂ durante todo o procedimento.' },
+      { id: 'DOC-058', tit: 'Laudo do paciente 8813-2', grupo: 'clinico', pessoal: true,  txt: 'Paciente 8813-2, exame de 12/03: alteração compatível com achado benigno; reavaliar em 6 meses.' },
+      { id: 'DOC-027', tit: 'Tabela salarial por faixa — 2026', grupo: 'rh',              txt: 'Faixa sênior de radiologia: remuneração entre as bandas 7 e 9 da tabela interna.' },
+      { id: 'DOC-031', tit: 'Contrato-modelo de prestação médica', grupo: 'juridico',     txt: 'Cláusula 9.1 — o aviso prévio de rescisão é de 60 dias a partir da notificação.' },
+      { id: 'DOC-044', tit: 'Runbook: laudo não sincroniza no portal', grupo: 'suporte',  txt: 'Se o laudo não aparece no portal, reprocessar a fila de integração antes de abrir chamado N2.' },
+      { id: 'DOC-002', tit: 'Código de conduta', grupo: 'geral',                          txt: 'Informação de paciente e de remuneração só circula entre quem tem necessidade funcional de conhecê-la.' },
+    ];
+
+    let perfilAtual = 'medico';
+    const removidos = new Set();
+
+    function selecionarPerfil(id) { perfilAtual = id; renderAcl(); }
+
+    function alternarRemocao(id) {
+      if (removidos.has(id)) { removidos.delete(id); Guia.toast(id + ' voltou ao índice.', 'fa-rotate-left'); }
+      else { removidos.add(id); Guia.toast(id + ' removido do índice e dos vetores.', 'fa-eraser'); }
+      renderAcl();
+    }
+
+    function renderAcl() {
+      const p = PERFIS.find(x => x.id === perfilAtual);
+
+      document.getElementById('perfil-grp').innerHTML = PERFIS.map(x => `
+        <button onclick="selecionarPerfil('${x.id}')" class="px-3 py-2 rounded-xl text-xs font-medium border transition flex items-center gap-2 ${
+          x.id === perfilAtual
+            ? 'bg-cyan-600 border-cyan-500 text-white'
+            : 'bg-surface-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'}">
+          <i class="fa-solid ${x.icone} text-[10px]"></i> ${esc(x.rotulo)}</button>`).join('');
+
+      const estados = DOCS.map(d => {
+        if (removidos.has(d.id)) return { d, estado: 'removido' };
+        if (!p.grupos.includes(d.grupo)) return { d, estado: 'bloqueado' };
+        return { d, estado: 'recuperavel' };
+      });
+
+      const cores = {
+        recuperavel: ['bg-emerald-950/25 border-emerald-500/40', 'text-emerald-300', 'recuperável'],
+        bloqueado:   ['bg-surface-950 border-slate-800 opacity-60', 'text-slate-500', 'fora do escopo de permissão'],
+        removido:    ['bg-rose-950/20 border-rose-500/30 opacity-70', 'text-rose-300', 'removido da base'],
+      };
+
+      document.getElementById('acl-lista').innerHTML = estados.map(({ d, estado }) => {
+        const [caixa, cor, rot] = cores[estado];
+        const visivel = estado === 'recuperavel';
+        return `<div class="rounded-xl border p-3 transition ${caixa}">
+          <div class="flex items-start justify-between gap-2 mb-1">
+            <div class="min-w-0">
+              <span class="font-mono text-[10px] ${cor}">${d.id}</span>
+              <span class="text-xs text-slate-200 ml-1">${esc(d.tit)}</span>
+              ${d.pessoal ? '<span class="ml-1 text-[9px] font-mono px-1 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">dado pessoal</span>' : ''}
+            </div>
+            <button onclick="alternarRemocao('${d.id}')" class="text-[10px] font-mono px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition shrink-0">
+              ${removidos.has(d.id) ? 'restaurar' : 'remover'}
+            </button>
+          </div>
+          <p class="text-[11px] leading-snug ${visivel ? 'text-slate-300' : 'text-slate-600 italic'}">
+            ${visivel ? esc(d.txt) : 'conteúdo não entregue ao gerador — ' + rot}
+          </p>
+          <p class="text-[9px] font-mono mt-1.5 ${cor}">grupo: ${d.grupo} · ${rot}</p>
+        </div>`;
+      }).join('');
+
+      const rec = estados.filter(e => e.estado === 'recuperavel').length;
+      const blo = estados.filter(e => e.estado === 'bloqueado').length;
+      const rem = estados.filter(e => e.estado === 'removido').length;
+
+      const cartao = (rot, val, cor) => `
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-3 text-center">
+          <p class="text-2xl font-extrabold font-mono text-${cor}-300">${val}</p>
+          <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mt-1">${rot}</p>
+        </div>`;
+
+      document.getElementById('acl-placar').innerHTML =
+        cartao('recuperáveis', rec, 'emerald') + cartao('bloqueados', blo, 'slate') + cartao('removidos', rem, 'rose');
+
+      const temSalario = estados.some(e => e.estado === 'recuperavel' && e.d.grupo === 'rh');
+      const temLaudo   = estados.some(e => e.estado === 'recuperavel' && e.d.pessoal);
+      const box = document.getElementById('acl-resposta');
+      box.className = 'rounded-xl border p-4 text-xs leading-relaxed ' +
+        (rec === 0 ? 'bg-rose-950/25 border-rose-500/40 text-rose-100' : 'bg-surface-950 border-slate-800 text-slate-300');
+
+      const partes = [];
+      partes.push(temLaudo
+        ? 'Sobre o paciente 8813-2, o agente responde com base no laudo recuperado.'
+        : 'Sobre o paciente 8813-2, o agente não tem material recuperável e diz isso.');
+      partes.push(temSalario
+        ? 'Sobre a remuneração de quem assina o laudo, ele responde pela tabela salarial.'
+        : 'Sobre a remuneração, não há nada recuperável — a faixa salarial nunca entra no prompt deste usuário.');
+
+      box.innerHTML = `
+        <p class="font-semibold text-slate-200 mb-2 flex items-center gap-2"><i class="fa-solid ${p.icone} text-cyan-400"></i> Resposta para ${esc(p.rotulo)}</p>
+        <p>${partes.join(' ')}</p>
+        <p class="mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-500">
+          ${rec} de ${DOCS.length} documentos entraram no contexto. O que ficou de fora não foi "escondido" pelo modelo:
+          ele nunca recebeu o texto.
+        </p>`;
+    }
+
+    /* ═══════════════ Módulo 4 — atribuição e trilha ═══════════════ */
+
+    const AFIRMACOES = [
+      { id: 'a1', txt: 'A licença-paternidade da empresa é de 20 dias corridos para quem adere ao Programa Empresa Cidadã.',
+        fonte: { doc: 'POL-RH-12', sec: 'seção 4.1', txt: 'A licença-paternidade é de 5 dias legais, estendidos para 20 dias corridos aos colaboradores inscritos no Programa Empresa Cidadã.' } },
+      { id: 'a2', txt: 'Ela pode ser emendada às férias, desde que haja acordo com a gestão da área.',
+        fonte: { doc: 'POL-RH-12', sec: 'seção 4.3', txt: 'A licença pode ser emendada a período de férias mediante acordo prévio registrado com a gestão da área.' } },
+      { id: 'a3', txt: 'O pedido precisa entrar no sistema com 30 dias de antecedência.',
+        fonte: { doc: 'POL-RH-07', sec: 'seção 2', txt: 'Solicitações de afastamento programado devem ser registradas no portal com, no mínimo, 30 dias de antecedência.' } },
+      { id: 'a4', txt: 'Em caso de parto prematuro, a contagem dos 20 dias começa na alta hospitalar do recém-nascido.',
+        fonte: null },
+    ];
+
+    let afirmSel = 'a1';
+    let esconderSemFonte = false;
+    const trilha = [];
+
+    function registrar(linha) {
+      const t = new Date().toLocaleTimeString('pt-BR', { hour12: false });
+      trilha.unshift('[' + t + '] ' + linha);
+      if (trilha.length > 20) trilha.pop();
+      const el = document.getElementById('afirm-log');
+      if (el) el.innerHTML = trilha.map(l => '<div>' + esc(l) + '</div>').join('');
+    }
+
+    function selecionarAfirmacao(id) {
+      afirmSel = id;
+      const a = AFIRMACOES.find(x => x.id === id);
+      registrar('consulta de atribuição · afirmação ' + id + ' → ' + (a.fonte ? a.fonte.doc + ' ' + a.fonte.sec : 'SEM FONTE'));
+      renderAfirmacoes();
+    }
+
+    function alternarSemFonte() {
+      esconderSemFonte = !esconderSemFonte;
+      if (esconderSemFonte && !AFIRMACOES.find(x => x.id === afirmSel).fonte) afirmSel = AFIRMACOES.find(x => x.fonte).id;
+      registrar('filtro "somente com fonte" ' + (esconderSemFonte ? 'ativado' : 'desativado'));
+      renderAfirmacoes();
+    }
+
+    function renderAfirmacoes() {
+      const lista = esconderSemFonte ? AFIRMACOES.filter(a => a.fonte) : AFIRMACOES;
+
+      document.getElementById('btn-semfonte').innerHTML = esconderSemFonte
+        ? '<i class="fa-solid fa-eye"></i> Mostrar tudo que o agente escreveu'
+        : '<i class="fa-solid fa-filter"></i> Esconder o que não tem fonte';
+
+      document.getElementById('afirm-lista').innerHTML = lista.map((a, i) => {
+        const sel = a.id === afirmSel;
+        const ok = !!a.fonte;
+        return `<button onclick="selecionarAfirmacao('${a.id}')" class="w-full text-left rounded-xl border p-3 transition ${
+          sel ? (ok ? 'bg-emerald-950/30 border-emerald-500/50' : 'bg-rose-950/30 border-rose-500/50')
+              : 'bg-surface-950 border-slate-800 hover:border-slate-700'}">
+          <div class="flex items-start gap-2">
+            <span class="w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-mono shrink-0 ${
+              ok ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'}">
+              <i class="fa-solid ${ok ? 'fa-link' : 'fa-link-slash'}"></i>
+            </span>
+            <span class="text-[11px] leading-snug ${ok ? 'text-slate-200' : 'text-rose-200'}">${esc(a.txt)}</span>
+          </div>
+          <p class="text-[9px] font-mono mt-1.5 ml-7 ${ok ? 'text-emerald-400/70' : 'text-rose-400/80'}">
+            ${ok ? a.fonte.doc + ' · ' + a.fonte.sec : 'nenhum trecho recuperado sustenta esta frase'}
+          </p>
+        </button>`;
+      }).join('');
+
+      const comFonte = AFIRMACOES.filter(a => a.fonte).length;
+      const cobertura = (comFonte / AFIRMACOES.length) * 100;
+      document.getElementById('afirm-placar').innerHTML = `
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+          <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Cobertura de citação</p>
+          <p class="text-xl font-extrabold font-mono ${cobertura === 100 ? 'text-emerald-300' : 'text-amber-300'}">${nf2.format(cobertura)}%</p>
+          <p class="text-[10px] text-slate-500 mt-1">${comFonte} de ${AFIRMACOES.length} afirmações</p>
+        </div>
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+          <p class="text-[9px] font-mono uppercase tracking-widest text-slate-600 mb-1">Documentos citados</p>
+          <p class="text-xl font-extrabold font-mono text-brand-300">${new Set(AFIRMACOES.filter(a => a.fonte).map(a => a.fonte.doc)).size}</p>
+          <p class="text-[10px] text-slate-500 mt-1">distintos no top-k</p>
+        </div>`;
+
+      const a = AFIRMACOES.find(x => x.id === afirmSel);
+      const box = document.getElementById('afirm-fonte');
+      if (a.fonte) {
+        box.className = 'rounded-xl border p-4 text-xs leading-relaxed min-h-[120px] bg-emerald-950/20 border-emerald-500/40';
+        box.innerHTML = `
+          <p class="font-mono text-[10px] text-emerald-300 mb-2">${esc(a.fonte.doc)} · ${esc(a.fonte.sec)}</p>
+          <p class="text-slate-200">"${esc(a.fonte.txt)}"</p>
+          <p class="text-[11px] text-emerald-400/80 mt-3 pt-3 border-t border-emerald-500/20">
+            Dá para conferir palavra por palavra sem refazer a pesquisa. Isso é o que torna o acerto reconhecível.
+          </p>`;
+      } else {
+        box.className = 'rounded-xl border p-4 text-xs leading-relaxed min-h-[120px] bg-rose-950/20 border-rose-500/40';
+        box.innerHTML = `
+          <p class="font-mono text-[10px] text-rose-300 mb-2">sem trecho de apoio</p>
+          <p class="text-slate-200">Nenhum dos documentos recuperados menciona parto prematuro nem alta hospitalar.
+          A frase é plausível — existe regra parecida em outros contextos — e é exatamente por isso que ela passaria
+          despercebida numa resposta sem atribuição.</p>
+          <p class="text-[11px] text-rose-400/80 mt-3 pt-3 border-t border-rose-500/20">
+            Com atribuição por afirmação, a frase sem âncora fica visível antes de virar decisão de alguém.
+          </p>`;
+      }
+    }
+
+    /* ═══════════════ Init ═══════════════ */
+
+    Guia.ready(() => {
+      renderCenario();
+      calcular();
+      renderAcl();
+      const docsApoio = new Set(AFIRMACOES.filter(a => a.fonte).map(a => a.fonte.doc)).size;
+      registrar('sessão iniciada · ' + AFIRMACOES.length + ' afirmações na resposta · ' + docsApoio + ' documento(s) de apoio recuperado(s)');
+      renderAfirmacoes();
+    });
+  </script>
+</body>
+</html>

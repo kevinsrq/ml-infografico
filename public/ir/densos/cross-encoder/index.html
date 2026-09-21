@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cross-Encoder: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Cross-Encoder"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Re-ranking por atenção cruzada entre consulta e documento"
+      data-icon="fa-code-compare"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ===================== MÓDULO 01 ===================== -->
+    <section class="slide-section" data-nav="Bi × Cross" data-icon="fa-code-compare">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Dois jeitos de usar o mesmo <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">Transformer</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          BM25 e Embeddings terminaram com a mesma promessa: <em>“os top-k vão para um re-ranker”</em>. Este é o re-ranker.
+          O bi-encoder comprime consulta e documento <strong>separadamente</strong> e compara depois; o cross-encoder
+          (Nogueira &amp; Cho, 2019 — <em>Passage Re-ranking with BERT</em>) lê os dois na <strong>mesma sequência</strong>.
+        </p>
+      </div>
+
+      <!-- Comparação lado a lado -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6 flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-mono font-semibold border border-cyan-500/30 flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-left-right-to-line"></i> 1º estágio • Bi-Encoder
+            </span>
+            <span class="text-[11px] text-slate-500 font-mono">indexável</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Codifica separado, compara no fim</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Cada texto vira um vetor sozinho. O vetor do documento é calculado <strong>uma vez</strong>, na indexação, e fica guardado.
+            Na consulta só sobra um produto escalar normalizado.
+          </p>
+          <div class="bg-surface-950 rounded-xl p-4 border border-slate-800 text-xs text-slate-300 mb-4 overflow-x-auto">
+            $$\text{score}(q,d) \;=\; \cos\big(E(q),\, E(d)\big) \;=\; \frac{E(q)\cdot E(d)}{\lVert E(q)\rVert\,\lVert E(d)\rVert}$$
+          </div>
+          <ul class="text-xs text-slate-400 space-y-2 mt-auto">
+            <li><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i> $E(d)$ é pré-computável: 1 vetor por documento, índice ANN.</li>
+            <li><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i> Latência quase constante em bases de milhões.</li>
+            <li><i class="fa-solid fa-xmark text-rose-400 mr-1.5"></i> A interação entre as palavras dos dois lados nunca acontece.</li>
+          </ul>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6 flex flex-col relative overflow-hidden glow-indigo">
+          <div class="absolute -top-12 -right-12 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <span class="px-3 py-1 rounded-lg bg-brand-500/10 text-brand-300 text-xs font-mono font-semibold border border-brand-500/30 flex items-center gap-1.5">
+              <i class="fa-solid fa-code-compare"></i> 2º estágio • Cross-Encoder
+            </span>
+            <span class="text-[11px] text-rose-400 font-mono">não indexável</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2 relative z-10">Lê os dois juntos, devolve um número</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4 relative z-10">
+            Consulta e documento entram concatenados. Cada token de um lado atende a cada token do outro, em todas as camadas.
+            A saída é um escalar de relevância — e <strong>nada</strong> sobra para guardar.
+          </p>
+          <div class="bg-surface-950 rounded-xl p-4 border border-brand-500/20 text-xs text-slate-300 mb-4 overflow-x-auto relative z-10">
+            $$\text{score}(q,d) \;=\; w^\top\,\text{Transformer}\big([\text{CLS}]\;q\;[\text{SEP}]\;d\;[\text{SEP}]\big)_{[\text{CLS}]}$$
+          </div>
+          <ul class="text-xs text-slate-400 space-y-2 mt-auto relative z-10">
+            <li><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i> Capta negação, ordem e correferência entre os dois textos.</li>
+            <li><i class="fa-solid fa-check text-emerald-400 mr-1.5"></i> Ganho grande de precisão no topo do ranking.</li>
+            <li><i class="fa-solid fa-xmark text-rose-400 mr-1.5"></i> Custa uma passagem inteira do Transformer <em>por par</em>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- SIMULADOR: ranking do bi-encoder e o erro plantado -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-flask text-cyan-400"></i> Onde o bi-encoder escorrega
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Cinco candidatos de um catálogo de exames. Troque a consulta e veja o cosseno reordenar.</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-slate-400 font-medium">Consulta:</span>
+            <button class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-brand-500 text-white font-bold" data-qidx="0">“açúcar no sangue em jejum”</button>
+            <button class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-surface-950 border border-slate-800 text-slate-300 hover:text-white" data-qidx="1">“hemograma sem jejum”</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div class="lg:col-span-3">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-3">Ranking do bi-encoder · cosseno (ilustrativo)</div>
+            <div id="bi-rank" class="space-y-2.5"></div>
+            <div id="bi-note" class="mt-4 text-[11px] leading-relaxed p-3 rounded-xl bg-surface-950 border border-slate-800 text-slate-300"></div>
+          </div>
+          <div class="lg:col-span-2">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-3">Os 5 candidatos do 1º estágio</div>
+            <div id="doc-list" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela comparativa -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-table-list text-brand-400"></i> Bi-Encoder × Cross-Encoder na prática
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[640px]">
+            <thead>
+              <tr class="text-left text-slate-400 border-b border-slate-800">
+                <th class="py-2.5 pr-4 font-semibold">Critério</th>
+                <th class="py-2.5 pr-4 font-semibold text-cyan-300">Bi-Encoder</th>
+                <th class="py-2.5 font-semibold text-brand-300">Cross-Encoder</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-4 font-medium text-slate-200">Representação do doc reaproveitável?</td>
+                <td class="py-2.5 pr-4 text-emerald-300">Sim — 1 vetor por doc, calculado uma vez e indexado</td>
+                <td class="py-2.5 text-rose-300">Não — o doc só existe junto da consulta</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-4 font-medium text-slate-200">Precisão de ranking</td>
+                <td class="py-2.5 pr-4 text-slate-400">Boa (comparação de resumos comprimidos)</td>
+                <td class="py-2.5 text-emerald-300">Excelente (atenção token a token entre os lados)</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-4 font-medium text-slate-200">Negação e ordem</td>
+                <td class="py-2.5 pr-4 text-rose-300">Frágil (“sem jejum” $\approx$ “com jejum”)</td>
+                <td class="py-2.5 text-emerald-300">Capta (“sem” da consulta atende ao “sem” do doc)</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-4 font-medium text-slate-200">Custo por consulta em base grande</td>
+                <td class="py-2.5 pr-4 text-emerald-300">1 passagem (a consulta) + busca ANN em ms</td>
+                <td class="py-2.5 text-rose-300">1 passagem por par $(q,d)$: cresce linear com $N$</td>
+              </tr>
+              <tr class="border-b border-slate-800/70">
+                <td class="py-2.5 pr-4 font-medium text-slate-200">Onde entra no pipeline</td>
+                <td class="py-2.5 pr-4 text-slate-400">1º estágio: recuperação (<em>retrieval</em>)</td>
+                <td class="py-2.5 text-slate-400">2º estágio: <em>re-ranking</em> dos top-k</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-4 font-medium text-slate-200">Exemplo de modelo</td>
+                <td class="py-2.5 pr-4 font-mono text-[11px] text-cyan-300">intfloat/multilingual-e5-base</td>
+                <td class="py-2.5 font-mono text-[11px] text-brand-300">cross-encoder/mmarco-mMiniLMv2-L12-H384-v1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 02 ===================== -->
+    <section class="slide-section" data-nav="Fita & Atenção" data-icon="fa-arrows-to-dot">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-arrows-to-dot"></i> Módulo 02 • Mecanismo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Uma fita só: <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">[CLS] q [SEP] d [SEP]</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O cross-encoder não codifica nada separado. Consulta e documento entram na mesma sequência de tokens e o modelo
+          processa tudo de uma vez — a atenção da página do Transformer, agora atravessando os dois textos.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div class="text-xs text-slate-400">
+            Consulta em teste: <span id="tape-q" class="font-mono text-brand-300 font-bold"></span>
+            · documento em foco: <span id="tape-d" class="font-mono text-cyan-300 font-bold"></span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-brand-500 text-white font-bold" data-qidx="0">“açúcar no sangue em jejum”</button>
+            <button class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-surface-950 border border-slate-800 text-slate-300 hover:text-white" data-qidx="1">“hemograma sem jejum”</button>
+          </div>
+        </div>
+
+        <div id="tape" class="flex flex-wrap items-center gap-1.5 p-4 rounded-xl bg-surface-950 border border-slate-800 mb-3"></div>
+        <p class="text-[11px] text-slate-500">
+          <i class="fa-solid fa-circle-info mr-1"></i>
+          A partir daqui não existe “vetor da consulta” nem “vetor do documento”: existe uma sequência de
+          <span id="tape-count" class="font-mono text-slate-300"></span> tokens que o modelo processa inteira.
+        </p>
+
+        <details class="mt-4 rounded-xl bg-surface-950 border border-slate-800 p-4">
+          <summary class="cursor-pointer text-xs font-semibold text-cyan-300">Como o modelo sabe de que lado veio cada token? (segment embeddings)</summary>
+          <p class="text-[11px] text-slate-400 leading-relaxed mt-3">
+            Além do embedding do token e do embedding de posição, cada posição recebe um <em>segment embedding</em>:
+            o vetor $\mathbf{0}$ para tudo até o primeiro <span class="font-mono text-slate-300">[SEP]</span> (consulta) e o vetor $\mathbf{1}$ para o resto (documento).
+            Assim “jejum” na consulta e “jejum” no documento entram com vetores diferentes, e a atenção consegue distinguir
+            “olhar para o outro lado” de “olhar para o próprio lado”.
+          </p>
+        </details>
+      </div>
+
+      <!-- SIMULADOR: grade de atenção cruzada -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex items-start justify-between gap-4 flex-wrap mb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-table-cells text-cyan-400"></i> Atenção cruzada: clique numa célula
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Linhas = tokens da consulta. Colunas = tokens do documento em foco. Uma cabeça de uma camada.</p>
+          </div>
+          <span class="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-mono">pesos ilustrativos</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <div id="attn-grid" class="gap-1 p-3 rounded-xl bg-surface-950 border border-slate-800"></div>
+        </div>
+
+        <div id="attn-out" class="mt-4 font-mono text-sm text-cyan-300"></div>
+        <div id="attn-note" class="mt-3 text-[11px] leading-relaxed p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/20 text-slate-300"></div>
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          Num modelo real há 12+ camadas $\times$ 12 cabeças e os valores não são legíveis assim — o que importa é a
+          <strong>forma</strong> da grade: tudo aceso em algum grau, nos dois sentidos. Guarde isso: no Multi-Vector (ColBERT)
+          só o máximo de cada linha vai contar.
+        </p>
+      </div>
+
+      <!-- SIMULADOR: logit e sigmoid -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-square-root-variable text-brand-400"></i> Do vetor de [CLS] ao score
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Escolha o documento: o logit vem do modelo, a probabilidade é calculada aqui com $\sigma$.</p>
+          </div>
+          <div id="logit-doc-btns" class="flex items-center gap-1.5 flex-wrap"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div class="lg:col-span-3">
+            <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono mb-4">
+              <span class="px-2.5 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300">[CLS] q [SEP] d [SEP]</span>
+              <i class="fa-solid fa-arrow-right text-slate-600"></i>
+              <span class="px-2.5 py-1.5 rounded-lg bg-brand-500/10 border border-brand-500/30 text-brand-300">Transformer (12 camadas)</span>
+              <i class="fa-solid fa-arrow-right text-slate-600"></i>
+              <span class="px-2.5 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300">h<sub>[CLS]</sub></span>
+              <i class="fa-solid fa-arrow-right text-slate-600"></i>
+              <span class="px-2.5 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300">w ·</span>
+              <i class="fa-solid fa-arrow-right text-slate-600"></i>
+              <span id="logit-chip" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold"></span>
+            </div>
+            <div class="rounded-xl bg-surface-950 border border-slate-800 p-4 text-xs text-slate-300 overflow-x-auto">
+              $$\sigma(x) = \frac{1}{1+e^{-x}} \qquad\Longrightarrow\qquad \text{probabilidade de relevância}$$
+            </div>
+            <div class="mt-4">
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                <span>$\sigma(\text{logit})$</span>
+                <span id="sigma-val" class="text-emerald-400 font-bold"></span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div id="sigma-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 space-y-3">
+            <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/30">
+              <div class="flex items-center gap-2 text-rose-400 text-xs font-semibold mb-2">
+                <i class="fa-solid fa-ban"></i> Nada disso é indexável
+              </div>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                Se a consulta mudar, <strong>tudo</strong> — atenção, $h_{[\text{CLS}]}$, logit — é recalculado do zero.
+                Não existe “vetor do documento” para guardar num banco vetorial.
+              </p>
+            </div>
+            <div id="logit-note" class="p-4 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400 leading-relaxed"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 03 ===================== -->
+    <section class="slide-section" data-nav="Nada pré-computável" data-icon="fa-database">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-database"></i> Módulo 03 • A conta do custo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que é pago na indexação e <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">o que é pago na consulta</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Todo motor de busca escolhe onde gastar. Os outros três gastam na indexação e ficam baratos na consulta.
+          O cross-encoder não tem indexação — ele empurra o trabalho inteiro para o instante da pergunta.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="text-xs uppercase tracking-wider font-mono text-emerald-400 mb-3">
+            <i class="fa-solid fa-box-archive mr-1.5"></i> Na indexação (uma vez, offline)
+          </h3>
+          <div id="cost-idx" class="space-y-1.5"></div>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5">
+          <h3 class="text-xs uppercase tracking-wider font-mono text-rose-400 mb-3">
+            <i class="fa-solid fa-bolt mr-1.5"></i> Na consulta (a cada pergunta)
+          </h3>
+          <div id="cost-qry" class="space-y-1.5"></div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR: recibo de custo -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-receipt text-amber-400"></i> Recibo de custo por tamanho da base
+          </h3>
+          <span class="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-mono">extrapolação ilustrativa, não benchmark</span>
+        </div>
+
+        <div class="flex items-center gap-4 flex-wrap mb-5">
+          <label for="cost-n" class="text-xs text-slate-400 font-medium whitespace-nowrap">Documentos na base $N$:</label>
+          <input id="cost-n" type="range" min="1" max="7" step="0.1" value="3" class="flex-1 min-w-[160px]">
+          <output id="cost-n-out" for="cost-n" class="font-mono text-sm text-amber-300 min-w-[110px] text-right"></output>
+        </div>
+
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-xs min-w-[560px]">
+            <thead>
+              <tr class="text-left text-slate-400 border-b border-slate-800">
+                <th class="py-2.5 pr-4 font-semibold">Método</th>
+                <th class="py-2.5 pr-4 font-semibold">Índice (tamanho)</th>
+                <th class="py-2.5 pr-4 font-semibold">Latência por consulta</th>
+                <th class="py-2.5 font-semibold">Reaproveita o doc?</th>
+              </tr>
+            </thead>
+            <tbody id="cost-body" class="font-mono text-slate-300"></tbody>
+          </table>
+        </div>
+
+        <div id="cost-chart" class="rounded-xl bg-surface-950 border border-slate-800 p-3 overflow-x-auto"></div>
+
+        <p class="text-[11px] text-slate-400 mt-4 leading-relaxed">
+          <i class="fa-solid fa-eye text-amber-400 mr-1"></i>
+          <strong>O que observar:</strong> arraste até 10 milhões. A linha do Cross-Encoder sobe em linha reta com $N$
+          (ele precisa reler cada documento junto da consulta); Bi-Encoder e Sparse ficam quase planos (índice ANN / invertido);
+          Multi-Vector fica plano em latência, mas o índice incha — dezenas de vetores por documento.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 04 ===================== -->
+    <section class="slide-section" data-nav="Funil top-k" data-icon="fa-filter">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-filter"></i> Módulo 04 • Aplicação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O funil: <span class="bg-gradient-to-r from-emerald-400 via-cyan-400 to-brand-400 bg-clip-text text-transparent">barato primeiro, preciso depois</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O cross-encoder não substitui BM25, bi-encoder ou sparse — ele se apoia neles. Mexa nos três controles
+          e veja a conta que separa “inviável” de “dezenas de milissegundos”.
+        </p>
+      </div>
+
+      <!-- SIMULADOR OBRIGATÓRIO: Calculadora de Latência do Pipeline -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-calculator text-emerald-400"></i> Calculadora de Latência do Pipeline
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Todos os números abaixo saem dos três sliders — nada é fixo.</p>
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono px-3 py-2 rounded-lg bg-surface-950 border border-slate-800 overflow-x-auto max-w-full">
+            $T_{\text{base inteira}} = N \cdot t_{\text{par}}$ &nbsp;·&nbsp; $T_{\text{funil}} = T_{1^\circ} + k \cdot t_{\text{par}}$
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <label for="calc-n" class="text-xs text-slate-300 font-medium">Base $N$ (documentos)</label>
+              <output id="calc-n-out" for="calc-n" class="font-mono text-xs text-cyan-300 font-bold"></output>
+            </div>
+            <input id="calc-n" type="range" min="2" max="7" step="0.1" value="6" class="w-full">
+            <p class="text-[10px] text-slate-500 mt-1.5 font-mono">100 → 10 000 000</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <label for="calc-k" class="text-xs text-slate-300 font-medium">Top-$k$ re-rankeado</label>
+              <output id="calc-k-out" for="calc-k" class="font-mono text-xs text-brand-300 font-bold"></output>
+            </div>
+            <input id="calc-k" type="range" min="5" max="500" step="5" value="50" class="w-full">
+            <p class="text-[10px] text-slate-500 mt-1.5 font-mono">5 → 500 candidatos</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <label for="calc-ms" class="text-xs text-slate-300 font-medium">Custo por par $t_{\text{par}}$</label>
+              <output id="calc-ms-out" for="calc-ms" class="font-mono text-xs text-amber-300 font-bold"></output>
+            </div>
+            <input id="calc-ms" type="range" min="1" max="60" step="1" value="12" class="w-full">
+            <p class="text-[10px] text-slate-500 mt-1.5 font-mono">1 → 60 ms (GPU → CPU)</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          <div class="p-5 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-[11px] uppercase tracking-wider font-mono text-rose-400 mb-2">
+              <i class="fa-solid fa-triangle-exclamation mr-1"></i> Cross-encoder na base inteira
+            </div>
+            <div id="calc-naive" class="text-2xl font-mono font-bold text-rose-300"></div>
+            <p id="calc-naive-sub" class="text-[11px] text-slate-500 mt-1.5 font-mono"></p>
+          </div>
+          <div class="p-5 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[11px] uppercase tracking-wider font-mono text-emerald-400 mb-2">
+              <i class="fa-solid fa-check-double mr-1"></i> Funil: 1º estágio + top-k
+            </div>
+            <div id="calc-pipe" class="text-2xl font-mono font-bold text-emerald-300"></div>
+            <p id="calc-pipe-sub" class="text-[11px] text-slate-500 mt-1.5 font-mono"></p>
+          </div>
+          <div class="p-5 rounded-xl bg-surface-950 border border-brand-500/30">
+            <div class="text-[11px] uppercase tracking-wider font-mono text-brand-400 mb-2">
+              <i class="fa-solid fa-gauge-high mr-1"></i> Ganho do funil
+            </div>
+            <div id="calc-speed" class="text-2xl font-mono font-bold text-brand-300"></div>
+            <p id="calc-speed-sub" class="text-[11px] text-slate-500 mt-1.5 font-mono"></p>
+          </div>
+        </div>
+
+        <div id="calc-bars" class="space-y-3 mb-5"></div>
+        <div id="calc-verdict" class="text-xs p-4 rounded-xl border leading-relaxed"></div>
+      </div>
+
+      <!-- Ranking antes/depois -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-arrow-right-arrow-left text-brand-400"></i> O que o re-ranking faz com a lista
+            </h3>
+            <p id="rr-sub" class="text-xs text-slate-400 mt-1"></p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-brand-500 text-white font-bold" data-qidx="0">“açúcar no sangue em jejum”</button>
+            <button class="q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition bg-surface-950 border border-slate-800 text-slate-300 hover:text-white" data-qidx="1">“hemograma sem jejum”</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-mono mb-3">Antes · bi-encoder (cosseno)</div>
+            <div id="rr-before" class="space-y-2.5"></div>
+          </div>
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-brand-400 font-mono mb-3">Depois · cross-encoder (logit)</div>
+            <div id="rr-after" class="space-y-2.5"></div>
+          </div>
+        </div>
+        <div id="rr-note" class="mt-5 text-[11px] leading-relaxed p-3 rounded-xl bg-surface-950 border border-slate-800 text-slate-300"></div>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-6">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 shrink-0">
+            <i class="fa-solid fa-lightbulb"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white mb-1.5">Regra prática: nunca use cross-encoder como 1º estágio</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Use-o sobre os 20–100 candidatos que BM25 / bi-encoder / sparse devolveram. Cada par custa uma passagem inteira
+              do Transformer: sobre milhões de documentos isso é minutos por pergunta; sobre 20, dezenas de milissegundos.
+              E lembre do teto: <strong>se o documento certo não estiver entre os $k$ candidatos, nenhum re-ranker o traz de volta</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 05 ===================== -->
+    <section class="slide-section" data-nav="Síntese & Quiz" data-icon="fa-graduation-cap">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-graduation-cap"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Custo × precisão: <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">quando o re-ranker paga a conta</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O cross-encoder é o componente mais caro e mais preciso do funil. A decisão é de orçamento: quanto de GPU
+          por dia o ganho de precisão no topo justifica.
+        </p>
+      </div>
+
+      <!-- SIMULADOR: orçamento de GPU -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-coins text-purple-400"></i> Orçamento de re-ranking
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Usa o $k$ e o $t_{\text{par}}$ que você deixou na calculadora do módulo 04.</p>
+          </div>
+          <span class="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-mono">estimativa ilustrativa</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <label for="bud-q" class="text-xs text-slate-300 font-medium">Consultas por dia</label>
+              <output id="bud-q-out" for="bud-q" class="font-mono text-xs text-purple-300 font-bold"></output>
+            </div>
+            <input id="bud-q" type="range" min="2" max="7" step="0.1" value="4" class="w-full">
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <label for="bud-price" class="text-xs text-slate-300 font-medium">Preço da GPU (US$ / hora)</label>
+              <output id="bud-price-out" for="bud-price" class="font-mono text-xs text-amber-300 font-bold"></output>
+            </div>
+            <input id="bud-price" type="range" min="0.2" max="5" step="0.1" value="1.2" class="w-full">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wider font-mono text-slate-500 mb-1.5">Pares por dia</div>
+            <div id="bud-pairs" class="text-lg font-mono font-bold text-cyan-300"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wider font-mono text-slate-500 mb-1.5">GPU ocupada</div>
+            <div id="bud-gpu" class="text-lg font-mono font-bold text-emerald-300"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wider font-mono text-slate-500 mb-1.5">Custo por mês</div>
+            <div id="bud-cost" class="text-lg font-mono font-bold text-purple-300"></div>
+          </div>
+        </div>
+        <p id="bud-note" class="text-[11px] text-slate-400 mt-4 leading-relaxed"></p>
+      </div>
+
+      <!-- Limitações e saídas -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-rose-500/30">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation text-rose-400"></i> Limitações do cross-encoder
+          </h3>
+          <ul class="text-xs text-slate-400 space-y-2.5 leading-relaxed">
+            <li><strong class="text-slate-200">Nada é pré-computável.</strong> Todo o custo cai no instante da pergunta; não há índice a consultar.</li>
+            <li><strong class="text-slate-200">Latência linear em $k$.</strong> Dobrar os candidatos dobra o tempo — e o ganho de precisão satura bem antes disso.</li>
+            <li><strong class="text-slate-200">Teto de recall herdado.</strong> Ele só reordena; o que o 1º estágio não trouxe está perdido.</li>
+            <li><strong class="text-slate-200">Janela de tokens.</strong> Consulta + documento precisam caber em 512 tokens; documentos longos exigem <em>chunking</em>.</li>
+            <li><strong class="text-slate-200">Score sem escala fixa.</strong> O logit só faz sentido comparado aos outros candidatos <em>da mesma consulta</em> — não é probabilidade calibrada entre consultas.</li>
+          </ul>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/30">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-road text-emerald-400"></i> Saídas conhecidas
+          </h3>
+          <ul class="text-xs text-slate-400 space-y-2.5 leading-relaxed">
+            <li><strong class="text-slate-200">Destilação.</strong> Usar os scores do cross-encoder (professor) como alvo para treinar um bi-encoder (aluno): o barato aprende a imitar o preciso.</li>
+            <li><strong class="text-slate-200">Modelos menores.</strong> Um MiniLM de 6 camadas re-rankeia em fração do tempo de um BERT-base, com perda pequena de precisão.</li>
+            <li><strong class="text-slate-200">Interação tardia.</strong> O ColBERT pré-computa vetores <em>por token</em> e adia só a interação final — próximo tópico desta seção.</li>
+            <li><strong class="text-slate-200">Re-rankers hospedados.</strong> Cohere Rerank, Jina Reranker e Voyage Rerank entregam a mesma ideia como API, sem GPU própria.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Como usar -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-code text-cyan-400"></i> Como usar: <span class="font-mono text-xs text-cyan-300">sentence-transformers</span>
+        </h3>
+        <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800 p-4">
+<pre class="text-[11px] leading-relaxed font-mono text-slate-300"><span class="text-brand-400">from</span> sentence_transformers <span class="text-brand-400">import</span> CrossEncoder
+
+<span class="text-slate-500"># multilíngue, inclui pt (nome do modelo é exemplo)</span>
+model = CrossEncoder(<span class="text-emerald-300">"cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"</span>)
+
+consulta = <span class="text-emerald-300">"açúcar no sangue em jejum"</span>
+candidatos = [                       <span class="text-slate-500"># vindos do BM25 / bi-encoder</span>
+    <span class="text-emerald-300">"hemograma completo sem jejum"</span>,
+    <span class="text-emerald-300">"glicemia de jejum exige jejum de 8 horas"</span>,
+    <span class="text-emerald-300">"colesterol total e frações com jejum de 12 horas antes da coleta"</span>,
+    <span class="text-emerald-300">"exame de urina primeira urina da manhã"</span>,
+    <span class="text-emerald-300">"tabela de jejum jejum de 8 horas jejum de 12 horas"</span>,
+]
+
+<span class="text-slate-500"># cada (consulta, candidato) vira UMA sequência e passa pelo Transformer</span>
+ranking = model.rank(consulta, candidatos, return_documents=<span class="text-brand-400">True</span>)
+<span class="text-brand-400">for</span> r <span class="text-brand-400">in</span> ranking:
+    <span class="text-brand-400">print</span>(r[<span class="text-emerald-300">"corpus_id"</span>], <span class="text-brand-400">round</span>(<span class="text-brand-400">float</span>(r[<span class="text-emerald-300">"score"</span>]), <span class="text-cyan-300">3</span>))</pre>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          <strong class="text-slate-400">Nota:</strong> <span class="font-mono">rank()</span> existe em sentence-transformers $\geq$ 2.3;
+          em versões antigas use <span class="font-mono">model.predict([(consulta, c) for c in candidatos])</span> e ordene você mesmo.
+          <span class="font-mono">corpus_id</span> é o índice na lista de candidatos. Dependendo do modelo, o score sai como logit
+          (sem limite) ou já como sigmoid (0–1) — só a ordem importa. Bancos vetoriais (Qdrant, Weaviate, OpenSearch, Elasticsearch)
+          aceitam esse estágio dentro da própria query.
+        </p>
+      </div>
+
+      <!-- Glossário -->
+      <details class="rounded-2xl bg-surface-900 border border-slate-800 p-6 mb-6">
+        <summary class="cursor-pointer text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-book text-brand-400"></i> Glossário dos termos desta página
+        </summary>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-5 text-xs">
+          <div><dt class="font-mono text-brand-300 mb-0.5">[CLS] [SEP]</dt><dd class="text-slate-400 leading-relaxed">Tokens especiais do BERT. <span class="font-mono">[CLS]</span> abre a sequência e, após o Transformer, seu vetor resume o par; <span class="font-mono">[SEP]</span> separa consulta de documento e fecha a fita.</dd></div>
+          <div><dt class="font-mono text-brand-300 mb-0.5">segment embedding</dt><dd class="text-slate-400 leading-relaxed">Vetor somado a cada token dizendo de que lado ele veio: 0 para a consulta, 1 para o documento.</dd></div>
+          <div><dt class="font-mono text-brand-300 mb-0.5">w</dt><dd class="text-slate-400 leading-relaxed">Camada linear final (vetor de pesos aprendido). Multiplica o vetor de <span class="font-mono">[CLS]</span> e devolve um único escalar.</dd></div>
+          <div><dt class="font-mono text-brand-300 mb-0.5">logit</dt><dd class="text-slate-400 leading-relaxed">O escalar bruto que sai de $w$. Sem limite: 8,4 é “muito relevante”, $-4{,}0$ é “irrelevante”.</dd></div>
+          <div><dt class="font-mono text-brand-300 mb-0.5">sigmoid</dt><dd class="text-slate-400 leading-relaxed">$\sigma(x) = 1/(1+e^{-x})$. Espreme o logit para $(0,1)$ e permite ler o score como probabilidade.</dd></div>
+          <div><dt class="font-mono text-brand-300 mb-0.5">re-ranker</dt><dd class="text-slate-400 leading-relaxed">Modelo que recebe uma lista curta de candidatos já recuperados e a reordena com mais cuidado (e mais custo).</dd></div>
+          <div><dt class="font-mono text-brand-300 mb-0.5">top-k</dt><dd class="text-slate-400 leading-relaxed">Os $k$ melhores resultados que o 1º estágio devolve. Só eles chegam ao cross-encoder.</dd></div>
+          <div><dt class="font-mono text-brand-300 mb-0.5">MS MARCO</dt><dd class="text-slate-400 leading-relaxed">Dataset de perguntas reais do Bing com passagens relevantes marcadas; treino típico dos cross-encoders públicos (mMARCO no multilíngue).</dd></div>
+        </dl>
+      </details>
+
+      <!-- QUIZ -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 mb-6">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação Conceitual
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas para validar o que o funil ensinou.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">1</span>
+              Por que não existe índice de cross-encoder num banco vetorial?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O tamanho do vetor não é o problema: o bi-encoder usa as mesmas 384 dimensões e indexa sem dificuldade.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque o vetor de saída tem dimensão alta demais para caber num índice ANN.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'O documento só é representado na presença da consulta: trocou a consulta, tudo é recalculado do zero.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o modelo nunca produz uma representação do documento sozinho — só do par $(q,d)$.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Cross-encoders são treinados exatamente assim, em MS MARCO / mMARCO.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque não há dados rotulados para treinar re-rankers.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A similaridade de cosseno continua definida; o problema é não haver dois vetores independentes para comparar.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque a similaridade de cosseno não é definida para logits.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">2</span>
+              Base de 1 milhão de documentos e 12 ms por par: o que a calculadora do módulo 04 mostra?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Não existe cache possível: o par (consulta, documento) muda a cada pergunta nova.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Que a base inteira fica viável se houver cache das representações dos documentos.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A latência do funil cresce com k, não com N — é exatamente isso que o torna viável.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Que o funil também cresce linearmente com $N$.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, '1 000 000 pares × 12 ms passa de 3 horas; o funil paga só k pares e fica na casa dos milissegundos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Que a base inteira levaria horas por pergunta, enquanto o top-50 fica abaixo de um segundo.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O custo por par é constante; o que muda é quantos pares você decide pagar.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Que o custo por par cai conforme a base cresce.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">3</span>
+              O documento certo ficou na posição 300 do 1º estágio e você re-rankeia o top-50. O que acontece?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button data-correct onclick="Guia.answer(this, true, 'O re-ranker só reordena o que recebeu: o recall do 1º estágio é o teto de todo o pipeline.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Ele nunca aparece — o cross-encoder só reordena os candidatos que recebeu.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O cross-encoder não varre a base: ele só pontua os pares que lhe são entregues.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O cross-encoder o resgata, porque lê a base inteira antes de ordenar.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A sigmoid é monotônica: não altera a ordem nem traz candidatos de fora da lista.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Ele sobe no ranking se a sigmoid for aplicada ao logit.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Reduzir o custo por par deixa tudo mais rápido, mas o documento continua fora do top-50.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Ele aparece se você reduzir o $t_{\text{par}}$.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Próximo tópico -->
+      <a href="../multi-vector/index.html" class="block rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-purple-500/30 p-6 hover:border-purple-500/60 transition group">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <div class="text-[11px] uppercase tracking-wider font-mono text-purple-400 mb-1.5">Próximo tópico · 1.2.6</div>
+            <h3 class="text-lg font-bold text-white">Multi-Vector (ColBERT)</h3>
+            <p class="text-xs text-slate-400 mt-1.5 max-w-2xl leading-relaxed">
+              Se a atenção cruzada é cara porque acontece tarde demais, e se guardássemos um vetor <em>por token</em> e
+              adiássemos apenas a interação final? É o meio-termo entre o bi-encoder e esta página.
+            </p>
+          </div>
+          <i class="fa-solid fa-arrow-right text-purple-400 text-xl group-hover:translate-x-1 transition shrink-0"></i>
+        </div>
+      </a>
+    </section>
+
+  </main>
+
+  <script>
+    /* =========================================================
+       Simuladores da página Cross-Encoder.
+       Todo número exibido é calculado aqui a partir dos controles
+       visíveis. Os scores de bi-encoder / cross-encoder dos 5
+       documentos são dados ilustrativos (rotulados como tal na
+       interface); rankings, percentuais, sigmoid, latências,
+       tamanhos de índice e custos são computados.
+       ========================================================= */
+
+    const DOCS = [
+      { id: 'D1', title: 'Hemograma',       text: 'hemograma completo sem jejum' },
+      { id: 'D2', title: 'Glicemia',        text: 'glicemia de jejum exige jejum de 8 horas' },
+      { id: 'D3', title: 'Colesterol',      text: 'colesterol total e frações com jejum de 12 horas antes da coleta' },
+      { id: 'D4', title: 'Urina',           text: 'exame de urina primeira urina da manhã' },
+      { id: 'D5', title: 'Tabela de jejum', text: 'tabela de jejum jejum de 8 horas jejum de 12 horas' }
+    ];
+
+    const QUERIES = [
+      {
+        text: 'açúcar no sangue em jejum',
+        focus: 'D2',
+        bi:    { D1: 0.36, D2: 0.82, D3: 0.52, D4: 0.13, D5: 0.59 },
+        cross: { D1: -1.5, D2: 8.4,  D3: 2.2,  D4: -4.0, D5: 3.1 },
+        bug: null,
+        biNote: 'Aqui o bi-encoder acerta: “açúcar no sangue” e “glicemia” caem perto no espaço. Mas repare em D5 e D3 logo atrás — a diferença entre “fala de jejum” e “fala de glicemia em jejum” está espremida em poucos centésimos.',
+        attn: [
+          [0.79, 0.04, 0.12, 0.05, 0.10, 0.03, 0.02, 0.03],
+          [0.10, 0.22, 0.08, 0.09, 0.07, 0.18, 0.05, 0.06],
+          [0.66, 0.05, 0.09, 0.06, 0.08, 0.04, 0.03, 0.05],
+          [0.08, 0.20, 0.14, 0.07, 0.12, 0.17, 0.06, 0.09],
+          [0.18, 0.05, 0.84, 0.09, 0.72, 0.04, 0.11, 0.16]
+        ],
+        attnHint: { qi: 0, di: 0 },
+        attnNote: '“açúcar” olha forte para “glicemia”, e “sangue” também: a consulta descobre, dentro do documento, a palavra que ela não tinha.'
+      },
+      {
+        text: 'hemograma sem jejum',
+        focus: 'D1',
+        bi:    { D1: 0.69, D2: 0.48, D3: 0.42, D4: 0.15, D5: 0.71 },
+        cross: { D1: 9.1,  D2: 0.4,  D3: -0.8, D4: -3.9, D5: 1.2 },
+        bug: ['D5', 'D1'],
+        biNote: 'Erro plantado: D5 (0,71) passa D1 (0,69). “sem jejum” e “jejum de 8 horas” caem perto no espaço porque cada lado foi comprimido <em>antes</em> de se encontrar — o “sem” pesa quase nada dentro de um único vetor.',
+        attn: [
+          [0.91, 0.31, 0.06, 0.08],
+          [0.09, 0.12, 0.88, 0.41],
+          [0.07, 0.05, 0.36, 0.86]
+        ],
+        attnHint: { qi: 1, di: 2 },
+        attnNote: '“sem” da consulta acha o “sem” do documento e ainda espia o “jejum” logo depois: o modelo vê a negação ligada ao termo que ela nega.'
+      }
+    ];
+
+    const state = { qidx: 0, cell: null, logitDoc: 'D2' };
+
+    /* ---------- utilitários ---------- */
+    const fmt = (n, d = 2) => Number(n).toFixed(d).replace('.', ',');
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const sigmoid = x => 1 / (1 + Math.exp(-x));
+    const fmtInt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+    function fmtMs(ms) {
+      if (ms < 1) return fmt(ms, 2) + ' ms';
+      if (ms < 1000) return fmtInt(ms) + ' ms';
+      if (ms < 60000) return fmt(ms / 1000, 1) + ' s';
+      if (ms < 3600000) return fmt(ms / 60000, 1) + ' min';
+      if (ms < 86400000) return fmt(ms / 3600000, 1) + ' h';
+      return fmt(ms / 86400000, 1) + ' dias';
+    }
+
+    function fmtBytes(b) {
+      if (b < 1024) return fmtInt(b) + ' B';
+      if (b < 1048576) return fmt(b / 1024, 1) + ' KB';
+      if (b < 1073741824) return fmt(b / 1048576, 1) + ' MB';
+      if (b < 1099511627776) return fmt(b / 1073741824, 1) + ' GB';
+      return fmt(b / 1099511627776, 1) + ' TB';
+    }
+
+    const curQuery = () => QUERIES[state.qidx];
+    const docById = id => DOCS.find(d => d.id === id);
+    const biRanked = q => DOCS.slice().sort((a, b) => q.bi[b.id] - q.bi[a.id]);
+    const crossRanked = q => DOCS.slice().sort((a, b) => q.cross[b.id] - q.cross[a.id]);
+    const posMap = order => order.reduce((acc, d, i) => { acc[d.id] = i + 1; return acc; }, {});
+
+    /* ---------- linha de ranking (módulos 01 e 04) ---------- */
+    function rankRow(i, doc, pct, label, tone) {
+      const barCls = tone === 'warn' ? 'bg-rose-600/60'
+        : (i === 0 ? (tone === 'win' ? 'bg-emerald-600/70' : 'bg-brand-600/70') : 'bg-slate-700/60');
+      const borderCls = tone === 'warn' ? 'border-rose-500/50' : (i === 0 ? 'border-slate-700' : 'border-slate-800');
+      const idCls = tone === 'warn' ? 'text-rose-400' : (i === 0 ? 'text-brand-300' : 'text-slate-400');
+      return `
+        <div class="flex items-center gap-2 sm:gap-3">
+          <span class="w-5 shrink-0 text-[11px] font-mono text-slate-500">${i + 1}º</span>
+          <span class="w-7 shrink-0 text-[11px] font-mono font-bold ${idCls}">${doc.id}</span>
+          <div class="flex-1 min-w-0 h-6 rounded-lg bg-surface-950 border ${borderCls} relative overflow-hidden">
+            <div class="h-full ${barCls} transition-all duration-500" style="width:${pct}%"></div>
+            <span class="absolute inset-0 flex items-center px-2 text-[11px] text-slate-200 truncate">${esc(doc.title)}</span>
+          </div>
+          <span class="w-16 shrink-0 text-right text-[11px] font-mono ${tone === 'warn' ? 'text-rose-300' : 'text-slate-300'}">${label}</span>
+        </div>`;
+    }
+
+    /* ---------- Módulo 01 ---------- */
+    function renderBiRank() {
+      const q = curQuery();
+      document.getElementById('bi-rank').innerHTML = biRanked(q).map((d, i) => {
+        const warn = q.bug && q.bug.indexOf(d.id) >= 0;
+        return rankRow(i, d, Math.round(q.bi[d.id] * 100), fmt(q.bi[d.id], 2), warn ? 'warn' : '');
+      }).join('');
+      document.getElementById('bi-note').innerHTML =
+        '<i class="fa-solid fa-eye text-cyan-400 mr-1"></i> ' + q.biNote;
+    }
+
+    function renderDocList() {
+      const q = curQuery();
+      document.getElementById('doc-list').innerHTML = DOCS.map(d => {
+        const isFocus = d.id === q.focus;
+        return `
+        <div class="p-3 rounded-xl bg-surface-950 border ${isFocus ? 'border-brand-500/40' : 'border-slate-800'}">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="text-[11px] font-mono font-bold ${isFocus ? 'text-brand-300' : 'text-slate-400'}">${d.id} · ${esc(d.title)}</span>
+            ${isFocus ? '<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-300 border border-brand-500/30 shrink-0">em foco</span>' : ''}
+          </div>
+          <p class="text-[11px] text-slate-400 leading-snug">${esc(d.text)}</p>
+        </div>`;
+      }).join('');
+    }
+
+    /* ---------- Módulo 02 ---------- */
+    function renderTape() {
+      const q = curQuery();
+      const focus = docById(q.focus);
+      const qT = q.text.split(' ');
+      const dT = focus.text.split(' ');
+      const chip = (t, cls) => `<span class="px-2 py-1 rounded-md text-[11px] font-mono ${cls}">${esc(t)}</span>`;
+      const parts = [chip('[CLS]', 'bg-brand-500/15 text-brand-300 border border-brand-500/30')];
+      qT.forEach(t => parts.push(chip(t, 'bg-cyan-500/15 text-cyan-200 border border-cyan-500/30')));
+      parts.push(chip('[SEP]', 'bg-brand-500/15 text-brand-300 border border-brand-500/30'));
+      dT.forEach(t => parts.push(chip(t, 'bg-slate-800 text-slate-300 border border-slate-700')));
+      parts.push(chip('[SEP]', 'bg-brand-500/15 text-brand-300 border border-brand-500/30'));
+      document.getElementById('tape').innerHTML = parts.join('');
+      document.getElementById('tape-count').textContent = qT.length + dT.length + 3;
+      document.getElementById('tape-q').textContent = '“' + q.text + '”';
+      document.getElementById('tape-d').textContent = focus.id + ' · ' + focus.title;
+    }
+
+    function renderAttn() {
+      const q = curQuery();
+      const A = q.attn;
+      const cell = state.cell || q.attnHint;
+      const qT = q.text.split(' ');
+      const dT = docById(q.focus).text.split(' ');
+      const cols = dT.length;
+
+      const grid = document.getElementById('attn-grid');
+      grid.style.display = 'grid';
+      grid.style.gridTemplateColumns = `84px repeat(${cols}, minmax(50px, 1fr))`;
+      grid.style.minWidth = (84 + cols * 54) + 'px';
+
+      let html = '<span></span>' + dT.map(t =>
+        `<span class="text-[10px] font-mono text-slate-500 text-center truncate px-0.5">${esc(t)}</span>`).join('');
+
+      qT.forEach((qt, qi) => {
+        html += `<span class="text-[11px] font-mono text-cyan-300 font-bold truncate pr-1.5 flex items-center">${esc(qt)}</span>`;
+        html += A[qi].map((w, di) => {
+          const sel = (qi === cell.qi && di === cell.di);
+          const alpha = (0.10 + 0.85 * w).toFixed(2);
+          return `<button type="button" data-cell="${qi}-${di}"
+            class="rounded-md text-[10px] font-mono text-slate-100 min-h-[32px] border ${sel ? 'border-cyan-300' : 'border-slate-800'} transition"
+            style="background:rgba(34,211,238,${alpha})"
+            aria-label="atenção de ${esc(qt)} para ${esc(dT[di])} igual a ${fmt(w, 2)}">${fmt(w, 2)}</button>`;
+        }).join('');
+      });
+      grid.innerHTML = html;
+
+      document.getElementById('attn-out').textContent =
+        'atenção(' + qT[cell.qi] + ' → ' + dT[cell.di] + ') = ' + fmt(A[cell.qi][cell.di], 2);
+      document.getElementById('attn-note').innerHTML =
+        '<i class="fa-solid fa-lightbulb text-cyan-400 mr-1"></i> ' + q.attnNote +
+        ' E repare: <strong>todas</strong> as células estão acesas em algum grau — a consulta reescreve o documento e o documento reescreve a consulta.';
+    }
+
+    function renderLogit() {
+      const q = curQuery();
+      if (!(state.logitDoc in q.cross)) state.logitDoc = q.focus;
+      const pos = posMap(crossRanked(q));
+
+      document.getElementById('logit-doc-btns').innerHTML = DOCS.map(d => {
+        const on = d.id === state.logitDoc;
+        return `<button type="button" data-logitdoc="${d.id}"
+          class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono transition ${on ? 'bg-brand-500 text-white font-bold' : 'bg-surface-950 border border-slate-800 text-slate-400 hover:text-white'}">${d.id}</button>`;
+      }).join('');
+
+      const logit = q.cross[state.logitDoc];
+      const sig = sigmoid(logit);
+      document.getElementById('logit-chip').textContent = 'logit ' + fmt(logit, 1);
+      document.getElementById('sigma-val').textContent = fmt(sig, 4);
+      document.getElementById('sigma-bar').style.width = (sig * 100).toFixed(1) + '%';
+      document.getElementById('logit-note').innerHTML =
+        `<strong class="text-slate-200">${state.logitDoc} · ${esc(docById(state.logitDoc).title)}</strong> fica em
+         <span class="font-mono text-brand-300">${pos[state.logitDoc]}º</span> de ${DOCS.length} para esta consulta.
+         O logit ${fmt(logit, 1)} só significa algo comparado aos outros candidatos; a sigmoid (${fmt(sig, 4)})
+         serve para ler o score como probabilidade e cortar por limiar — por exemplo, descartar tudo abaixo de 0,5.`;
+    }
+
+    /* ---------- Módulo 03: recibo de custo ---------- */
+    /* bytesDoc ilustrativo: denso 384 float32; sparse ~30 pares (id + peso);
+       multi-vector 20 tokens × 128 float16; cross-encoder nada. */
+    const METHODS = [
+      { id: 'bi',     name: 'Bi-Encoder (denso)',      bytesDoc: 384 * 4,      color: '#22d3ee',
+        idx: '1 vetor de 384 dims por doc, grafo HNSW',        qry: 'codifica a consulta (1×) + busca ANN',                reuse: 'sim',
+        ms: n => 8 + 0.9 * Math.log10(n) },
+      { id: 'sparse', name: 'Sparse Encoder (SPLADE)', bytesDoc: 30 * 6,       color: '#34d399',
+        idx: '~30 termos com peso por doc, índice invertido',  qry: 'codifica a consulta (1×) + índice invertido',         reuse: 'sim',
+        ms: n => 9 + 1.6 * Math.log10(n) },
+      { id: 'multi',  name: 'Multi-Vector (ColBERT)',  bytesDoc: 20 * 128 * 2, color: '#a78bfa',
+        idx: '~20 vetores de 128 dims por doc, ANN por token', qry: 'codifica a consulta (1×) + ANN por token + MaxSim',   reuse: 'sim',
+        ms: n => 18 + 3.5 * Math.log10(n) },
+      { id: 'cross',  name: 'Cross-Encoder',           bytesDoc: 0,            color: '#fb7185',
+        idx: 'nada — não existe representação do doc',         qry: '1 passagem do Transformer por PAR (consulta, doc)',   reuse: 'não',
+        ms: n => 12 * n }
+    ];
+
+    function renderCostStatic() {
+      const row = (m, txt) => `
+        <div class="flex items-start gap-3 p-2.5 rounded-lg ${m.id === 'cross' ? 'bg-rose-500/5 border border-rose-500/20' : 'bg-surface-950 border border-slate-800'}">
+          <span class="text-[11px] font-mono w-24 sm:w-28 shrink-0 ${m.id === 'cross' ? 'text-rose-300 font-bold' : 'text-slate-400'}">${m.name.split(' (')[0]}</span>
+          <span class="text-[11px] text-slate-400 leading-snug">${txt}</span>
+        </div>`;
+      document.getElementById('cost-idx').innerHTML = METHODS.map(m => row(m, m.idx)).join('');
+      document.getElementById('cost-qry').innerHTML = METHODS.map(m => row(m, m.qry)).join('');
+    }
+
+    function costChart(n) {
+      const W = 720, H = 230, L = 62, R = 98, T = 14, B = 34;
+      const xs = e => L + (e - 1) / 6 * (W - L - R);
+      const maxLog = Math.log10(12 * 1e7);
+      const ys = ms => T + (1 - Math.log10(Math.max(ms, 1)) / maxLog) * (H - T - B);
+
+      let s = `<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto min-w-[520px]" role="img" aria-label="Latência ilustrativa por consulta em função do número de documentos, escala logarítmica nos dois eixos">`;
+      for (let p = 0; p <= 8; p += 2) {
+        const y = ys(Math.pow(10, p));
+        s += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="#1e293b"/>`;
+        s += `<text x="${L - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#64748b" font-family="JetBrains Mono, monospace">${fmtMs(Math.pow(10, p))}</text>`;
+      }
+      for (let e = 1; e <= 7; e++) {
+        const x = xs(e);
+        s += `<line x1="${x}" x2="${x}" y1="${T}" y2="${H - B}" stroke="#1e293b"/>`;
+        s += `<text x="${x}" y="${H - B + 14}" text-anchor="middle" font-size="10" fill="#64748b" font-family="JetBrains Mono, monospace">10${'⁰¹²³⁴⁵⁶⁷'.charAt(e)}</text>`;
+      }
+      s += `<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="#94a3b8">documentos na base (N)</text>`;
+
+      METHODS.forEach(m => {
+        const pts = [];
+        for (let k = 1; k <= 7; k += 0.25) pts.push(xs(k).toFixed(1) + ',' + ys(m.ms(Math.pow(10, k))).toFixed(1));
+        const isCross = m.id === 'cross';
+        s += `<polyline points="${pts.join(' ')}" fill="none" stroke="${m.color}" stroke-width="${isCross ? 3 : 1.6}" opacity="${isCross ? 1 : 0.75}"/>`;
+        const ly = Math.min(Math.max(ys(m.ms(1e7)), T + 8), H - B - 2);
+        s += `<text x="${W - R + 6}" y="${ly + 4}" font-size="10" fill="${m.color}" font-family="JetBrains Mono, monospace" font-weight="${isCross ? 'bold' : 'normal'}">${m.name.split(' (')[0]}</text>`;
+      });
+
+      const cx = xs(Math.log10(n));
+      s += `<line x1="${cx}" x2="${cx}" y1="${T}" y2="${H - B}" stroke="#6366f1" stroke-dasharray="4 3"/>`;
+      s += '</svg>';
+      return s;
+    }
+
+    function renderCost() {
+      const n = Math.pow(10, Number(document.getElementById('cost-n').value));
+      document.getElementById('cost-n-out').textContent = fmtInt(n) + ' docs';
+      document.getElementById('cost-body').innerHTML = METHODS.map(m => {
+        const ms = m.ms(n);
+        const isCross = m.id === 'cross';
+        const latCls = ms > 5000 ? 'text-rose-400' : 'text-emerald-400';
+        return `<tr class="border-b border-slate-800/70 ${isCross ? 'bg-rose-500/5' : ''}">
+          <td class="py-2.5 pr-4 font-sans ${isCross ? 'text-rose-300 font-bold' : 'text-slate-200'}">${m.name}</td>
+          <td class="py-2.5 pr-4">${m.bytesDoc ? fmtBytes(m.bytesDoc * n) : '0 B'}</td>
+          <td class="py-2.5 pr-4 ${latCls}">${fmtMs(ms)}</td>
+          <td class="py-2.5 ${isCross ? 'text-rose-400' : 'text-emerald-400'}">${m.reuse}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('cost-chart').innerHTML = costChart(n);
+    }
+
+    /* ---------- Módulo 04: Calculadora de Latência do Pipeline ---------- */
+    function calcInputs() {
+      return {
+        n: Math.round(Math.pow(10, Number(document.getElementById('calc-n').value))),
+        k: Number(document.getElementById('calc-k').value),
+        ms: Number(document.getElementById('calc-ms').value)
+      };
+    }
+
+    function renderCalc() {
+      const inp = calcInputs();
+      const n = inp.n, k = inp.k, ms = inp.ms;
+      const kEff = Math.min(k, n);
+      const first = 8 + 0.9 * Math.log10(n);     // 1º estágio (ANN), ilustrativo
+      const naive = n * ms;
+      const pipe = first + kEff * ms;
+      const speed = naive / pipe;
+      const coverage = (kEff / n) * 100;
+      const qps = 1000 / pipe;
+
+      document.getElementById('calc-n-out').textContent = fmtInt(n) + ' docs';
+      document.getElementById('calc-k-out').textContent = 'top-' + k + (kEff < k ? ' (→ ' + kEff + ')' : '');
+      document.getElementById('calc-ms-out').textContent = ms + ' ms/par';
+
+      document.getElementById('calc-naive').textContent = fmtMs(naive);
+      document.getElementById('calc-naive-sub').textContent = fmtInt(n) + ' pares × ' + ms + ' ms';
+      document.getElementById('calc-pipe').textContent = fmtMs(pipe);
+      document.getElementById('calc-pipe-sub').textContent = fmtMs(first) + ' (1º estágio) + ' + kEff + ' × ' + ms + ' ms';
+      document.getElementById('calc-speed').textContent = fmtInt(speed) + '×';
+      document.getElementById('calc-speed-sub').textContent =
+        fmt(qps, 1) + ' consultas/s · o funil vê ' + fmt(coverage, coverage < 1 ? 3 : 1) + '% da base';
+
+      const logW = t => Math.max(2, Math.min(100, 100 * Math.log10(t + 1) / Math.log10(naive + 1)));
+      const bars = [
+        { lbl: 'Base inteira (' + fmtInt(n) + ' pares)',          t: naive, cls: 'bg-rose-500/70',    txt: 'text-rose-300' },
+        { lbl: 'Funil top-' + kEff + ' (' + kEff + ' pares)',     t: pipe,  cls: 'bg-emerald-500/70', txt: 'text-emerald-300' },
+        { lbl: 'Só o 1º estágio (sem re-ranking)',                t: first, cls: 'bg-cyan-500/70',    txt: 'text-cyan-300' }
+      ];
+      document.getElementById('calc-bars').innerHTML = bars.map(b => `
+        <div>
+          <div class="flex items-center justify-between gap-3 text-[11px] font-mono mb-1">
+            <span class="text-slate-400 truncate">${b.lbl}</span>
+            <span class="${b.txt} font-bold shrink-0">${fmtMs(b.t)}</span>
+          </div>
+          <div class="w-full bg-surface-950 border border-slate-800 h-3 rounded-full overflow-hidden">
+            <div class="${b.cls} h-full transition-all duration-500" style="width:${logW(b.t).toFixed(1)}%"></div>
+          </div>
+        </div>`).join('') +
+        '<p class="text-[10px] text-slate-500 font-mono pt-1">barras em escala logarítmica — a diferença real é maior do que parece</p>';
+
+      const v = document.getElementById('calc-verdict');
+      if (pipe <= 300) {
+        v.className = 'text-xs p-4 rounded-xl border leading-relaxed bg-emerald-500/5 border-emerald-500/30 text-slate-300';
+        v.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1.5"></i>
+          <strong class="text-emerald-300">Viável em tempo real.</strong> O funil responde em ${fmtMs(pipe)} —
+          ${fmt(qps, 1)} consultas por segundo por réplica. Rodar o cross-encoder na base inteira levaria ${fmtMs(naive)},
+          ou seja ${fmtInt(speed)}× mais, para reordenar documentos que o 1º estágio já descartou.`;
+      } else if (pipe <= 2000) {
+        v.className = 'text-xs p-4 rounded-xl border leading-relaxed bg-amber-500/5 border-amber-500/30 text-slate-300';
+        v.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1.5"></i>
+          <strong class="text-amber-300">No limite.</strong> ${fmtMs(pipe)} por consulta já é perceptível para quem espera a resposta.
+          Reduza o $k$, troque por um modelo menor (MiniLM de 6 camadas) ou aumente o paralelismo do batch.
+          A base inteira continuaria custando ${fmtMs(naive)}.`;
+      } else {
+        v.className = 'text-xs p-4 rounded-xl border leading-relaxed bg-rose-500/5 border-rose-500/30 text-slate-300';
+        v.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400 mr-1.5"></i>
+          <strong class="text-rose-300">Inviável assim.</strong> ${fmtMs(pipe)} por consulta é tempo de fila, não de busca.
+          Com ${fmtInt(kEff)} pares a ${ms} ms cada, só o re-ranking consome ${fmtMs(kEff * ms)}.
+          Reduza o $k$ ou o custo por par — e note que a base inteira custaria ${fmtMs(naive)}.`;
+      }
+      Guia.renderMath(v);
+      renderBudget();
+    }
+
+    function renderRerank() {
+      const q = curQuery();
+      const before = biRanked(q);
+      const after = crossRanked(q);
+      const biPos = posMap(before);
+      const logits = DOCS.map(d => q.cross[d.id]);
+      const maxL = Math.max.apply(null, logits), minL = Math.min.apply(null, logits);
+
+      document.getElementById('rr-sub').textContent =
+        'Os 5 candidatos entregues pelo 1º estágio, antes e depois de passarem par a par pelo Transformer.';
+
+      document.getElementById('rr-before').innerHTML = before.map((d, i) => {
+        const warn = q.bug && q.bug.indexOf(d.id) >= 0;
+        return rankRow(i, d, Math.round(q.bi[d.id] * 100), fmt(q.bi[d.id], 2), warn ? 'warn' : '');
+      }).join('');
+
+      document.getElementById('rr-after').innerHTML = after.map((d, i) => {
+        const diff = biPos[d.id] - (i + 1);
+        const move = diff > 0 ? `<span class="text-emerald-400">▲${diff}</span>`
+          : diff < 0 ? `<span class="text-rose-400">▼${-diff}</span>`
+          : '<span class="text-slate-600">=</span>';
+        const pct = Math.round(6 + 94 * (q.cross[d.id] - minL) / (maxL - minL));
+        return rankRow(i, d, pct, move + ' ' + fmt(q.cross[d.id], 1), (i === 0 && diff > 0) ? 'win' : '');
+      }).join('');
+
+      const moved = after.filter((d, i) => biPos[d.id] !== i + 1).length;
+      const top = after[0];
+      const msg = moved
+        ? `O cross-encoder reordenou <strong>${moved} dos ${DOCS.length}</strong>: <strong class="text-brand-300">${top.id}</strong> assume o topo com logit ${fmt(q.cross[top.id], 1)}${q.bug ? ' — o “sem” finalmente contou.' : '.'}`
+        : `O topo não muda, mas a distância entre 1º e 2º abre de centésimos de cosseno para ${fmt(q.cross[after[0].id] - q.cross[after[1].id], 1)} pontos de logit: o re-ranker está mais seguro do que o cosseno.`;
+      document.getElementById('rr-note').innerHTML =
+        '<i class="fa-solid fa-eye text-brand-400 mr-1"></i> ' + msg +
+        ' Importante: ele só viu os candidatos que o 1º estágio entregou — o que ficou fora do top-k está perdido.';
+    }
+
+    /* ---------- Módulo 05: orçamento ---------- */
+    function renderBudget() {
+      const inp = calcInputs();
+      const k = inp.k, ms = inp.ms;
+      const qpd = Math.round(Math.pow(10, Number(document.getElementById('bud-q').value)));
+      const price = Number(document.getElementById('bud-price').value);
+      const pairs = qpd * k;
+      const gpuHours = pairs * ms / 1000 / 3600;
+      const replicas = Math.max(1, Math.ceil(gpuHours / 24));
+      const monthly = replicas * 24 * 30 * price;
+
+      document.getElementById('bud-q-out').textContent = fmtInt(qpd) + '/dia';
+      document.getElementById('bud-price-out').textContent = 'US$ ' + fmt(price, 2) + '/h';
+      document.getElementById('bud-pairs').textContent = fmtInt(pairs);
+      document.getElementById('bud-gpu').textContent = fmt(gpuHours, 1) + ' h/dia';
+      document.getElementById('bud-cost').textContent = 'US$ ' + fmtInt(monthly);
+      document.getElementById('bud-note').innerHTML =
+        `<i class="fa-solid fa-circle-info text-purple-400 mr-1"></i>
+         Com top-${k} e ${ms} ms por par, ${fmtInt(qpd)} consultas/dia geram ${fmtInt(pairs)} passagens do Transformer
+         (${fmt(gpuHours, 1)} h de GPU por dia) — cerca de <strong class="text-slate-200">${replicas}</strong>
+         ${replicas === 1 ? 'réplica' : 'réplicas'} para absorver a carga, a US$ ${fmt(price, 2)}/hora.
+         Metade do $k$ corta a conta pela metade; o ganho de precisão costuma saturar bem antes do topo do slider.`;
+      Guia.renderMath(document.getElementById('bud-note'));
+    }
+
+    /* ---------- orquestração ---------- */
+    function renderQueryDependent() {
+      document.querySelectorAll('[data-qidx]').forEach(b => {
+        const on = Number(b.dataset.qidx) === state.qidx;
+        b.className = 'q-btn px-3 py-1.5 rounded-lg text-xs font-mono transition ' +
+          (on ? 'bg-brand-500 text-white font-bold' : 'bg-surface-950 border border-slate-800 text-slate-300 hover:text-white');
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      renderBiRank();
+      renderDocList();
+      renderTape();
+      renderAttn();
+      renderLogit();
+      renderRerank();
+    }
+
+    Guia.ready(() => {
+      document.querySelectorAll('[data-qidx]').forEach(b => {
+        b.addEventListener('click', () => {
+          state.qidx = Number(b.dataset.qidx);
+          state.cell = null;                     // a grade muda de tamanho entre consultas
+          state.logitDoc = curQuery().focus;
+          renderQueryDependent();
+          Guia.toast('Consulta trocada: “' + curQuery().text + '”', 'fa-magnifying-glass');
+        });
+      });
+
+      document.getElementById('attn-grid').addEventListener('click', e => {
+        const btn = e.target.closest('[data-cell]');
+        if (!btn) return;
+        const parts = btn.dataset.cell.split('-');
+        state.cell = { qi: Number(parts[0]), di: Number(parts[1]) };
+        renderAttn();
+      });
+
+      document.getElementById('logit-doc-btns').addEventListener('click', e => {
+        const btn = e.target.closest('[data-logitdoc]');
+        if (!btn) return;
+        state.logitDoc = btn.dataset.logitdoc;
+        renderLogit();
+      });
+
+      document.getElementById('cost-n').addEventListener('input', renderCost);
+      ['calc-n', 'calc-k', 'calc-ms'].forEach(id => document.getElementById(id).addEventListener('input', renderCalc));
+      ['bud-q', 'bud-price'].forEach(id => document.getElementById(id).addEventListener('input', renderBudget));
+
+      renderQueryDependent();
+      renderCostStatic();
+      renderCost();
+      renderCalc();
+    });
+
+    // Os SVGs nascem com a largura do container: redesenhe ao entrar no módulo.
+    Guia.onSlide(2, renderCost);
+    Guia.onSlide(3, renderCalc);
+  </script>
+</body>
+</html>

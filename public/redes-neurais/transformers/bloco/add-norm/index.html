@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add &amp; Norm: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../../assets/guia.css">
+  <script src="../../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Add &amp; Norm"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Conexão residual e LayerNorm: o que torna possível empilhar dezenas de blocos"
+      data-icon="fa-layer-group"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — O PROBLEMA ══════════════ -->
+    <section class="slide-section" data-nav="Sinal profundo" data-icon="fa-arrow-down-short-wide">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-arrow-down-short-wide"></i> Módulo 01 • O Problema
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Profundidade custa caro: o sinal <span class="bg-gradient-to-r from-rose-400 to-emerald-400 bg-clip-text text-transparent">se perde no caminho de volta</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Empilhar blocos é a forma mais barata de ganhar capacidade. O preço aparece no treino: o
+          gradiente atravessa toda a pilha de volta multiplicando um jacobiano por camada. Se cada
+          multiplicação encolhe um pouco o sinal, depois de dezenas de camadas não sobra gradiente
+          nenhum para as primeiras. A conexão residual (He et al., 2015) resolve isso com uma soma.
+        </p>
+      </div>
+
+      <!-- A derivada em uma linha -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-xmark text-rose-400"></i> Pilha simples (sem residual)
+          </h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3">
+            Cada camada substitui a entrada pela saída: $x_{\ell+1} = F_\ell(x_\ell)$. A regra da cadeia
+            para a camada 1 vira um produto puro de jacobianos:
+          </p>
+          <p class="text-center my-4">
+            $$\frac{\partial x_L}{\partial x_1} = \prod_{\ell=1}^{L-1} \frac{\partial F_\ell}{\partial x_\ell}$$
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            É um produto de $L-1$ fatores. Se a norma típica de cada fator for $g$, a magnitude do
+            gradiente é $\approx g^{L-1}$. Para $g = 0{,}8$ e $L = 24$, isso já é
+            <span class="font-mono text-rose-300">$0{,}8^{23} \approx 5{,}9 \times 10^{-3}$</span>: as camadas de baixo recebem
+            um sinal ordens de grandeza menor que as de cima. Se $g &gt; 1$, o problema inverte e o
+            gradiente explode.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6 glow-emerald">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-check text-emerald-400"></i> Com conexão residual
+          </h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3">
+            A camada passa a <em>somar</em> a própria contribuição em vez de substituir a entrada:
+            $x_{\ell+1} = x_\ell + F_\ell(x_\ell)$. Derivando:
+          </p>
+          <p class="text-center my-4">
+            $$\frac{\partial x_{\ell+1}}{\partial x_\ell} = I + \frac{\partial F_\ell}{\partial x_\ell}$$
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            O termo $I$ é o detalhe que muda tudo. Ao expandir o produto
+            $\prod_\ell (I + J_\ell)$, um dos termos é $I$ puro — o <strong class="text-emerald-300">caminho
+            identidade</strong>, que atravessa a pilha inteira sem ser multiplicado por nada. Mesmo que
+            todos os $J_\ell$ encolham a zero, esse termo continua valendo 1. O gradiente não some.
+          </p>
+        </div>
+      </div>
+
+      <!-- O que "residual" quer dizer para a função aprendida -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-lightbulb text-amber-400"></i> A leitura conceitual: aprender a correção, não a função
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs text-slate-400 leading-relaxed">
+          <p>
+            Sem residual, $F_\ell$ precisa aprender a <em>função inteira</em> — inclusive a parte que
+            deveria simplesmente repassar a entrada. Para uma camada que idealmente não deveria fazer
+            nada, isso significa aprender a identidade a partir do zero, o que é surpreendentemente
+            difícil para uma pilha de transformações não lineares.
+          </p>
+          <p>
+            Com residual, $F_\ell$ aprende só o <strong class="text-emerald-300">resíduo</strong>: o
+            quanto corrigir. "Não fazer nada" vira o estado trivial $F_\ell \approx 0$, alcançado com
+            pesos pequenos. O vetor que atravessa a pilha ganha até um nome próprio — o
+            <strong class="text-slate-200">residual stream</strong>: um canal por onde cada bloco lê,
+            escreve um incremento e devolve.
+          </p>
+        </div>
+      </div>
+
+      <!-- SIMULADOR B — comparador de profundidade -->
+      <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-emerald-400"></i> Comparador de profundidade
+          </h3>
+          <span class="px-3 py-1 rounded-lg bg-surface-950 border border-amber-500/30 text-[10px] font-mono text-amber-300">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i> modelo escalar simplificado
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed mb-5">
+          Trate cada bloco como um único número: um ganho $g$ aplicado à entrada. Não é uma simulação
+          de treino — não há dados, pesos nem otimizador aqui. É uma conta de ordem de grandeza para
+          mostrar como um produto de $L$ fatores se comporta com e sem o termo identidade. Mexa nos
+          controles: tudo abaixo é recalculado em JavaScript.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+          <div>
+            <div class="flex justify-between text-xs font-mono mb-1.5">
+              <label for="dep-l" class="text-slate-400">Número de camadas $L$</label>
+              <span id="dep-l-out" class="text-emerald-300">24</span>
+            </div>
+            <input id="dep-l" type="range" min="1" max="64" step="1" value="24" class="w-full">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs font-mono mb-1.5">
+              <label for="dep-g" class="text-slate-400">Ganho por camada $g$</label>
+              <span id="dep-g-out" class="text-emerald-300">0.80</span>
+            </div>
+            <input id="dep-g" type="range" min="5" max="180" step="1" value="80" class="w-full">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-[10px] font-mono text-rose-400 mb-1">sem residual · $g^L$</div>
+            <div id="dep-plain" class="text-xl font-mono font-bold text-rose-300 break-all">—</div>
+            <div id="dep-plain-note" class="text-[11px] text-slate-500 mt-1.5 leading-relaxed"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[10px] font-mono text-emerald-400 mb-1">com residual · $(1+g)^L$</div>
+            <div id="dep-res" class="text-xl font-mono font-bold text-emerald-300 break-all">—</div>
+            <div id="dep-res-note" class="text-[11px] text-slate-500 mt-1.5 leading-relaxed"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-brand-500/30">
+            <div class="text-[10px] font-mono text-brand-400 mb-1">piso do caminho identidade</div>
+            <div id="dep-floor" class="text-xl font-mono font-bold text-brand-300">1.000</div>
+            <div class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+              O termo $I\cdot I\cdots I$ da expansão. Não depende de $g$ nem de $L$: é a garantia de que
+              alguma coisa chega às primeiras camadas.
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-500 mb-2">
+            <span>Magnitude do sinal camada a camada (escala logarítmica)</span>
+            <span><span class="text-rose-400">■</span> sem residual &nbsp; <span class="text-emerald-400">■</span> com residual</span>
+          </div>
+          <div class="overflow-x-auto">
+            <div id="dep-bars" class="flex items-end gap-[2px] h-32 min-w-[280px] p-2 rounded-xl bg-surface-950 border border-slate-800"></div>
+          </div>
+          <div id="dep-scale" class="text-[10px] font-mono text-slate-600 mt-1.5"></div>
+        </div>
+
+        <div id="dep-verdict" class="text-xs p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-slate-400 leading-relaxed"></div>
+
+        <div class="mt-4 p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-slate-400 leading-relaxed">
+          <i class="fa-solid fa-circle-info text-amber-400 mr-1"></i>
+          Repare no efeito colateral: com residual e $g$ razoável, o sinal <em>cresce</em> a cada camada —
+          o caminho residual acumula. É exatamente por isso que "Add" nunca vem sozinho. O "Norm" do
+          próximo módulo é quem devolve a escala ao lugar antes do bloco seguinte.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — LAYERNORM ══════════════ -->
+    <section class="slide-section" data-nav="LayerNorm" data-icon="fa-ruler-combined">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-ruler-combined"></i> Módulo 02 • A Normalização
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          LayerNorm: cada token <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">normalizado por si mesmo</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A LayerNorm (Ba, Kiros &amp; Hinton, 2016) olha um vetor de token de cada vez e o padroniza
+          pelas <em>próprias</em> $d_{model}$ features — média zero, variância um — e então devolve ao
+          modelo o direito de reescalar e deslocar, via dois parâmetros aprendidos.
+        </p>
+      </div>
+
+      <!-- A fórmula completa -->
+      <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-emerald-400"></i> A fórmula, inteira
+        </h3>
+        <div class="overflow-x-auto">
+          <p class="text-center my-4 min-w-[280px]">
+            $$\mu = \frac{1}{d}\sum_{i=1}^{d} x_i \qquad
+              \sigma^2 = \frac{1}{d}\sum_{i=1}^{d}(x_i - \mu)^2$$
+          </p>
+          <p class="text-center my-4 min-w-[280px]">
+            $$\hat{x}_i = \frac{x_i - \mu}{\sqrt{\sigma^2 + \epsilon}} \qquad
+              y_i = \gamma_i\,\hat{x}_i + \beta_i$$
+          </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5 text-[11px]">
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-emerald-400 mb-1">$\mu, \sigma^2$</div>
+            <p class="text-slate-400 leading-relaxed">Somam sobre as $d$ features <em>de um token só</em>. Nada de outro token da sequência nem de outro exemplo do batch entra nessa conta.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-emerald-400 mb-1">$\epsilon$</div>
+            <p class="text-slate-400 leading-relaxed">Constante minúscula (tipicamente $10^{-5}$) que impede divisão por zero quando o vetor é constante — e amortece a derivada quando $\sigma$ é muito pequeno.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-emerald-400 mb-1">$\gamma \in \mathbb{R}^{d}$</div>
+            <p class="text-slate-400 leading-relaxed">Escala aprendida, por dimensão. Inicializada em 1. Sem ela, a camada seguinte receberia sempre variância unitária e perderia um grau de liberdade.</p>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-mono text-emerald-400 mb-1">$\beta \in \mathbb{R}^{d}$</div>
+            <p class="text-slate-400 leading-relaxed">Deslocamento aprendido, por dimensão. Inicializado em 0. Devolve a média que a normalização acabou de zerar, se o modelo precisar dela.</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-4 leading-relaxed">
+          Parâmetros: $2d$ por LayerNorm — uma ninharia perto das $4d^2$ da atenção ou das $8d^2$ da FFN.
+          O custo da LayerNorm é de memória de banda e de sincronização, não de parâmetros.
+        </p>
+      </div>
+
+      <!-- SIMULADOR A — laboratório de LayerNorm -->
+      <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5 sm:p-6 mb-6 glow-emerald">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-flask text-emerald-400"></i> Laboratório de LayerNorm
+          </h3>
+          <span class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-[10px] font-mono text-emerald-300">$d = 8$ · $\epsilon = 10^{-5}$</span>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed mb-5">
+          Um vetor de ativações de 8 dimensões — um token, uma posição do residual stream. Mexa em
+          cada feature e veja $\mu$, $\sigma$, o vetor normalizado e o efeito de $\gamma$ e $\beta$.
+          Todos os números abaixo saem dos controles, calculados na hora.
+        </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- controles -->
+          <div>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <button id="ln-preset-rand" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 hover:border-emerald-500/50 text-[11px] font-mono text-slate-300 transition">
+                <i class="fa-solid fa-dice mr-1"></i> Aleatório
+              </button>
+              <button id="ln-preset-out" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 hover:border-amber-500/50 text-[11px] font-mono text-slate-300 transition">
+                <i class="fa-solid fa-arrow-up-right-dots mr-1"></i> Com outlier
+              </button>
+              <button id="ln-preset-const" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 hover:border-rose-500/50 text-[11px] font-mono text-slate-300 transition">
+                <i class="fa-solid fa-equals mr-1"></i> Vetor constante
+              </button>
+              <button id="ln-preset-shift" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 hover:border-cyan-500/50 text-[11px] font-mono text-slate-300 transition">
+                <i class="fa-solid fa-plus mr-1"></i> Deslocar +1
+              </button>
+            </div>
+
+            <div id="ln-sliders" class="space-y-2 mb-5"></div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <div class="flex justify-between text-xs font-mono mb-1.5">
+                  <label for="ln-gamma" class="text-slate-400">$\gamma$ (escala)</label>
+                  <span id="ln-gamma-out" class="text-cyan-300">1.00</span>
+                </div>
+                <input id="ln-gamma" type="range" min="-200" max="300" step="5" value="100" class="w-full">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-mono mb-1.5">
+                  <label for="ln-beta" class="text-slate-400">$\beta$ (deslocamento)</label>
+                  <span id="ln-beta-out" class="text-cyan-300">0.00</span>
+                </div>
+                <input id="ln-beta" type="range" min="-200" max="200" step="5" value="0" class="w-full">
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-2 leading-relaxed">
+              No modelo real $\gamma$ e $\beta$ são vetores com um valor por dimensão. Aqui estão
+              amarrados a um escalar só, para que o efeito fique visível em um controle.
+            </p>
+          </div>
+
+          <!-- estatísticas -->
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div class="p-2.5 rounded-xl bg-surface-950 border border-slate-800 text-center">
+                <div class="text-[10px] font-mono text-slate-500">média $\mu$</div>
+                <div id="ln-mu" class="text-sm font-mono font-bold text-amber-300 mt-0.5">—</div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-surface-950 border border-slate-800 text-center">
+                <div class="text-[10px] font-mono text-slate-500">variância $\sigma^2$</div>
+                <div id="ln-var" class="text-sm font-mono font-bold text-amber-300 mt-0.5">—</div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-surface-950 border border-slate-800 text-center">
+                <div class="text-[10px] font-mono text-slate-500">desvio $\sigma$</div>
+                <div id="ln-sd" class="text-sm font-mono font-bold text-amber-300 mt-0.5">—</div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-surface-950 border border-slate-800 text-center">
+                <div class="text-[10px] font-mono text-slate-500">norma $\lVert x \rVert$</div>
+                <div id="ln-norm" class="text-sm font-mono font-bold text-amber-300 mt-0.5">—</div>
+              </div>
+            </div>
+
+            <div class="rounded-xl bg-surface-950 border border-slate-800 p-3">
+              <div class="text-[10px] font-mono text-slate-500 mb-2">entrada $x$ · normalizado $\hat{x}$ · saída $y$</div>
+              <div id="ln-bars" class="space-y-1.5"></div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800">
+              <table class="w-full text-[11px] font-mono min-w-[320px]">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="p-2 text-left font-normal">i</th>
+                    <th class="p-2 text-right font-normal">x</th>
+                    <th class="p-2 text-right font-normal">x − μ</th>
+                    <th class="p-2 text-right font-normal">x̂</th>
+                    <th class="p-2 text-right font-normal">y</th>
+                  </tr>
+                </thead>
+                <tbody id="ln-tbody"></tbody>
+              </table>
+            </div>
+
+            <div id="ln-check" class="text-[11px] p-3 rounded-xl bg-surface-950 border border-slate-800 text-slate-400 leading-relaxed"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Por que não BatchNorm -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+        <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-ban text-rose-400"></i> Por que não BatchNorm aqui
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-5">
+          A BatchNorm (Ioffe &amp; Szegedy, 2015) domina visão computacional e normaliza na direção
+          oposta: para cada feature, ela tira a média sobre o <em>batch</em>. Em visão isso funciona;
+          em linguagem, a mesma escolha cria três problemas de uma vez.
+        </p>
+
+        <!-- eixo de normalização -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[11px] font-mono text-emerald-400 mb-2">LayerNorm · normaliza na horizontal</div>
+            <div class="font-mono text-[10px] text-slate-400 space-y-1">
+              <div class="flex gap-1 items-center"><span class="w-16 shrink-0 text-slate-600">token 1</span><span class="flex-1 h-4 rounded bg-emerald-500/40 border border-emerald-500/50"></span></div>
+              <div class="flex gap-1 items-center"><span class="w-16 shrink-0 text-slate-600">token 2</span><span class="flex-1 h-4 rounded bg-emerald-500/40 border border-emerald-500/50"></span></div>
+              <div class="flex gap-1 items-center"><span class="w-16 shrink-0 text-slate-600">token 3</span><span class="flex-1 h-4 rounded bg-emerald-500/40 border border-emerald-500/50"></span></div>
+              <div class="text-center text-slate-600 pt-1">← $d_{model}$ features →</div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+              Cada linha se normaliza sozinha. O resultado de um token não depende de nenhum outro
+              token nem de quem mais está no batch.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-[11px] font-mono text-rose-400 mb-2">BatchNorm · normaliza na vertical</div>
+            <div class="font-mono text-[10px] text-slate-400 space-y-1">
+              <div class="flex gap-1 items-center"><span class="w-16 shrink-0 text-slate-600">token 1</span><span class="flex-1 flex gap-1"><span class="flex-1 h-4 rounded bg-rose-500/40 border border-rose-500/50"></span><span class="flex-1 h-4 rounded bg-slate-800"></span><span class="flex-1 h-4 rounded bg-slate-800"></span></span></div>
+              <div class="flex gap-1 items-center"><span class="w-16 shrink-0 text-slate-600">token 2</span><span class="flex-1 flex gap-1"><span class="flex-1 h-4 rounded bg-rose-500/40 border border-rose-500/50"></span><span class="flex-1 h-4 rounded bg-slate-800"></span><span class="flex-1 h-4 rounded bg-slate-800"></span></span></div>
+              <div class="flex gap-1 items-center"><span class="w-16 shrink-0 text-slate-600">token 3</span><span class="flex-1 flex gap-1"><span class="flex-1 h-4 rounded bg-rose-500/40 border border-rose-500/50"></span><span class="flex-1 h-4 rounded bg-slate-800"></span><span class="flex-1 h-4 rounded bg-slate-800"></span></span></div>
+              <div class="text-center text-slate-600 pt-1">uma feature, todos os exemplos</div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+              A estatística é coletada por coluna, ao longo do batch inteiro. A saída de um exemplo
+              passa a depender dos vizinhos que por acaso caíram no mesmo lote.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="flex items-center gap-2 text-rose-400 text-xs font-mono mb-2">
+              <i class="fa-solid fa-users"></i> 1 · dependência do batch
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              A saída de uma frase muda conforme as outras frases do lote. Com batch pequeno — o caso
+              comum quando o modelo é grande e a memória é curta — a estimativa de $\mu$ e $\sigma^2$
+              fica ruidosa, e esse ruído entra direto na função de perda.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="flex items-center gap-2 text-rose-400 text-xs font-mono mb-2">
+              <i class="fa-solid fa-ruler-horizontal"></i> 2 · sequências de tamanho variável
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Textos têm comprimentos diferentes e o lote vem cheio de <em>padding</em>. A média por
+              feature na posição 400 seria calculada sobre as poucas sequências que chegam lá — ou
+              contaminada por posições que nem existem. A LayerNorm não tem esse problema: ela nunca
+              olha para fora do token.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="flex items-center gap-2 text-rose-400 text-xs font-mono mb-2">
+              <i class="fa-solid fa-code-branch"></i> 3 · treino ≠ inferência
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              A BatchNorm usa estatísticas do lote no treino e médias móveis acumuladas na inferência —
+              duas funções diferentes para o mesmo peso. Qualquer descolamento entre as duas aparece
+              como queda de qualidade em produção. A LayerNorm computa a mesma coisa nos dois regimes,
+              inclusive com um único exemplo.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — PRÉ vs PÓS ══════════════ -->
+    <section class="slide-section" data-nav="Pré vs pós-norma" data-icon="fa-arrows-split-up-and-left">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-arrows-split-up-and-left"></i> Módulo 03 • Onde colocar a norma
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Pré-norma ou pós-norma: <span class="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">dois parênteses, dois regimes de treino</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Os mesmos dois ingredientes — soma e normalização — admitem duas ordens. O paper original do
+          Transformer usou a pós-norma; praticamente todo modelo grande treinado depois usa a
+          pré-norma. A diferença está em uma coisa só: se a LayerNorm fica <em>dentro</em> ou
+          <em>fora</em> do caminho residual.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- PÓS-NORMA -->
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-6">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> Pós-norma
+            </h3>
+            <span class="text-[10px] font-mono text-amber-300 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">Vaswani et al., 2017</span>
+          </div>
+          <p class="text-center my-4">$$x_{\ell+1} = \mathrm{LN}\big(x_\ell + F_\ell(x_\ell)\big)$$</p>
+
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 mb-4">
+            <div class="text-[10px] font-mono text-slate-500 mb-2">o caminho de volta</div>
+            <div class="flex items-center gap-1.5 flex-wrap text-[10px] font-mono">
+              <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">$x_\ell$</span>
+              <i class="fa-solid fa-arrow-right text-slate-600"></i>
+              <span class="px-2 py-1 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">+</span>
+              <i class="fa-solid fa-arrow-right text-slate-600"></i>
+              <span class="px-2 py-1 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300">LN</span>
+              <i class="fa-solid fa-arrow-right text-slate-600"></i>
+              <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">$x_{\ell+1}$</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed">
+              A LN está <strong class="text-amber-300">no meio do caminho</strong>. O jacobiano da
+              LayerNorm entra no produto de <em>toda</em> camada — não existe mais um trajeto puro de
+              identidade da saída até $x_1$.
+            </p>
+          </div>
+
+          <ul class="space-y-2 text-[11px] text-slate-400 leading-relaxed">
+            <li class="flex gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-0.5 shrink-0"></i><span>A ativação que sai de cada bloco tem escala controlada por construção: nada acumula.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 shrink-0"></i><span>Precisa de <strong class="text-amber-300">warmup</strong> de learning rate. Começar com passo grande costuma divergir, e o schedule vira parte da receita, não um detalhe.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 shrink-0"></i><span>Fica progressivamente mais difícil de treinar conforme a pilha cresce — quanto mais camadas, mais frágil o começo do treino.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle-info text-slate-500 mt-0.5 shrink-0"></i><span>Quando converge, costuma render modelos competitivos: a fragilidade é de otimização, não de capacidade.</span></li>
+          </ul>
+        </div>
+
+        <!-- PRÉ-NORMA -->
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6 glow-emerald">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-forward text-emerald-400"></i> Pré-norma
+            </h3>
+            <span class="text-[10px] font-mono text-emerald-300 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">padrão dos LLMs atuais</span>
+          </div>
+          <p class="text-center my-4">$$x_{\ell+1} = x_\ell + F_\ell\big(\mathrm{LN}(x_\ell)\big)$$</p>
+
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800 mb-4">
+            <div class="text-[10px] font-mono text-slate-500 mb-2">o caminho de volta</div>
+            <div class="flex items-center gap-1.5 flex-wrap text-[10px] font-mono">
+              <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">$x_\ell$</span>
+              <i class="fa-solid fa-arrow-right text-emerald-500"></i>
+              <span class="px-2 py-1 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">+</span>
+              <i class="fa-solid fa-arrow-right text-emerald-500"></i>
+              <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">$x_{\ell+1}$</span>
+              <span class="text-slate-600 ml-1">(LN e $F$ ficam no ramo lateral)</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed">
+              O residual stream vai de $x_1$ à saída <strong class="text-emerald-300">sem atravessar
+              uma única LayerNorm</strong>. O caminho identidade do módulo 01 continua intacto por
+              toda a pilha.
+            </p>
+          </div>
+
+          <ul class="space-y-2 text-[11px] text-slate-400 leading-relaxed">
+            <li class="flex gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-0.5 shrink-0"></i><span>Treina com muito mais tolerância: warmup deixa de ser obrigatório e o learning rate inicial pode ser maior.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-circle-check text-emerald-400 mt-0.5 shrink-0"></i><span>Escala para dezenas ou centenas de camadas sem o colapso típico da pós-norma profunda. É por isso que virou padrão.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 shrink-0"></i><span>A norma do residual stream <strong class="text-amber-300">cresce com a profundidade</strong> — cada bloco soma sem que nada reescale o canal. Na prática a contribuição relativa dos últimos blocos encolhe.</span></li>
+            <li class="flex gap-2"><i class="fa-solid fa-wrench text-slate-500 mt-0.5 shrink-0"></i><span>Por causa disso, a arquitetura pré-norma precisa de uma <strong class="text-slate-200">LayerNorm final</strong>, depois do último bloco e antes da projeção de saída.</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- a análise -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-magnifying-glass-chart text-cyan-400"></i> Por que o warmup aparece só na pós-norma
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs text-slate-400 leading-relaxed">
+          <p>
+            Na pós-norma, o gradiente que chega às camadas iniciais depende de como a LayerNorm de cada
+            bloco está escalando o sinal naquele momento. No início do treino, com pesos aleatórios,
+            essa escala é grande perto da saída — e passos grandes nessa região produzem atualizações
+            que desestabilizam a pilha inteira. Xiong et al. (2020) formalizaram essa análise e é dela
+            que vem a recomendação prática: ou você entra devagar (warmup), ou muda a ordem.
+          </p>
+          <p>
+            Na pré-norma, cada bloco recebe uma entrada já normalizada e escreve um incremento no canal.
+            O gradiente que volta pelo caminho identidade não passa por nenhuma LN, então não há esse
+            fator dependente da profundidade multiplicando o passo inicial. O treino aguenta começar
+            com o learning rate cheio. O custo é o crescimento de norma do canal, que se resolve com
+            uma LN no fim — uma camada, não um schedule.
+          </p>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20 text-xs text-slate-400 leading-relaxed">
+        <i class="fa-solid fa-diagram-project text-cyan-400 mr-1"></i>
+        Volte ao módulo 01 e mexa no ganho $g$ com a pré-norma em mente: o crescimento do sinal que
+        aparece ali é exatamente o que a LN final vem corrigir. E o que essa norma prepara é a entrada
+        de cada sub-bloco — a
+        <a href="../multi-head-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">multi-head attention</a>
+        e a
+        <a href="../ffn/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">FFN position-wise</a>,
+        cada uma com o seu próprio Add &amp; Norm em volta.
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — RMSNORM ══════════════ -->
+    <section class="slide-section" data-nav="RMSNorm" data-icon="fa-compress">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-compress"></i> Módulo 04 • Variantes Atuais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          RMSNorm: <span class="bg-gradient-to-r from-brand-400 to-emerald-400 bg-clip-text text-transparent">tirar a média e ver que quase nada muda</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Zhang &amp; Sennrich (2019) fizeram a pergunta óbvia: a LayerNorm faz duas coisas — centrar e
+          reescalar. Quanto do benefício vem de cada uma? A resposta empírica foi que o essencial é o
+          reescalonamento. Daí nasceu uma normalização mais barata, hoje presente em boa parte das
+          famílias de LLM abertas.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-ruler-combined text-emerald-400"></i> LayerNorm
+          </h3>
+          <p class="text-center my-4">$$y_i = \gamma_i\,\frac{x_i - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta_i$$</p>
+          <div class="text-[11px] text-slate-400 space-y-1.5 font-mono">
+            <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-slate-500">passos</span><span>centrar + reescalar + afim</span></div>
+            <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-slate-500">parâmetros</span><span>$2d$ ($\gamma$ e $\beta$)</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">invariância</span><span>a deslocamento e a escala</span></div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-compress text-brand-400"></i> RMSNorm
+          </h3>
+          <div class="overflow-x-auto">
+            <p class="text-center my-4 min-w-[260px]">$$y_i = \gamma_i\,\frac{x_i}{\mathrm{RMS}(x)}, \quad \mathrm{RMS}(x) = \sqrt{\epsilon + \frac{1}{d}\sum_{j=1}^{d} x_j^2}$$</p>
+          </div>
+          <div class="text-[11px] text-slate-400 space-y-1.5 font-mono">
+            <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-slate-500">passos</span><span>só reescalar</span></div>
+            <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-slate-500">parâmetros</span><span class="text-brand-300">$d$ (só $\gamma$)</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">invariância</span><span>só a escala</span></div>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+            Sem $\mu$, some uma passada de redução sobre o vetor e a subtração que vinha depois. Sem
+            $\beta$, somem $d$ parâmetros e uma soma por elemento. O ganho de tempo é pequeno em
+            proporção ao bloco inteiro, mas a operação roda uma ou duas vezes por bloco em cada token
+            de cada camada — e economia constante em caminho quente tem valor.
+          </p>
+        </div>
+      </div>
+
+      <!-- comparador ao vivo (reusa o vetor do módulo 02) -->
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-scale-balanced text-brand-400"></i> Lado a lado, no mesmo vetor
+          </h3>
+          <button id="rms-sync" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 hover:border-brand-500/50 text-[11px] font-mono text-slate-300 transition">
+            <i class="fa-solid fa-rotate mr-1"></i> Recalcular
+          </button>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          As duas normalizações aplicadas ao <strong class="text-slate-200">mesmo vetor de 8 dimensões
+          do módulo 02</strong> — volte lá, mexa nos sliders e retorne: os números seguem o vetor.
+          Repare no que acontece quando a média do vetor está longe de zero.
+        </p>
+        <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800">
+          <table class="w-full text-[11px] font-mono min-w-[380px]">
+            <thead>
+              <tr class="text-slate-500 border-b border-slate-800">
+                <th class="p-2 text-left font-normal">i</th>
+                <th class="p-2 text-right font-normal">x</th>
+                <th class="p-2 text-right font-normal text-emerald-400">LayerNorm</th>
+                <th class="p-2 text-right font-normal text-brand-400">RMSNorm</th>
+                <th class="p-2 text-right font-normal">diferença</th>
+              </tr>
+            </thead>
+            <tbody id="rms-tbody"></tbody>
+          </table>
+        </div>
+        <div id="rms-note" class="text-[11px] p-3 mt-3 rounded-xl bg-surface-950 border border-slate-800 text-slate-400 leading-relaxed"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="flex items-center gap-2 text-emerald-400 text-xs font-mono mb-2">
+            <i class="fa-solid fa-map-pin"></i> onde a RMSNorm aparece
+          </div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            Virou escolha comum nas famílias de LLM abertas mais recentes — LLaMA e derivados, entre
+            outras — quase sempre combinada com pré-norma. A variante de normalização usada pelo T5
+            também dispensa a centragem. Não é uma mudança de arquitetura: é a mesma posição no bloco,
+            com uma conta mais curta. Nenhum número de benchmark é citado aqui de propósito; a
+            diferença de qualidade relatada na literatura é pequena e depende muito do cenário.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <div class="flex items-center gap-2 text-amber-400 text-xs font-mono mb-2">
+            <i class="fa-solid fa-flask-vial"></i> outras variantes do mesmo bloco
+          </div>
+          <ul class="text-[11px] text-slate-400 leading-relaxed space-y-1.5">
+            <li>— <strong class="text-slate-200">Sandwich / double norm</strong>: uma LN antes e outra depois do sub-bloco, tentando juntar as duas vantagens do módulo 03.</li>
+            <li>— <strong class="text-slate-200">Residual escalado</strong>: multiplicar $F(x)$ por um fator pequeno, às vezes aprendido, para conter o crescimento do canal em pilhas muito profundas.</li>
+            <li>— <strong class="text-slate-200">Inicializar $\gamma$ perto de zero</strong> no último sub-bloco, para que o bloco comece como identidade e "ligue" gradualmente.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Duas operações baratas que <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-emerald-400 bg-clip-text text-transparent">compram toda a profundidade</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Uma soma e uma padronização. Juntas, quase nenhum parâmetro e nenhuma capacidade
+          representacional nova — e ainda assim são elas que separam um modelo de 6 camadas de um de
+          80.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/30">
+          <div class="text-xs font-mono text-emerald-400 mb-1">o "Add"</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Caminho identidade</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$x + F(x)$ faz a derivada virar $I + J$. A expansão do produto contém um termo $I$ puro: o gradiente chega à camada 1 independentemente do que as outras fizerem.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-1">o "Norm"</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Escala sob controle</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">A LayerNorm padroniza cada token pelas suas $d_{model}$ features, com $\gamma$ e $\beta$ aprendidos. Sem batch, sem padding, sem diferença entre treino e inferência.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1">a ordem</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Pré-norma venceu</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$x + F(\mathrm{LN}(x))$ mantém o canal residual livre de normalização, dispensa warmup obrigatório e escala em profundidade — ao custo de uma LN final.</p>
+        </div>
+      </div>
+
+      <!-- limitações -->
+      <div class="p-5 rounded-2xl bg-surface-900 border border-rose-500/30 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> O que esta página não resolve
+        </h3>
+        <ul class="text-xs text-slate-400 leading-relaxed space-y-2">
+          <li class="flex gap-2"><i class="fa-solid fa-minus text-rose-400 mt-1 shrink-0 text-[8px]"></i><span>
+            <strong class="text-slate-200">Residual não garante treino estável.</strong> Ele remove o
+            desaparecimento do gradiente pela profundidade; não remove instabilidade numérica,
+            divergência de loss, explosão por learning rate alto nem os picos que aparecem em treinos
+            grandes. Clipping de gradiente e escolha de precisão continuam necessários.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-minus text-rose-400 mt-1 shrink-0 text-[8px]"></i><span>
+            <strong class="text-slate-200">Os dois simuladores são didáticos.</strong> O comparador de
+            profundidade reduz um bloco inteiro a um escalar $g$; no modelo real o jacobiano é uma
+            matriz cujo espectro muda a cada passo de treino. O laboratório de LayerNorm usa $d = 8$ e
+            $\gamma, \beta$ escalares, enquanto o modelo real tem $d_{model}$ na casa dos milhares e um
+            valor por dimensão.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-minus text-rose-400 mt-1 shrink-0 text-[8px]"></i><span>
+            <strong class="text-slate-200">A escolha entre as variantes é empírica.</strong> Pré-norma,
+            pós-norma, RMSNorm, residual escalado: a literatura dá argumentos e resultados, mas não um
+            teorema. Em escala nova, a receita se re-testa.</span></li>
+          <li class="flex gap-2"><i class="fa-solid fa-minus text-rose-400 mt-1 shrink-0 text-[8px]"></i><span>
+            <strong class="text-slate-200">A LayerNorm não é grátis em hardware.</strong> Ela é limitada
+            por banda de memória, não por FLOPs, e força uma sincronização por token. Em kernels
+            fundidos isso costuma ser o que separa uma implementação rápida de uma lenta — assunto de
+            engenharia, fora do escopo desta página.</span></li>
+        </ul>
+      </div>
+
+      <!-- onde encaixa -->
+      <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Onde isso se encaixa
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          O Add &amp; Norm envolve cada sub-bloco: um depois da
+          <a href="../multi-head-attention/index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">multi-head attention</a> (2.1.2.1)
+          e outro depois da FFN. O próximo tópico é justamente essa outra metade do bloco —
+          <a href="../ffn/index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">2.1.2.3 Positionwise FFN</a>,
+          onde mora a maior parte dos parâmetros do modelo. Com as três peças na mão, o bloco fecha em
+          <a href="../index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">2.1.2 Bloco Transformer</a>
+          e empilha no
+          <a href="../../encoder/index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">encoder</a> (2.1.3)
+          e no
+          <a href="../../decoder/index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">decoder</a> (2.1.4).
+          Antes disso vem a
+          <a href="../../positional-encoding/index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">2.1.1 Positional Encoding</a>,
+          que prepara o vetor de entrada. Para o mapa completo, volte a
+          <a href="../../index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">2.1 Transformers</a>
+          ou ao capítulo
+          <a href="../../../index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">2. Redes Neurais</a>.
+          A visão de fora — o Transformer pelo que interessa à busca — está em
+          <a href="../../../../ir/densos/transformer/index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">1.2.4 Arquitetura Transformer</a>.
+        </p>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que realmente sustenta o Add &amp; Norm.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Qual é o efeito da conexão residual sobre o gradiente que volta pela pilha?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A soma não normaliza nada — quem faz isso é a LayerNorm, que é a outra metade do Add &amp; Norm.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Ela normaliza a magnitude do gradiente para 1 em toda camada.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A derivada de x + F(x) é I + J. Ao expandir o produto pela pilha, sobra um termo de identidade pura que não é multiplicado por jacobiano nenhum.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Ela acrescenta um termo $I$ à derivada de cada camada, criando um caminho que atravessa a pilha sem multiplicação.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Descartar o gradiente das camadas iniciais é justamente o problema que o residual veio resolver.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Ela descarta o gradiente das camadas iniciais, que é ruidoso demais para ser útil.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O número de parâmetros não muda: a soma não tem peso nenhum.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Ela duplica os parâmetros de cada bloco, dando mais caminhos de aprendizado.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Por que o Transformer usa LayerNorm e não BatchNorm?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'BatchNorm é perfeitamente aplicável a vetores densos — ela domina visão computacional, que também trabalha com ativações densas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque a BatchNorm só funciona com entradas esparsas.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Contagem de parâmetros não é o critério: as duas aprendem gama e beta, com d valores cada.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque a LayerNorm tem menos parâmetros que a BatchNorm.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Os três motivos andam juntos: estatística por lote vira ruído com batch pequeno, padding contamina a média por posição, e a média móvel da inferência não é a mesma função do treino.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque a estatística por batch depende dos vizinhos do lote, sofre com sequências de comprimentos diferentes e usa funções distintas em treino e inferência.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A LayerNorm não computa nada entre tokens: ela normaliza cada token pelas próprias features, isoladamente.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque a LayerNorm calcula a média ao longo da sequência, capturando o contexto da frase.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              O que muda ao trocar $\mathrm{LN}(x + F(x))$ por $x + F(\mathrm{LN}(x))$?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A LayerNorm continua exatamente a mesma operação — o que muda é onde ela entra no circuito.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) A fórmula da LayerNorm passa a dispensar $\gamma$ e $\beta$.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Na pré-norma a LN sai do caminho residual e vai para o ramo lateral: o canal vai da entrada à saída sem atravessar normalização, o que dispensa warmup obrigatório — em troca a norma do canal cresce e exige uma LN no fim.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O caminho residual deixa de atravessar a LayerNorm; o treino tolera começar sem warmup, mas a norma do canal cresce com a profundidade e pede uma LN final.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A atenção e a FFN continuam idênticas: a ordem do Add &amp; Norm não altera o cálculo interno dos sub-blocos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) A atenção passa a ser calculada sobre vetores não normalizados, mudando os scores.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O custo é praticamente idêntico: é a mesma LN, no mesmo bloco, em outra posição.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) O custo computacional do bloco cai pela metade, já que a LN roda uma vez só.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════ util ═══════════ */
+    const EPS = 1e-5;
+    const D = 8;
+
+    function media(v) { return v.reduce((a, b) => a + b, 0) / v.length; }
+    function variancia(v) { const m = media(v); return media(v.map(x => (x - m) * (x - m))); }
+    function norma(v) { return Math.sqrt(v.reduce((a, b) => a + b * b, 0)); }
+
+    /* Notação curta para magnitudes que variam muitas ordens de grandeza. */
+    function fmtMag(x) {
+      if (!isFinite(x)) return '∞';
+      if (x === 0) return '0';
+      const abs = Math.abs(x);
+      if (abs >= 1e-3 && abs < 1e6) return x.toFixed(abs >= 100 ? 1 : 4);
+      return x.toExponential(2);
+    }
+
+    Guia.ready(() => {
+      initProfundidade();
+      initLayerNorm();
+      initRms();
+    });
+
+    /* ═══════════════════════════════════════════════════════════
+       MÓDULO 01 — comparador de profundidade
+       Modelo escalar: cada bloco tem ganho g. Sem residual o sinal
+       vira g^l; com residual, (1+g)^l. O piso 1 é o caminho identidade.
+       ═══════════════════════════════════════════════════════════ */
+    function initProfundidade() {
+      ['dep-l', 'dep-g'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', renderProfundidade);
+      });
+      renderProfundidade();
+    }
+
+    function renderProfundidade() {
+      const L = parseInt(document.getElementById('dep-l').value, 10);
+      const g = parseInt(document.getElementById('dep-g').value, 10) / 100;
+
+      document.getElementById('dep-l-out').textContent = L;
+      document.getElementById('dep-g-out').textContent = g.toFixed(2);
+
+      const semRes = [], comRes = [];
+      for (let l = 0; l <= L; l++) {
+        semRes.push(Math.pow(g, l));
+        comRes.push(Math.pow(1 + g, l));
+      }
+      const fimSem = semRes[L], fimCom = comRes[L];
+
+      document.getElementById('dep-plain').textContent = fmtMag(fimSem);
+      document.getElementById('dep-res').textContent = fmtMag(fimCom);
+
+      const ordensSem = Math.log10(Math.max(fimSem, Number.MIN_VALUE));
+      document.getElementById('dep-plain-note').innerHTML = g < 1
+        ? 'Encolheu <span class="text-rose-300">' + Math.abs(ordensSem).toFixed(1) + '</span> ordens de grandeza em ' + L + ' camadas. As primeiras camadas mal recebem sinal.'
+        : (g > 1
+          ? 'Cresceu <span class="text-rose-300">' + ordensSem.toFixed(1) + '</span> ordens de grandeza: o outro lado do mesmo problema, explosão.'
+          : 'Com g exatamente 1 o produto fica estável — um equilíbrio que nenhum treino real mantém sozinho.');
+
+      document.getElementById('dep-res-note').innerHTML =
+        'A expansão de (1+g)<sup>' + L + '</sup> soma ' + (L + 1) + ' termos; o primeiro deles vale exatamente 1 e não depende de g.';
+
+      /* barras em escala log, normalizadas pelos dois conjuntos juntos */
+      const todos = semRes.concat(comRes).filter(v => v > 0 && isFinite(v)).map(Math.log10);
+      const lo = Math.min.apply(null, todos), hi = Math.max.apply(null, todos);
+      const span = (hi - lo) || 1;
+      const alt = v => {
+        if (!(v > 0) || !isFinite(v)) return 1;
+        return Math.max(1, ((Math.log10(v) - lo) / span) * 100);
+      };
+
+      /* Em pilhas longas, mostrar no máximo 32 pares para o gráfico caber em 400px. */
+      const passo = Math.max(1, Math.ceil(L / 32));
+      let html = '';
+      for (let l = 0; l <= L; l += passo) {
+        html += '<div class="flex-1 min-w-[4px] flex gap-[1px] items-end h-full" title="camada ' + l + '">'
+          + '<div class="flex-1 bg-rose-500/70 rounded-t" style="height:' + alt(semRes[l]).toFixed(1) + '%"></div>'
+          + '<div class="flex-1 bg-emerald-500/70 rounded-t" style="height:' + alt(comRes[l]).toFixed(1) + '%"></div>'
+          + '</div>';
+      }
+      document.getElementById('dep-bars').innerHTML = html;
+      document.getElementById('dep-scale').textContent =
+        'topo = 10^' + hi.toFixed(1) + ' · base = 10^' + lo.toFixed(1)
+        + (passo > 1 ? ' · uma barra a cada ' + passo + ' camadas' : '');
+
+      const razao = fimSem > 0 ? fimCom / fimSem : Infinity;
+      document.getElementById('dep-verdict').innerHTML =
+        '<i class="fa-solid fa-scale-unbalanced text-emerald-400 mr-1"></i> Com <span class="font-mono text-slate-300">L = '
+        + L + '</span> e <span class="font-mono text-slate-300">g = ' + g.toFixed(2) + '</span>, o sinal com residual é '
+        + '<span class="font-mono text-emerald-300">' + fmtMag(razao) + '×</span> o sinal sem residual. '
+        + 'E, por maior que seja a diferença, o número que importa para o treino é o piso: '
+        + '<span class="font-mono text-brand-300">1</span>. '
+        + 'Sem residual não existe piso — se g &lt; 1, o gradiente vai a zero e as primeiras camadas param de aprender. '
+        + 'Lembre que g aqui é um escalar fixo, igual em todas as camadas: no modelo real cada bloco tem um jacobiano diferente, que muda a cada passo de treino.';
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       MÓDULO 02 — laboratório de LayerNorm (d = 8)
+       ═══════════════════════════════════════════════════════════ */
+    const lnX = [1.2, -0.4, 0.8, 2.1, -1.5, 0.3, -0.9, 1.7];
+
+    function lnStats() {
+      const gamma = parseInt(document.getElementById('ln-gamma').value, 10) / 100;
+      const beta = parseInt(document.getElementById('ln-beta').value, 10) / 100;
+      const mu = media(lnX);
+      const varia = variancia(lnX);
+      const sd = Math.sqrt(varia + EPS);
+      const hat = lnX.map(x => (x - mu) / sd);
+      const y = hat.map(h => gamma * h + beta);
+      return { gamma, beta, mu, varia, sd, hat, y };
+    }
+
+    function initLayerNorm() {
+      const box = document.getElementById('ln-sliders');
+      if (!box) return;
+
+      box.innerHTML = lnX.map((v, i) =>
+        '<div class="flex items-center gap-2">'
+        + '<label for="ln-x' + i + '" class="w-10 shrink-0 text-[11px] font-mono text-slate-500">x<sub>' + i + '</sub></label>'
+        + '<input id="ln-x' + i + '" type="range" min="-300" max="300" step="5" value="' + Math.round(v * 100) + '" class="flex-1">'
+        + '<span id="ln-x' + i + '-out" class="w-12 shrink-0 text-right text-[11px] font-mono text-emerald-300">' + v.toFixed(2) + '</span>'
+        + '</div>').join('');
+
+      lnX.forEach((_, i) => {
+        document.getElementById('ln-x' + i).addEventListener('input', e => {
+          lnX[i] = parseInt(e.target.value, 10) / 100;
+          renderLayerNorm();
+        });
+      });
+
+      ['ln-gamma', 'ln-beta'].forEach(id => {
+        document.getElementById(id).addEventListener('input', renderLayerNorm);
+      });
+
+      const setX = vals => {
+        vals.forEach((v, i) => {
+          lnX[i] = Math.max(-3, Math.min(3, v));
+          document.getElementById('ln-x' + i).value = String(Math.round(lnX[i] * 100));
+        });
+        renderLayerNorm();
+      };
+
+      document.getElementById('ln-preset-rand').addEventListener('click', () => {
+        setX(lnX.map(() => Math.round((Math.random() * 6 - 3) * 20) / 20));
+        Guia.toast('Vetor aleatório em [-3, 3]', 'fa-dice');
+      });
+      document.getElementById('ln-preset-out').addEventListener('click', () => {
+        setX([0.1, 0.05, -0.1, 3.0, 0.0, -0.05, 0.1, -0.1]);
+        Guia.toast('Uma dimensão domina: veja o desvio subir e o resto achatar', 'fa-arrow-up-right-dots');
+      });
+      document.getElementById('ln-preset-const').addEventListener('click', () => {
+        setX([1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]);
+        Guia.toast('Vetor constante: só o epsilon impede a divisão por zero', 'fa-equals');
+      });
+      document.getElementById('ln-preset-shift').addEventListener('click', () => {
+        setX(lnX.map(v => v + 1));
+        Guia.toast('Deslocamento uniforme: a LayerNorm é invariante a ele', 'fa-plus');
+      });
+
+      renderLayerNorm();
+    }
+
+    function renderLayerNorm() {
+      const s = lnStats();
+
+      lnX.forEach((v, i) => { document.getElementById('ln-x' + i + '-out').textContent = v.toFixed(2); });
+      document.getElementById('ln-gamma-out').textContent = s.gamma.toFixed(2);
+      document.getElementById('ln-beta-out').textContent = s.beta.toFixed(2);
+
+      document.getElementById('ln-mu').textContent = s.mu.toFixed(4);
+      document.getElementById('ln-var').textContent = s.varia.toFixed(4);
+      document.getElementById('ln-sd').textContent = s.sd.toFixed(4);
+      document.getElementById('ln-norm').textContent = norma(lnX).toFixed(4);
+
+      /* barras: escala comum aos três vetores para a comparação ser honesta */
+      const maxAbs = Math.max(
+        1e-6,
+        Math.max.apply(null, lnX.map(Math.abs)),
+        Math.max.apply(null, s.hat.map(Math.abs)),
+        Math.max.apply(null, s.y.map(Math.abs))
+      );
+      /* Cada dimensão é uma célula com zero no centro: negativo cresce à esquerda, positivo à direita. */
+      const linha = (rotulo, vals, cor) =>
+        '<div class="flex items-center gap-2">'
+        + '<span class="w-8 shrink-0 text-[10px] font-mono text-slate-500">' + rotulo + '</span>'
+        + '<div class="flex-1 flex gap-[2px] items-center h-4">'
+        + vals.map(v => {
+          const larg = ((Math.abs(v) / maxAbs) * 100).toFixed(1);
+          const neg = v < 0 ? larg : '0';
+          const pos = v >= 0 ? larg : '0';
+          return '<div class="flex-1 flex h-3">'
+            + '<div class="w-1/2 flex justify-end"><div class="h-full ' + cor + ' rounded-l" style="width:' + neg + '%"></div></div>'
+            + '<div class="w-1/2 flex justify-start"><div class="h-full ' + cor + ' rounded-r" style="width:' + pos + '%"></div></div>'
+            + '</div>';
+        }).join('')
+        + '</div></div>';
+
+      document.getElementById('ln-bars').innerHTML =
+        linha('x', lnX, 'bg-slate-500')
+        + linha('x̂', s.hat, 'bg-emerald-500')
+        + linha('y', s.y, 'bg-cyan-500');
+
+      document.getElementById('ln-tbody').innerHTML = lnX.map((x, i) =>
+        '<tr class="border-b border-slate-800/60">'
+        + '<td class="p-2 text-slate-500">' + i + '</td>'
+        + '<td class="p-2 text-right text-slate-300">' + x.toFixed(3) + '</td>'
+        + '<td class="p-2 text-right text-slate-500">' + (x - s.mu).toFixed(3) + '</td>'
+        + '<td class="p-2 text-right text-emerald-300">' + s.hat[i].toFixed(3) + '</td>'
+        + '<td class="p-2 text-right text-cyan-300">' + s.y[i].toFixed(3) + '</td>'
+        + '</tr>').join('');
+
+      const muHat = media(s.hat), sdHat = Math.sqrt(variancia(s.hat));
+      const muY = media(s.y), sdY = Math.sqrt(variancia(s.y));
+      const constante = s.varia < 1e-9;
+
+      document.getElementById('ln-check').innerHTML =
+        '<i class="fa-solid fa-vial text-emerald-400 mr-1"></i> Conferindo: '
+        + 'média de x̂ = <span class="font-mono text-emerald-300">' + muHat.toExponential(2) + '</span>, '
+        + 'desvio de x̂ = <span class="font-mono text-emerald-300">' + sdHat.toFixed(5) + '</span> — '
+        + 'zero e um, a menos do epsilon. Depois de gama e beta: '
+        + 'média de y = <span class="font-mono text-cyan-300">' + muY.toFixed(4) + '</span> (≈ beta = ' + s.beta.toFixed(2) + '), '
+        + 'desvio de y = <span class="font-mono text-cyan-300">' + sdY.toFixed(4) + '</span> (≈ |gama| = ' + Math.abs(s.gamma).toFixed(2) + '). '
+        + (constante
+          ? '<br><span class="text-rose-300">Vetor constante:</span> a variância é zero e só o epsilon evita a divisão por zero — x̂ colapsa para perto de zero e a saída vira praticamente beta puro. É o caso-limite que o epsilon existe para cobrir.'
+          : '<br>Use o botão <span class="font-mono text-slate-300">Deslocar +1</span>: x muda, mas x̂ fica idêntico. A LayerNorm é invariante a deslocamento uniforme — e também a reescalonamento uniforme do vetor.');
+
+      renderRms();
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       MÓDULO 04 — LayerNorm x RMSNorm no mesmo vetor
+       ═══════════════════════════════════════════════════════════ */
+    function initRms() {
+      const btn = document.getElementById('rms-sync');
+      if (btn) btn.addEventListener('click', () => {
+        renderRms();
+        Guia.toast('Recalculado sobre o vetor atual do módulo 02', 'fa-rotate');
+      });
+      renderRms();
+    }
+
+    function renderRms() {
+      const tb = document.getElementById('rms-tbody');
+      if (!tb) return;
+
+      const mu = media(lnX);
+      const sd = Math.sqrt(variancia(lnX) + EPS);
+      const rms = Math.sqrt(media(lnX.map(x => x * x)) + EPS);
+      const ln = lnX.map(x => (x - mu) / sd);
+      const rn = lnX.map(x => x / rms);
+
+      /* gama = 1 nos dois lados, para isolar a diferença entre as normalizações. */
+      tb.innerHTML = lnX.map((x, i) =>
+        '<tr class="border-b border-slate-800/60">'
+        + '<td class="p-2 text-slate-500">' + i + '</td>'
+        + '<td class="p-2 text-right text-slate-300">' + x.toFixed(3) + '</td>'
+        + '<td class="p-2 text-right text-emerald-300">' + ln[i].toFixed(3) + '</td>'
+        + '<td class="p-2 text-right text-brand-300">' + rn[i].toFixed(3) + '</td>'
+        + '<td class="p-2 text-right text-slate-500">' + (rn[i] - ln[i]).toFixed(3) + '</td>'
+        + '</tr>').join('');
+
+      const maxDif = Math.max.apply(null, rn.map((v, i) => Math.abs(v - ln[i])));
+      const proximo = maxDif < 0.05;
+
+      document.getElementById('rms-note').innerHTML =
+        '<i class="fa-solid fa-calculator text-brand-400 mr-1"></i> '
+        + 'média do vetor = <span class="font-mono text-amber-300">' + mu.toFixed(4) + '</span> · '
+        + 'desvio = <span class="font-mono text-emerald-300">' + sd.toFixed(4) + '</span> · '
+        + 'RMS = <span class="font-mono text-brand-300">' + rms.toFixed(4) + '</span>. '
+        + 'Diferença máxima entre as duas saídas: <span class="font-mono text-slate-300">' + maxDif.toFixed(4) + '</span>. '
+        + (proximo
+          ? '<br>Com a média perto de zero, desvio e RMS quase coincidem e as duas normalizações entregam praticamente o mesmo vetor — o argumento empírico a favor de dispensar a centragem.'
+          : '<br>Com a média longe de zero (' + mu.toFixed(2) + '), desvio e RMS se separam: a RMSNorm <strong class="text-slate-200">não</strong> recentra, então o deslocamento sobrevive à normalização. Use o botão <span class="font-mono text-slate-300">Deslocar +1</span> do módulo 02 e volte aqui para ver a diferença crescer.');
+    }
+  </script>
+</body>
+</html>

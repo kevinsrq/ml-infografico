@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sparse Encoder (SPLADE): Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Sparse Encoder (SPLADE)"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Pesos aprendidos e expansão de termos sobre o índice invertido (Formal et al., 2021)"
+      data-icon="fa-diagram-project"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ===================== MÓDULO 01 ===================== -->
+    <section class="slide-section" data-nav="Vocabulário Descasado" data-icon="fa-lightbulb">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-sparkles"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O Vocabulário Descasado: <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">quando a palavra certa não aparece</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O BM25 (tópico 1.1.2) pontua apenas termos com grafia idêntica. A consulta diz <em>“açúcar”</em>, o laudo diz
+          <em>“glicemia”</em>: para o índice invertido são duas dimensões ortogonais, e o score é zero. O
+          <strong>Sparse Encoder</strong> ataca esse buraco sem sair do mundo esparso.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-gradient-to-br from-surface-900 to-surface-850 border border-brand-500/30 p-5 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center shrink-0 text-brand-400 text-xl">
+            <i class="fa-solid fa-quote-left"></i>
+          </div>
+          <div>
+            <blockquote class="text-base sm:text-lg font-medium text-slate-100 italic">
+              “SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking.”
+            </blockquote>
+            <p class="text-xs text-brand-400 font-mono mt-2">— Formal, Piwowarski &amp; Clinchant (SIGIR 2021) • <span class="text-slate-500">v2: Formal et al. (2021/2022)</span></p>
+            <p class="text-slate-400 text-xs mt-1">
+              A ideia em uma linha: reaproveitar a cabeça <em>Masked Language Modeling</em> do BERT como gerador de
+              <strong>pesos por termo</strong> — inclusive de termos que não estão no texto.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> BM25 ao vivo sobre 5 laudos
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Scores calculados em JS com $k_1 = 1{,}2$, $b = 0{,}75$ e IDF medido nesta coleção de 5 documentos.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2" id="m1-presets"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div>
+            <div class="text-xs text-slate-400 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-keyboard text-brand-400"></i> Termos da consulta (stopwords descartadas)
+            </div>
+            <div id="m1-qtoks" class="flex flex-wrap gap-2 p-3 rounded-xl bg-surface-950 border border-slate-800 min-h-[52px]"></div>
+            <div class="mt-3 flex flex-wrap items-center gap-4 text-[11px]">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-500/60"></span><span class="text-slate-300">casa literalmente em algum laudo</span></span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-500/20 border border-rose-500/60"></span><span class="text-slate-300">não existe em nenhum laudo</span></span>
+            </div>
+            <div id="m1-verdict" class="mt-4 text-xs leading-relaxed p-3 rounded-xl border"></div>
+          </div>
+
+          <div>
+            <div class="text-xs text-slate-400 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-ranking-star text-amber-400"></i> Ranking BM25
+            </div>
+            <div id="m1-ranking" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="p-4 rounded-2xl bg-surface-900 border border-rose-500/30">
+          <div class="text-rose-400 text-xs font-mono flex items-center gap-2 mb-2"><i class="fa-solid fa-triangle-exclamation"></i> BM25</div>
+          <h4 class="font-bold text-white text-sm mb-1">Casamento exato de string</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Explicável e barato, mas cego a sinônimos. Peso = contagem, não conhecimento.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-surface-900 border border-amber-500/30">
+          <div class="text-amber-400 text-xs font-mono flex items-center gap-2 mb-2"><i class="fa-solid fa-circle-nodes"></i> Bi-Encoder denso</div>
+          <h4 class="font-bold text-white text-sm mb-1">384 dimensões anônimas</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Resolve o sinônimo, mas perde o índice invertido e a lista de termos que explica o match.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-surface-900 border border-brand-500/40 glow-indigo">
+          <div class="text-brand-400 text-xs font-mono flex items-center gap-2 mb-2"><i class="fa-solid fa-diagram-project"></i> Sparse Encoder</div>
+          <h4 class="font-bold text-white text-sm mb-1">Pesos aprendidos sobre $|V|$</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Vetor de 30 522 posições, quase tudo zero, cada dimensão com nome de termo. Semântica do denso, infraestrutura do BM25.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 02 ===================== -->
+    <section class="slide-section" data-nav="Da MLM ao Vetor" data-icon="fa-diagram-project">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-diagram-project"></i> Módulo 02 • Mecanismo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Da Projeção MLM ao <span class="bg-gradient-to-r from-cyan-400 to-brand-400 bg-clip-text text-transparent">Vetor Esparso</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Cada token passa pelo Transformer e é projetado pela cabeça MLM — a mesma que prevê palavras mascaradas —
+          sobre as $|V| = 30\,522$ entradas do vocabulário WordPiece. O vetor do texto é o <strong>máximo posição a posição</strong>
+          dessas propostas, passado por $\log(1 + \mathrm{ReLU}(\cdot))$.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-2xl bg-surface-900 border border-slate-800">
+          <div class="text-cyan-400 text-xs font-mono mb-2"><i class="fa-solid fa-1"></i> Projeção</div>
+          <p class="text-xs text-slate-400 leading-relaxed">Para o token $i$ e a entrada $j$ do vocabulário, a cabeça MLM devolve um logit $z_{ij}$ — quão plausível é a palavra $j$ naquela posição.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-surface-900 border border-slate-800">
+          <div class="text-cyan-400 text-xs font-mono mb-2"><i class="fa-solid fa-2"></i> Ativação</div>
+          <p class="text-xs text-slate-400 leading-relaxed">A $\mathrm{ReLU}$ zera tudo que é negativo (é ela que cria a esparsidade); o $\log$ comprime os picos para nenhum termo dominar sozinho.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-surface-900 border border-slate-800">
+          <div class="text-cyan-400 text-xs font-mono mb-2"><i class="fa-solid fa-3"></i> Max-pooling</div>
+          <p class="text-xs text-slate-400 leading-relaxed">O vetor do texto inteiro é o máximo por posição sobre todos os tokens — basta um token propor o termo com força para ele acender.</p>
+        </div>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="text-center text-slate-200 overflow-x-auto py-2">
+          $$w_j \;=\; \max_{i \,\in\, \text{tokens}} \; \log\!\bigl(1 + \mathrm{ReLU}(z_{ij})\bigr), \qquad j = 1, \dots, |V|$$
+        </div>
+        <p class="text-[11px] text-slate-500 text-center mt-1">
+          $z_{ij}$ = logit da cabeça MLM • o resultado é um vetor de 30 522 posições com dezenas de valores não nulos.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-hand-pointer text-cyan-400"></i> Clique em um token para ver a proposta dele
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Cada token propõe seus próprios pesos; a coluna da direita é o max-pooling de todos.</p>
+          </div>
+          <span class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-[11px] font-mono text-cyan-300" id="m2-textlabel"></span>
+        </div>
+
+        <div id="m2-toks" class="flex flex-wrap gap-2 mb-5"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="rounded-xl bg-surface-950 border border-slate-800 p-4">
+            <div class="text-xs font-semibold text-cyan-300 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> Proposta do token <span id="m2-toklabel" class="font-mono text-white"></span>
+            </div>
+            <div id="m2-props" class="space-y-1.5"></div>
+          </div>
+          <div class="rounded-xl bg-surface-950 border border-brand-500/30 p-4">
+            <div class="text-xs font-semibold text-brand-300 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-layer-group"></i> Após o max-pooling (vetor do texto)
+            </div>
+            <div id="m2-pool" class="space-y-1.5"></div>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          Pesos ilustrativos: no lugar dos logits de um SPLADE treinado, esta página usa um pequeno léxico de associações
+          do domínio de exames laboratoriais. A mecânica — proposta por token, $\mathrm{ReLU}$, $\log$, máximo — é a do artigo,
+          e é calculada de verdade em JS.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 03 ===================== -->
+    <section class="slide-section" data-nav="Expansão de Termos" data-icon="fa-wand-magic-sparkles">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Módulo 03 • Simulador Principal
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Expansão de Termos: <span class="bg-gradient-to-r from-purple-400 to-brand-400 bg-clip-text text-transparent">o modelo acende palavras que não estão no texto</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Digite um texto e veja o vetor esparso resultante. As barras <span class="text-cyan-300 font-semibold">azuis</span> são
+          termos que estão literalmente no texto; as <span class="text-purple-300 font-semibold">roxas</span> foram acesas pelo modelo
+          — é a <em>expansão</em>, e é ela que fecha o abismo do Módulo 01.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-col gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1 min-w-0">
+              <label for="sim-text" class="block text-xs text-slate-400 font-medium mb-1.5">Texto de entrada</label>
+              <input id="sim-text" type="text" autocomplete="off"
+                     class="w-full bg-surface-950 border border-slate-700 text-white text-sm rounded-xl px-3 py-2.5 font-mono focus:ring-1 focus:ring-brand-500 focus:border-brand-500 focus:outline-none">
+            </div>
+            <div class="sm:w-64 shrink-0">
+              <label for="sim-lam" class="block text-xs text-slate-400 font-medium mb-1.5">
+                Regularização <span class="font-mono text-amber-300">λ = <span id="sim-lam-out">0,35</span></span>
+              </label>
+              <input id="sim-lam" type="range" min="0" max="1.2" step="0.05" value="0.35" class="w-full mt-2">
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1"><span>0 (sem poda)</span><span>1,2 (raso)</span></div>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2" id="m3-presets"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">dimensões ativas</div>
+            <div class="text-xl font-bold text-brand-300 font-mono" id="sim-dims">—</div>
+            <div class="text-[10px] text-slate-500" id="sim-dims-pct">—</div>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">expansões acesas</div>
+            <div class="text-xl font-bold text-purple-300 font-mono" id="sim-exp">—</div>
+            <div class="text-[10px] text-slate-500" id="sim-exp-pct">—</div>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">bytes por texto</div>
+            <div class="text-xl font-bold text-emerald-300 font-mono" id="sim-bytes">—</div>
+            <div class="text-[10px] text-slate-500">6 B por par (id uint32 + peso float16)</div>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">denso, para comparar</div>
+            <div class="text-xl font-bold text-slate-400 font-mono">1 536 B</div>
+            <div class="text-[10px] text-slate-500">384 dims × float32, nada é zero</div>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-surface-950 border border-slate-800 p-4 mb-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 mb-2 font-mono">
+            <span>painel do vocabulário — 30 522 posições em 4 800 células</span>
+            <span id="sim-panel-note" class="text-slate-500"></span>
+          </div>
+          <div id="sim-panel" class="w-full"></div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-chart-simple text-brand-400"></i> Vetor esparso resultante</h3>
+          <div class="flex items-center gap-4 text-[11px]">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-cyan-500"></span><span class="text-slate-300">termo original</span></span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-purple-500"></span><span class="text-slate-300">expansão</span></span>
+          </div>
+        </div>
+        <div id="sim-bars" class="space-y-1.5"></div>
+        <div id="sim-pruned" class="mt-4 text-xs leading-relaxed p-3 rounded-xl bg-amber-500/5 border border-amber-500/30 text-amber-200/90"></div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-surface-900 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+        <span class="text-brand-300 font-semibold"><i class="fa-solid fa-circle-info"></i> Assimetria consulta × documento:</span>
+        o SPLADE treina dois codificadores (ou um só, com prompts diferentes) e usa $\lambda_q > \lambda_d$ — a consulta pode
+        ser mais rasa que o documento, porque o custo da busca cresce com o número de termos <em>da consulta</em>
+        multiplicado pelo tamanho das listas de postings. Arraste o λ com um laudo no campo de texto e depois com uma pergunta curta.
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 04 ===================== -->
+    <section class="slide-section" data-nav="FLOPS e Custo" data-icon="fa-gauge-high">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-gauge-high"></i> Módulo 04 • Custo &amp; Regularização
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Regularização FLOPS e <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">o preço do índice</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Expandir é fácil; expandir <em>barato</em> é o problema. Um modelo que acende 500 termos por documento enche o índice
+          invertido de listas enormes e transforma a busca numa varredura disfarçada. A perda FLOPS coloca o custo do
+          produto escalar esparso dentro da própria função objetivo.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="overflow-x-auto py-2 text-slate-200">
+          $$\mathcal{L} \;=\; \mathcal{L}_{\text{rank}} \;+\; \lambda_q\,\ell_{\text{FLOPS}}(q) \;+\; \lambda_d\,\ell_{\text{FLOPS}}(d), \qquad \ell_{\text{FLOPS}} \;=\; \sum_{j=1}^{|V|} \Bigl(\tfrac{1}{N}\textstyle\sum_{i=1}^{N} w_j^{(i)}\Bigr)^{2}$$
+        </div>
+        <p class="text-xs text-slate-400 mt-3 leading-relaxed">
+          O termo interno é a <strong>ativação média</strong> do termo $j$ no lote. Ao elevar ao quadrado, um termo que acende
+          em quase todo documento (“exame”, “paciente”) custa desproporcionalmente mais do que um termo raro e discriminativo
+          (“hba1c”). O modelo aprende a ficar quieto onde não vale a pena — é isso que mantém as listas de postings curtas.
+        </p>
+        <div class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
+          <span class="text-amber-300 font-semibold font-mono">No simulador:</span>
+          o slider λ do Módulo 03 aplica a versão proximal dessa penalidade — um soft-threshold ponderado pela frequência do termo,
+          $w_j' = \max\bigl(0,\; w_j - \lambda(\alpha + \beta\,\mathrm{df}_j)\bigr)$, com $\alpha = 0{,}6$ e $\beta = 6$.
+          Termos frequentes morrem primeiro; termos raros e fortes resistem. É a mesma direção do gradiente da FLOPS, num passo só.
+        </div>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-end justify-between gap-4 pb-5 border-b border-slate-800 mb-5">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-database text-amber-400"></i> Recibo do índice</h3>
+            <p class="text-xs text-slate-400 mt-1">Tudo abaixo é recalculado a partir do λ do Módulo 03 e do N deste slider.</p>
+          </div>
+          <div class="w-full sm:w-72">
+            <label for="cost-n" class="block text-xs text-slate-400 font-medium mb-1.5">
+              Documentos na base: <span class="font-mono text-amber-300" id="cost-n-out">10 000</span>
+            </label>
+            <input id="cost-n" type="range" min="3" max="7" step="0.1" value="4" class="w-full">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">termos médios por documento</div>
+            <div class="text-2xl font-bold text-brand-300 font-mono" id="cost-kd">—</div>
+            <div class="text-[10px] text-slate-500">média sobre os 5 laudos, no λ atual</div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">termos na consulta</div>
+            <div class="text-2xl font-bold text-cyan-300 font-mono" id="cost-kq">—</div>
+            <div class="text-[10px] text-slate-500">cada um abre uma lista de postings</div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">coleção tocada por consulta</div>
+            <div class="text-2xl font-bold font-mono" id="cost-touch">—</div>
+            <div class="text-[10px] text-slate-500" id="cost-touch-note">—</div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-xs min-w-[560px]">
+            <thead>
+              <tr class="bg-surface-950 text-slate-400 text-left">
+                <th class="px-3 py-2.5 font-medium">Representação</th>
+                <th class="px-3 py-2.5 font-medium text-right">Bytes por doc</th>
+                <th class="px-3 py-2.5 font-medium text-right">Índice total</th>
+                <th class="px-3 py-2.5 font-medium">Estrutura</th>
+              </tr>
+            </thead>
+            <tbody id="cost-body" class="font-mono"></tbody>
+          </table>
+        </div>
+
+        <div id="cost-verdict" class="mt-4 text-xs leading-relaxed p-3 rounded-xl bg-surface-950 border border-slate-800 text-slate-300"></div>
+
+        <div class="mt-5">
+          <div class="text-xs text-slate-400 mb-2 font-mono">fração da coleção varrida por consulta, em função de λ</div>
+          <div id="cost-curve"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MÓDULO 05 ===================== -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-timeline">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Visão Geral &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          SPLADE × BM25 × Denso: <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">quem ganha o quê</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O produto escalar esparso $s(q,d) = \sum_{j} w_j^{q}\, w_j^{d}$ roda no mesmo índice invertido do BM25 — só troca a
+          contagem TF-IDF pelo peso aprendido. Abaixo, os dois rankings sobre a mesma coleção, calculados ao vivo.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800 mb-5">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-scale-balanced text-purple-400"></i> Ranking lado a lado</h3>
+          <span class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-[11px] font-mono text-slate-300" id="m5-qlabel"></span>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div>
+            <div class="text-xs font-semibold text-rose-300 mb-3 flex items-center gap-2"><i class="fa-solid fa-hashtag"></i> BM25 (casamento exato)</div>
+            <div id="m5-bm25" class="space-y-2"></div>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-brand-300 mb-3 flex items-center gap-2"><i class="fa-solid fa-diagram-project"></i> Sparse Encoder (produto escalar esparso)</div>
+            <div id="m5-splade" class="space-y-2"></div>
+          </div>
+        </div>
+        <div class="mt-5">
+          <div class="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-2"><i class="fa-solid fa-list-check"></i> Explicabilidade: por que o 1º colocado do SPLADE ganhou</div>
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-xs min-w-[520px]">
+              <thead>
+                <tr class="bg-surface-950 text-slate-400 text-left">
+                  <th class="px-3 py-2 font-medium">Termo</th>
+                  <th class="px-3 py-2 font-medium text-right">peso na consulta</th>
+                  <th class="px-3 py-2 font-medium text-right">peso no laudo</th>
+                  <th class="px-3 py-2 font-medium text-right">produto</th>
+                  <th class="px-3 py-2 font-medium">origem</th>
+                </tr>
+              </thead>
+              <tbody id="m5-terms" class="font-mono"></tbody>
+            </table>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-2">
+            Cada linha é um termo que dá para mostrar ao usuário (“achei por <em>glicemia</em>”) — a explicabilidade do BM25 com a semântica do denso.
+          </p>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-800 mb-6">
+        <table class="w-full text-xs min-w-[680px] bg-surface-900">
+          <thead>
+            <tr class="bg-surface-950 text-slate-400 text-left">
+              <th class="px-3 py-3 font-medium">Critério</th>
+              <th class="px-3 py-3 font-medium">BM25</th>
+              <th class="px-3 py-3 font-medium text-brand-300">Sparse Encoder</th>
+              <th class="px-3 py-3 font-medium">Bi-Encoder denso</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-300">
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-white">Sinônimos</td>
+              <td class="px-3 py-2.5 text-rose-400">Falha</td>
+              <td class="px-3 py-2.5 text-emerald-400">Bom — expansão de termos</td>
+              <td class="px-3 py-2.5 text-emerald-400">Excelente</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-white">Siglas e códigos exatos</td>
+              <td class="px-3 py-2.5 text-emerald-400">Excelente</td>
+              <td class="px-3 py-2.5 text-emerald-400">Bom — o termo literal continua ativo</td>
+              <td class="px-3 py-2.5 text-rose-400">Pobre</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-white">Explicabilidade</td>
+              <td class="px-3 py-2.5 text-emerald-400">Sim, termo a termo</td>
+              <td class="px-3 py-2.5 text-emerald-400">Sim, termo a termo</td>
+              <td class="px-3 py-2.5 text-rose-400">Não — dimensões anônimas</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-white">Infraestrutura</td>
+              <td class="px-3 py-2.5 text-slate-400">Índice invertido (Elasticsearch, OpenSearch)</td>
+              <td class="px-3 py-2.5 text-slate-400">Índice invertido (OpenSearch neural sparse, ELSER, Qdrant sparse)</td>
+              <td class="px-3 py-2.5 text-slate-400">Banco vetorial / HNSW (pgvector, Qdrant, Milvus)</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-white">GPU na indexação</td>
+              <td class="px-3 py-2.5 text-emerald-400">Não precisa</td>
+              <td class="px-3 py-2.5 text-amber-400">Recomendada — 1 passagem por doc</td>
+              <td class="px-3 py-2.5 text-amber-400">Recomendada — 1 passagem por doc</td>
+            </tr>
+            <tr class="border-t border-slate-800">
+              <td class="px-3 py-2.5 font-semibold text-white">Idioma</td>
+              <td class="px-3 py-2.5 text-emerald-400">Qualquer — só depende do tokenizador</td>
+              <td class="px-3 py-2.5 text-rose-400">SPLADE é majoritariamente inglês; pt-BR via modo esparso do bge-m3</td>
+              <td class="px-3 py-2.5 text-emerald-400">Muitos modelos multilíngues</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-surface-900 border border-emerald-500/30 text-xs text-slate-400 leading-relaxed mb-6">
+        <span class="text-emerald-300 font-semibold"><i class="fa-solid fa-layer-group"></i> O híbrido moderno:</span>
+        Qdrant, Weaviate e OpenSearch guardam os dois vetores do mesmo documento — o esparso no índice invertido, o denso no
+        HNSW — e devolvem duas listas por consulta. As listas são fundidas por <strong>Reciprocal Rank Fusion</strong> e o topo
+        passa por um <em>cross-encoder</em> para a ordenação final. O esparso cobre siglas e termos exatos; o denso cobre
+        paráfrases; o reranker desempata.
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-rose-500/30">
+          <h3 class="text-base font-bold text-white flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Limitações do método
+          </h3>
+          <ul class="space-y-2.5 text-xs text-slate-400 leading-relaxed">
+            <li><span class="text-rose-300 font-semibold">Latência maior que a do BM25.</span> Cada consulta paga uma passagem de Transformer antes de tocar o índice, e cada termo expandido abre mais uma lista de postings.</li>
+            <li><span class="text-rose-300 font-semibold">Expansão de termo frequente incha o índice.</span> Sem FLOPS bem calibrado, o modelo acende “exame” em tudo e a busca vira varredura — o Módulo 04 mostra o efeito ao subir o N.</li>
+            <li><span class="text-rose-300 font-semibold">Cobertura de idioma.</span> Os SPLADE públicos são treinados em MS MARCO (inglês); em pt-BR a alternativa prática é o modo esparso do <code class="font-mono text-slate-300">BAAI/bge-m3</code>, que expande bem menos.</li>
+            <li><span class="text-rose-300 font-semibold">Ainda é bag-of-words.</span> O vetor não guarda ordem: “jejum de 8 horas” e “8 horas sem jejum” produzem vetores quase idênticos. Negação e ordem continuam sendo assunto do cross-encoder.</li>
+            <li><span class="text-rose-300 font-semibold">Paráfrase sem ancoragem léxica.</span> Quando consulta e documento não compartilham nenhum termo — nem por expansão — o denso ainda ganha.</li>
+          </ul>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/30 flex flex-col">
+          <h3 class="text-base font-bold text-white flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-forward text-emerald-400"></i> Para onde isto aponta
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            O sparse encoder fecha a seção <strong>1.1 Modelos Esparsos</strong>: saímos da contagem pura (TF-IDF), passamos
+            pela saturação probabilística (BM25) e chegamos ao peso aprendido com expansão. O que ele ainda não faz é
+            abandonar o vocabulário como sistema de coordenadas.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            É esse o passo da próxima seção: representar o texto em um espaço contínuo de algumas centenas de dimensões,
+            onde a proximidade é geométrica e não mais lexical. Depois, a busca híbrida mostra que a resposta prática
+            costuma ser <strong>os dois ao mesmo tempo</strong>.
+          </p>
+          <div class="mt-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <a href="../../densos/index.html" class="px-4 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold flex items-center justify-between gap-2 transition shadow-lg shadow-brand-600/30">
+              <span>Próximo: 1.2 Modelos Densos</span> <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <a href="../bm25/index.html" class="px-4 py-3 rounded-xl bg-surface-950 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-2 transition">
+              <i class="fa-solid fa-arrow-left"></i> <span>Revisar 1.1.2 BM25</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <h3 class="text-base font-bold text-white flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-code text-cyan-400"></i> Como usar na prática
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          A partir do <code class="font-mono text-slate-300">sentence-transformers 5.0</code> existe uma classe própria para
+          modelos esparsos, com a mesma API dos densos; <code class="font-mono text-slate-300">decode</code> devolve os termos ativos e seus pesos.
+        </p>
+        <div class="overflow-x-auto rounded-xl bg-surface-950 border border-slate-800 p-4">
+<pre class="text-[11px] leading-relaxed font-mono text-slate-300"><span class="text-purple-400">from</span> sentence_transformers <span class="text-purple-400">import</span> SparseEncoder
+
+model = SparseEncoder(<span class="text-emerald-400">"naver/splade-cocondenser-ensembledistil"</span>)
+
+q = model.encode_query([<span class="text-emerald-400">"açúcar no sangue em jejum"</span>])
+d = model.encode_document(laudos)       <span class="text-slate-500"># offline, 1x; vai para o índice invertido</span>
+
+<span class="text-purple-400">print</span>(model.similarity(q, d))          <span class="text-slate-500"># produto escalar esparso</span>
+<span class="text-purple-400">print</span>(model.decode(q[<span class="text-cyan-400">0</span>], top_k=<span class="text-cyan-400">8</span>))    <span class="text-slate-500"># termos ativos e pesos -&gt; explicabilidade</span>
+</pre>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          Para pt-BR: <code class="font-mono text-slate-400">BGEM3FlagModel("BAAI/bge-m3")</code> com
+          <code class="font-mono text-slate-400">return_sparse=True</code> devolve <code class="font-mono text-slate-400">lexical_weights</code>
+          (vocabulário XLM-R, 250 002 posições) — e sai do mesmo modelo que o vetor denso, o que facilita o híbrido.
+        </p>
+      </div>
+
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação Conceitual
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que o SPLADE realmente faz.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">1</span>
+              O que a cabeça MLM entrega ao SPLADE que um TF-IDF jamais teria?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O vetor do SPLADE não é denso: ele tem 30 522 posições, quase todas em zero.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Um vetor denso de 768 dimensões contínuas.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A projeção MLM pontua todas as entradas do vocabulário para cada token — por isso o modelo consegue acender termos ausentes do texto.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Uma pontuação sobre todo o vocabulário para cada token — inclusive para termos que não aparecem no texto.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A ordem se perde no max-pooling: o vetor final continua sendo um bag-of-words.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) A ordem exata das palavras na frase.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O IDF é estatística de coleção; o SPLADE aprende pesos por contexto, não troca uma contagem por outra.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Um IDF mais preciso, calculado sobre um corpus maior.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">2</span>
+              Qual é o papel da regularização FLOPS no treino?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Quem zera os negativos é a ReLU; a FLOPS controla quantos termos sobrevivem e quais.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Zerar os logits negativos da projeção MLM.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Normalizar por tamanho de documento é papel do parâmetro b do BM25, não da FLOPS.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Normalizar o score pelo comprimento do documento.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Ela aproxima o custo esperado do produto escalar esparso e penaliza mais os termos que acendem em muitos documentos — é o que mantém as listas de postings curtas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Colocar o custo do produto escalar esparso dentro da perda, punindo termos ativos demais e frequentes demais.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Ela não mexe na arquitetura: o modelo continua sendo um BERT com cabeça MLM.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Reduzir o número de camadas do Transformer durante o fine-tuning.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px] shrink-0">3</span>
+              Por que o SPLADE continua rodando em índice invertido, e não em HNSW como um Bi-Encoder?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Ele usa Transformer sim — inclusive na indexação, uma passagem por documento.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque ele não usa rede neural em nenhuma etapa.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Cada dimensão é uma entrada do vocabulário e quase todas valem zero: o par (termo, peso) entra direto nas postings e o match continua explicável termo a termo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o vetor é esparso e cada dimensão tem nome de termo — vira par (termo, peso) nas postings.
+              </button>
+              <button onclick="Guia.answer(this, false, 'HNSW funcionaria tecnicamente; seria só um desperdício enorme percorrer 30 522 dimensões quase todas nulas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque HNSW não aceita vetores com mais de 2 000 dimensões.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A similaridade é produto escalar, exatamente como no denso — o que muda é a estrutura do vetor.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque o produto escalar não é definido para vetores esparsos.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    'use strict';
+
+    /* ===================================================================
+       Léxico ilustrativo do domínio de exames laboratoriais.
+       sal = salience (logit-base da cabeça MLM para o termo literal)
+       df  = frequência aproximada do termo na coleção
+       exp = [termo expandido, força da associação]
+       Os pesos são ilustrativos; a mecânica (ReLU, log, max-pooling,
+       soft-threshold, produto escalar) é calculada de verdade em JS.
+       =================================================================== */
+    const VOCAB = 30522;
+
+    const LEX = {
+      'açúcar':     { sal: 4.0, df: 0.05, exp: [['glicemia', .95], ['glicose', .88], ['diabetes', .62], ['insulina', .40], ['doce', .30], ['carboidrato', .28]] },
+      'sangue':     { sal: 3.4, df: 0.22, exp: [['hemograma', .55], ['plasma', .45], ['soro', .40], ['hematologia', .35], ['coleta', .30], ['venoso', .28]] },
+      'jejum':      { sal: 4.4, df: 0.18, exp: [['horas', .45], ['preparo', .42], ['alimentação', .35], ['8', .30], ['água', .25]] },
+      'glicemia':   { sal: 5.0, df: 0.04, exp: [['glicose', .90], ['diabetes', .70], ['açúcar', .68], ['hba1c', .50], ['insulina', .45]] },
+      'glicose':    { sal: 4.7, df: 0.05, exp: [['glicemia', .90], ['açúcar', .75], ['diabetes', .70], ['carboidrato', .40]] },
+      'diabetes':   { sal: 4.6, df: 0.07, exp: [['glicemia', .85], ['glicose', .80], ['insulina', .60], ['açúcar', .60], ['hba1c', .50]] },
+      'colesterol': { sal: 4.8, df: 0.05, exp: [['lipídico', .85], ['ldl', .75], ['hdl', .72], ['triglicérides', .65], ['gordura', .60], ['lipídios', .58]] },
+      'lipídico':   { sal: 4.6, df: 0.03, exp: [['colesterol', .88], ['ldl', .70], ['hdl', .68], ['triglicérides', .66], ['gordura', .50]] },
+      'gordura':    { sal: 3.6, df: 0.09, exp: [['lipídios', .80], ['colesterol', .70], ['triglicérides', .60], ['obesidade', .35]] },
+      'hemograma':  { sal: 4.9, df: 0.05, exp: [['sangue', .70], ['glóbulos', .60], ['leucócitos', .58], ['plaquetas', .55], ['anemia', .45], ['hematócrito', .40]] },
+      'urina':      { sal: 4.7, df: 0.06, exp: [['urinário', .80], ['renal', .60], ['rim', .52], ['sedimento', .45], ['bexiga', .35], ['eas', .30]] },
+      'coração':    { sal: 4.2, df: 0.07, exp: [['cardíaco', .85], ['cardiologia', .60], ['eletrocardiograma', .55], ['cardiovascular', .50], ['arritmia', .35]] },
+      'pressão':    { sal: 3.8, df: 0.10, exp: [['hipertensão', .80], ['arterial', .75], ['cardiovascular', .45], ['mmhg', .30]] },
+      'tireoide':   { sal: 4.8, df: 0.04, exp: [['tsh', .85], ['t4', .70], ['hormônio', .55], ['endócrino', .45]] },
+      'vitamina':   { sal: 3.9, df: 0.08, exp: [['suplemento', .40], ['deficiência', .38], ['nutriente', .35]] },
+      'gravidez':   { sal: 4.5, df: 0.05, exp: [['hcg', .75], ['gestação', .70], ['beta', .70], ['pré-natal', .50]] },
+      'alergia':    { sal: 4.3, df: 0.05, exp: [['alérgico', .75], ['ige', .70], ['imunológico', .50], ['rinite', .35]] },
+      'criança':    { sal: 3.5, df: 0.08, exp: [['pediátrico', .80], ['infantil', .70], ['pediatria', .60]] },
+      'dor':        { sal: 3.3, df: 0.20, exp: [['sintoma', .45], ['analgesia', .30], ['dolorido', .28]] },
+      'exame':      { sal: 1.8, df: 0.55, exp: [['teste', .40], ['análise', .35], ['laudo', .30]] },
+      'resultado':  { sal: 1.6, df: 0.60, exp: [['laudo', .45], ['valor', .35]] },
+      'paciente':   { sal: 1.4, df: 0.70, exp: [['pessoa', .30], ['laudo', .25]] },
+      'taxa':       { sal: 1.9, df: 0.40, exp: [['nível', .50], ['valor', .40], ['índice', .35]] },
+      'horas':      { sal: 2.0, df: 0.35, exp: [['tempo', .35], ['duração', .30]] },
+      'alta':       { sal: 1.9, df: 0.40, exp: [['elevado', .50], ['aumentado', .45]] },
+      'perfil':     { sal: 2.2, df: 0.30, exp: [['painel', .40], ['conjunto', .25]] },
+      'coleta':     { sal: 2.6, df: 0.30, exp: [['amostra', .45], ['tubo', .30]] }
+    };
+
+    /* df dos termos que só aparecem como expansão ou só nos laudos */
+    const DF = {
+      'glicose': .05, 'hba1c': .02, 'insulina': .06, 'doce': .10, 'carboidrato': .06,
+      'plasma': .06, 'soro': .07, 'hematologia': .04, 'venoso': .08, 'preparo': .25,
+      'alimentação': .20, 'água': .25, 'ldl': .04, 'hdl': .04, 'triglicérides': .05,
+      'lipídios': .05, 'obesidade': .06, 'glóbulos': .05, 'leucócitos': .05,
+      'plaquetas': .05, 'anemia': .06, 'hematócrito': .04, 'urinário': .05, 'renal': .06,
+      'rim': .05, 'sedimento': .04, 'bexiga': .04, 'eas': .03, 'cardíaco': .07,
+      'cardiologia': .05, 'eletrocardiograma': .04, 'cardiovascular': .06, 'arritmia': .04,
+      'hipertensão': .06, 'arterial': .08, 'mmhg': .03, 'tsh': .03, 't4': .03,
+      'hormônio': .07, 'endócrino': .04, 'suplemento': .06, 'deficiência': .08,
+      'nutriente': .05, 'hcg': .02, 'gestação': .05, 'beta': .06, 'pré-natal': .04,
+      'alérgico': .05, 'ige': .02, 'imunológico': .05, 'rinite': .03, 'pediátrico': .05,
+      'infantil': .06, 'pediatria': .04, 'sintoma': .20, 'analgesia': .03, 'dolorido': .05,
+      'teste': .40, 'análise': .45, 'laudo': .50, 'valor': .50, 'pessoa': .40, 'nível': .35,
+      'índice': .30, 'tempo': .40, 'duração': .20, 'elevado': .30, 'aumentado': .30,
+      'painel': .12, 'conjunto': .20, 'amostra': .25, 'tubo': .10,
+      'total': .40, 'completo': .30, 'sem': .50, 'exige': .20, 'primeira': .30,
+      'manhã': .15, 'tabela': .20, 'frações': .10, '8': .30, '12': .30
+    };
+
+    const STOP = new Set(['o', 'a', 'os', 'as', 'de', 'do', 'da', 'dos', 'das', 'e', 'em', 'no', 'na',
+      'nos', 'nas', 'um', 'uma', 'uns', 'umas', 'para', 'por', 'com', 'que', 'ao', 'à', 'às', 'aos', 'se', 'é']);
+
+    const DOCS = [
+      { id: 'D1', title: 'Hemograma',         text: 'hemograma completo sem jejum' },
+      { id: 'D2', title: 'Glicemia de jejum', text: 'glicemia de jejum exige jejum de 8 horas' },
+      { id: 'D3', title: 'Perfil lipídico',   text: 'colesterol total e frações com jejum de 12 horas antes da coleta' },
+      { id: 'D4', title: 'Urina tipo I',      text: 'exame de urina primeira urina da manhã' },
+      { id: 'D5', title: 'Tabela de jejum',   text: 'tabela de jejum jejum de 8 horas jejum de 12 horas' }
+    ];
+
+    const PRESETS = [
+      { q: 'açúcar no sangue em jejum', rel: 'D2' },
+      { q: 'exame de gordura e colesterol', rel: 'D3' },
+      { q: 'diabetes e taxa de glicose', rel: 'D2' }
+    ];
+
+    const S = { text: PRESETS[0].q, lam: 0.35, n: 4, tok: 0 };
+
+    /* ------------------------- utilidades ------------------------- */
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const fmt = (n, d) => n.toFixed(d === undefined ? 2 : d).replace('.', ',');
+    const fmtN = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    function fmtBytes(b) {
+      if (b < 1024) return fmtN(b) + ' B';
+      if (b < 1048576) return fmt(b / 1024, 1) + ' KB';
+      if (b < 1073741824) return fmt(b / 1048576, 1) + ' MB';
+      return fmt(b / 1073741824, 1) + ' GB';
+    }
+    function dfOf(t) {
+      if (LEX[t]) return LEX[t].df;
+      if (DF[t] !== undefined) return DF[t];
+      return 0.12;
+    }
+    const salOf = t => (LEX[t] ? LEX[t].sal : 2.4);
+    const tokenize = text => String(text).toLowerCase().split(/[^0-9a-zà-öø-ÿ-]+/).filter(Boolean);
+    const content = toks => toks.filter(t => !STOP.has(t));
+
+    /* posição pseudo-aleatória, mas estável, do termo dentro do vocabulário */
+    function vocabId(t) {
+      let h = 2166136261;
+      for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return (h >>> 0) % VOCAB;
+    }
+
+    /* ------------------------- o "modelo" ------------------------- */
+    /* Proposta de um token: logits sobre o vocabulário (só os não nulos). */
+    function proposals(tok) {
+      const out = [[tok, salOf(tok), false]];
+      const e = LEX[tok];
+      if (e) e.exp.forEach(p => out.push([p[0], p[1] * e.sal, true]));
+      return out.sort((a, b) => b[1] - a[1]);
+    }
+
+    /* Codifica um texto: max-pooling das propostas + log(1 + ReLU(z)). */
+    function encode(text) {
+      const toks = content(tokenize(text));
+      const literal = new Set(toks);
+      const z = new Map();
+      toks.forEach(tk => proposals(tk).forEach(p => {
+        if (!z.has(p[0]) || z.get(p[0]) < p[1]) z.set(p[0], p[1]);
+      }));
+      const vec = [];
+      z.forEach((v, t) => vec.push({
+        t: t,
+        w: Math.log(1 + Math.max(0, v)),
+        lit: literal.has(t),
+        df: dfOf(t)
+      }));
+      vec.sort((a, b) => b.w - a.w);
+      return { toks: toks, vec: vec };
+    }
+
+    /* Soft-threshold ponderado por df: operador proximal da L1 por trás da FLOPS. */
+    const ALPHA = 0.6, BETA = 6;
+    function prune(vec, lam) {
+      const kept = [], cut = [];
+      vec.forEach(d => {
+        const w2 = Math.max(0, d.w - lam * (ALPHA + BETA * d.df));
+        if (w2 > 0) kept.push({ t: d.t, w: w2, w0: d.w, lit: d.lit, df: d.df });
+        else cut.push(d);
+      });
+      return { kept: kept, cut: cut };
+    }
+
+    const encodePruned = (text, lam) => prune(encode(text).vec, lam).kept;
+
+    function sparseDot(a, b) {
+      const m = new Map(b.map(d => [d.t, d.w]));
+      let s = 0;
+      const rows = [];
+      a.forEach(d => {
+        const wd = m.get(d.t);
+        if (wd === undefined) return;
+        s += d.w * wd;
+        rows.push({ t: d.t, wq: d.w, wd: wd, prod: d.w * wd, lit: d.lit });
+      });
+      rows.sort((x, y) => y.prod - x.prod);
+      return { score: s, rows: rows };
+    }
+
+    /* ------------------------- BM25 de verdade ------------------------- */
+    const DOC_TOKS = DOCS.map(d => content(tokenize(d.text)));
+    const AVGDL = DOC_TOKS.reduce((s, d) => s + d.length, 0) / DOC_TOKS.length;
+    const docFreq = t => DOC_TOKS.filter(d => d.indexOf(t) >= 0).length;
+
+    function bm25(qToks) {
+      const k1 = 1.2, b = 0.75, N = DOC_TOKS.length;
+      return DOC_TOKS.map((d, i) => {
+        let s = 0;
+        const hits = [];
+        Array.from(new Set(qToks)).forEach(t => {
+          const f = d.filter(x => x === t).length;
+          if (!f) return;
+          const n = docFreq(t);
+          const idf = Math.log(1 + (N - n + 0.5) / (n + 0.5));
+          const part = idf * (f * (k1 + 1)) / (f + k1 * (1 - b + b * d.length / AVGDL));
+          s += part;
+          hits.push({ t: t, f: f, part: part });
+        });
+        return { doc: DOCS[i], score: s, hits: hits };
+      });
+    }
+
+    /* ------------------------- componentes de UI ------------------------- */
+    const C_LIT = '#22d3ee', C_EXP = '#a855f7';
+    const TAG_LIT = '<span class="w-16 shrink-0 text-[9px] font-mono text-cyan-300 text-right">original</span>';
+    const TAG_EXP = '<span class="w-16 shrink-0 text-[9px] font-mono text-purple-300 text-right">expansão</span>';
+
+    function barRow(label, value, max, color, tag) {
+      const pct = max > 0 ? Math.max(2, (value / max) * 100) : 2;
+      return '<div class="flex items-center gap-2 text-[11px]">' +
+        '<span class="w-20 sm:w-32 shrink-0 truncate font-mono text-slate-300" title="' + esc(label) + '">' + esc(label) + '</span>' +
+        '<div class="flex-1 min-w-0 h-4 rounded bg-surface-900 border border-slate-800 overflow-hidden">' +
+          '<div class="h-full transition-all duration-300" style="width:' + pct.toFixed(1) + '%;background:' + color + '"></div>' +
+        '</div>' +
+        '<span class="w-9 shrink-0 text-right font-mono text-slate-400">' + fmt(value, 2) + '</span>' +
+        (tag || '') +
+      '</div>';
+    }
+
+    function presetButtons(containerId) {
+      const el = document.getElementById(containerId);
+      el.innerHTML = PRESETS.map((p, i) =>
+        '<button data-preset="' + i + '" class="preset-btn px-3 py-1.5 rounded-lg border text-[11px] font-mono transition">“' + esc(p.q) + '”</button>'
+      ).join('');
+      el.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+        S.text = PRESETS[Number(b.dataset.preset)].q;
+        S.tok = 0;
+        const input = document.getElementById('sim-text');
+        if (input) input.value = S.text;
+        renderAll();
+      }));
+    }
+
+    function paintPresets() {
+      document.querySelectorAll('.preset-btn').forEach(b => {
+        const on = PRESETS[Number(b.dataset.preset)].q === S.text;
+        b.className = 'preset-btn px-3 py-1.5 rounded-lg border text-[11px] font-mono transition ' +
+          (on ? 'bg-brand-600 border-brand-500 text-white'
+              : 'bg-surface-950 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600');
+      });
+    }
+
+    /* ===================== MÓDULO 01 ===================== */
+    function renderM1() {
+      const toks = content(tokenize(S.text));
+      const scored = bm25(toks);
+      const max = Math.max(0.001, ...scored.map(s => s.score));
+      const ranked = scored.slice().sort((a, b) => b.score - a.score);
+
+      document.getElementById('m1-qtoks').innerHTML = toks.length
+        ? toks.map(t => {
+            const hit = docFreq(t) > 0;
+            return '<span class="px-2.5 py-1 rounded-lg text-[11px] font-mono border ' +
+              (hit ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300'
+                   : 'bg-rose-500/10 border-rose-500/50 text-rose-300') +
+              '">' + esc(t) + '</span>';
+          }).join('')
+        : '<span class="text-[11px] text-slate-500 font-mono">digite um texto no Módulo 03</span>';
+
+      document.getElementById('m1-ranking').innerHTML = ranked.map((r, i) => {
+        const pct = Math.max(1.5, (r.score / max) * 100);
+        const top = i === 0 && r.score > 0;
+        return '<div class="flex items-center gap-2 text-[11px]">' +
+          '<span class="w-5 shrink-0 font-mono text-slate-500">' + (i + 1) + 'º</span>' +
+          '<span class="w-8 shrink-0 font-mono font-bold ' + (top ? 'text-amber-300' : 'text-slate-400') + '">' + r.doc.id + '</span>' +
+          '<div class="flex-1 min-w-0 h-5 rounded bg-surface-950 border border-slate-800 overflow-hidden relative">' +
+            '<div class="h-full transition-all duration-300" style="width:' + pct.toFixed(1) + '%;background:' + (top ? '#f59e0b' : '#334155') + '"></div>' +
+            '<span class="absolute inset-0 flex items-center px-2 text-[10px] text-slate-200 whitespace-nowrap overflow-hidden">' +
+              esc(r.doc.title) + ' · ' + r.hits.length + ' termo' + (r.hits.length === 1 ? '' : 's') + ' em comum</span>' +
+          '</div>' +
+          '<span class="w-9 shrink-0 text-right font-mono ' + (top ? 'text-amber-300 font-bold' : 'text-slate-400') + '">' + fmt(r.score, 2) + '</span>' +
+        '</div>';
+      }).join('');
+
+      const missing = toks.filter(t => docFreq(t) === 0);
+      const preset = PRESETS.find(p => p.q === S.text);
+      const allZero = ranked[0].score === 0;
+      const wrongTop = !!preset && !allZero && ranked[0].doc.id !== preset.rel;
+      let msg;
+      if (allZero) {
+        msg = '<strong>BM25 zera os 5 laudos.</strong> Nenhum termo da consulta existe literalmente na coleção — e um score zero ' +
+              'não significa “nada relevante”, significa “nada encontrado”. O laudo certo está ali, escrito com outras palavras.';
+      } else if (wrongTop) {
+        msg = '<strong>BM25 erra o topo.</strong> Ele coloca <span class="font-mono">' + ranked[0].doc.id + ' (' + esc(ranked[0].doc.title) +
+              ')</span> em 1º porque esse texto repete o único termo que casou, enquanto o laudo realmente pedido ' +
+              '(<span class="font-mono">' + preset.rel + '</span>) fica para trás. Repetição venceu significado.';
+      } else {
+        msg = '<strong>Aqui o BM25 acerta.</strong> Os termos da consulta aparecem escritos no laudo — e é por isso que ele segue ' +
+              'sendo um baseline difícil de bater: quando o vocabulário casa, ninguém ganha dele em custo.';
+      }
+      if (missing.length) {
+        msg += '<br><span class="text-rose-300 font-mono text-[11px]">' + missing.length + ' termo' + (missing.length === 1 ? '' : 's') +
+               ' sem nenhuma ocorrência: ' + missing.map(esc).join(', ') + '</span>';
+      }
+      const v = document.getElementById('m1-verdict');
+      v.className = 'mt-4 text-xs leading-relaxed p-3 rounded-xl border ' +
+        (allZero || wrongTop ? 'bg-rose-500/5 border-rose-500/30 text-rose-200/90'
+                             : 'bg-emerald-500/5 border-emerald-500/30 text-emerald-200/90');
+      v.innerHTML = msg;
+    }
+
+    /* ===================== MÓDULO 02 ===================== */
+    function renderM2() {
+      const toks = content(tokenize(S.text));
+      if (S.tok >= toks.length) S.tok = 0;
+      document.getElementById('m2-textlabel').textContent = '“' + S.text + '”';
+
+      document.getElementById('m2-toks').innerHTML = toks.length
+        ? toks.map((t, i) =>
+            '<button data-tok="' + i + '" class="px-3 py-1.5 rounded-lg text-xs font-mono border transition ' +
+            (i === S.tok ? 'bg-cyan-600 border-cyan-400 text-white'
+                         : 'bg-surface-950 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600') +
+            '">' + esc(t) + '</button>').join('')
+        : '<span class="text-[11px] text-slate-500 font-mono">nenhum token de conteúdo</span>';
+
+      document.querySelectorAll('#m2-toks [data-tok]').forEach(b =>
+        b.addEventListener('click', () => { S.tok = Number(b.dataset.tok); renderM2(); }));
+
+      const cur = toks[S.tok];
+      document.getElementById('m2-toklabel').textContent = cur ? '“' + cur + '”' : '—';
+
+      const elProps = document.getElementById('m2-props');
+      const elPool = document.getElementById('m2-pool');
+      if (!cur) { elProps.innerHTML = ''; elPool.innerHTML = ''; return; }
+
+      const props = proposals(cur)
+        .map(p => ({ t: p[0], w: Math.log(1 + Math.max(0, p[1])), exp: p[2] }))
+        .slice(0, 8);
+      const pmax = props[0].w;
+      elProps.innerHTML = props.map(p => barRow(p.t, p.w, pmax, p.exp ? C_EXP : C_LIT, p.exp ? TAG_EXP : TAG_LIT)).join('') +
+        '<p class="text-[10px] text-slate-500 pt-2 leading-relaxed">Logits já passados por log(1 + ReLU). As outras ' +
+        fmtN(VOCAB - props.length) + ' posições do vocabulário ficaram em zero para este token.</p>';
+
+      const pool = encode(S.text).vec.slice(0, 8);
+      const mmax = pool.length ? pool[0].w : 1;
+      elPool.innerHTML = pool.map(p => barRow(p.t, p.w, mmax, p.lit ? C_LIT : C_EXP, p.lit ? TAG_LIT : TAG_EXP)).join('') +
+        '<p class="text-[10px] text-slate-500 pt-2 leading-relaxed">Máximo posição a posição sobre os ' + toks.length +
+        ' tokens de conteúdo. Basta um token propor o termo com força para ele entrar no vetor final.</p>';
+    }
+
+    /* ===================== MÓDULO 03 ===================== */
+    const PANEL_COLS = 80, PANEL_ROWS = 60;
+    function panelSvg(kept) {
+      const cells = PANEL_COLS * PANEL_ROWS, cell = 8;
+      const w = PANEL_COLS * cell, h = PANEL_ROWS * cell;
+      const max = kept.length ? kept[0].w : 1;
+      let s = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" role="img" ' +
+        'aria-label="Painel do vocabulário: ' + kept.length + ' posições acesas de ' + VOCAB + '" ' +
+        'style="width:100%;height:130px;display:block;border-radius:6px;background:#090d16">';
+      kept.forEach(d => {
+        const ci = Math.floor(vocabId(d.t) / VOCAB * cells);
+        const x = (ci % PANEL_COLS) * cell, y = Math.floor(ci / PANEL_COLS) * cell;
+        const f = max > 0 ? d.w / max : 0;
+        const col = d.lit ? C_LIT : C_EXP;
+        s += '<rect x="' + (x - cell) + '" y="' + (y - cell) + '" width="' + (cell * 3) + '" height="' + (cell * 3) +
+             '" fill="' + col + '" opacity="' + (0.08 + 0.18 * f).toFixed(2) + '" rx="3"/>' +
+             '<rect x="' + x + '" y="' + y + '" width="' + cell + '" height="' + cell + '" rx="1.5" fill="' + col +
+             '" opacity="' + (0.45 + 0.55 * f).toFixed(2) + '"><title>' + esc(d.t) + ' · peso ' + fmt(d.w, 2) + '</title></rect>';
+      });
+      return s + '</svg>';
+    }
+
+    function renderM3() {
+      const full = encode(S.text).vec;
+      const res = prune(full, S.lam);
+      const kept = res.kept, cut = res.cut;
+
+      document.getElementById('sim-lam-out').textContent = fmt(S.lam, 2);
+
+      const nExp = kept.filter(d => !d.lit).length;
+      document.getElementById('sim-dims').textContent = kept.length + ' / ' + fmtN(VOCAB);
+      document.getElementById('sim-dims-pct').textContent = fmt(kept.length / VOCAB * 100, 3) + ' % do vetor';
+      document.getElementById('sim-exp').textContent = String(nExp);
+      document.getElementById('sim-exp-pct').textContent = kept.length ? fmt(nExp / kept.length * 100, 0) + ' % das dimensões ativas' : '—';
+      document.getElementById('sim-bytes').textContent = fmtN(kept.length * 6) + ' B';
+      document.getElementById('sim-panel').innerHTML = panelSvg(kept);
+      document.getElementById('sim-panel-note').textContent = kept.length + ' acesas · ' + fmtN(VOCAB - kept.length) + ' em zero';
+
+      const max = kept.length ? kept[0].w : 1;
+      const show = kept.slice(0, 26);
+      document.getElementById('sim-bars').innerHTML = show.length
+        ? show.map(d => barRow(d.t, d.w, max, d.lit ? C_LIT : C_EXP, d.lit ? TAG_LIT : TAG_EXP)).join('') +
+          (kept.length > show.length
+            ? '<p class="text-[10px] text-slate-500 pt-1 font-mono">… e mais ' + (kept.length - show.length) + ' dimensões ativas</p>'
+            : '')
+        : (full.length
+            ? '<p class="text-xs text-rose-300 font-mono">λ alto demais: o vetor ficou vazio e este texto não pode mais ser indexado.</p>'
+            : '<p class="text-xs text-slate-500 font-mono">Digite um texto no campo acima para ver o vetor esparso.</p>');
+
+      const cutEl = document.getElementById('sim-pruned');
+      if (!cut.length) {
+        cutEl.innerHTML = '<strong>Neste λ nada é podado.</strong> As ' + full.length +
+          ' dimensões propostas sobrevivem inteiras — inclusive os termos genéricos, que vão gerar listas de postings enormes no índice. Suba o λ.';
+      } else {
+        const sample = cut.slice(0, 10).map(d => esc(d.t) + ' <span class="text-amber-400/60">(df ' + fmt(d.df, 2) + ')</span>');
+        cutEl.innerHTML = '<strong>' + cut.length + (cut.length === 1 ? ' dimensão podada' : ' dimensões podadas') +
+          ' neste λ</strong>, as de maior frequência primeiro: <span class="font-mono text-[11px]">' + sample.join(', ') +
+          (cut.length > 10 ? ', …' : '') + '</span>. O corte não é por peso puro: um termo raro e fraco resiste mais do que um termo forte e onipresente.';
+      }
+    }
+
+    /* ===================== MÓDULO 04 ===================== */
+    function renderM4() {
+      const n = Math.pow(10, S.n);
+      document.getElementById('cost-n-out').textContent = fmtN(n) + ' docs';
+
+      const q = encodePruned(S.text, S.lam);
+      const docVecs = DOCS.map(d => encodePruned(d.text, S.lam));
+      const kd = docVecs.reduce((s, v) => s + v.length, 0) / docVecs.length;
+      const touchFrac = Math.min(1, q.reduce((s, d) => s + d.df, 0));
+
+      document.getElementById('cost-kd').textContent = fmt(kd, 1);
+      document.getElementById('cost-kq').textContent = String(q.length);
+
+      const touchEl = document.getElementById('cost-touch');
+      touchEl.textContent = fmt(touchFrac * 100, 1) + ' %';
+      touchEl.className = 'text-2xl font-bold font-mono ' +
+        (touchFrac > 0.5 ? 'text-rose-400' : touchFrac > 0.2 ? 'text-amber-400' : 'text-emerald-400');
+      document.getElementById('cost-touch-note').textContent = '≈ ' + fmtN(touchFrac * n) + ' postings varridos';
+
+      const bm25Bytes = DOC_TOKS.reduce((s, d) => s + new Set(d).size, 0) / DOCS.length * 6;
+      const rows = [
+        { name: 'Sparse Encoder (λ atual)', bytes: kd * 6, struct: 'Índice invertido — pares (termo, peso)', hi: true },
+        { name: 'BM25', bytes: bm25Bytes, struct: 'Índice invertido — pares (termo, TF)', hi: false },
+        { name: 'Bi-Encoder denso (384d)', bytes: 384 * 4, struct: 'HNSW / IVF — grafo de vizinhança', hi: false },
+        { name: 'Multi-Vector (20 × 128d)', bytes: 20 * 128 * 2, struct: 'ANN por token + MaxSim', hi: false }
+      ];
+      document.getElementById('cost-body').innerHTML = rows.map(r =>
+        '<tr class="border-t border-slate-800 ' + (r.hi ? 'bg-brand-500/10' : '') + '">' +
+          '<td class="px-3 py-2.5 font-sans ' + (r.hi ? 'text-brand-300 font-semibold' : 'text-slate-300') + '">' + r.name + '</td>' +
+          '<td class="px-3 py-2.5 text-right text-slate-400">' + fmtN(r.bytes) + ' B</td>' +
+          '<td class="px-3 py-2.5 text-right ' + (r.hi ? 'text-brand-300' : 'text-slate-400') + '">' + fmtBytes(r.bytes * n) + '</td>' +
+          '<td class="px-3 py-2.5 font-sans text-slate-500 text-[11px]">' + r.struct + '</td>' +
+        '</tr>').join('');
+
+      const dense = 384 * 4 * n, sparse = kd * 6 * n;
+      document.getElementById('cost-verdict').innerHTML =
+        'Com λ = <span class="font-mono text-amber-300">' + fmt(S.lam, 2) + '</span> e N = <span class="font-mono text-amber-300">' +
+        fmtN(n) + '</span>: o índice esparso ocupa <span class="font-mono text-brand-300">' + fmtBytes(sparse) +
+        '</span> contra <span class="font-mono text-slate-300">' + fmtBytes(dense) + '</span> do denso — ' +
+        (sparse < dense
+          ? '<span class="text-emerald-300">' + fmt(dense / Math.max(sparse, 1), 1) + '× menor</span>. '
+          : '<span class="text-rose-300">' + fmt(sparse / Math.max(dense, 1), 1) + '× maior</span>, o que já é sintoma de λ baixo demais. ') +
+        'E cada consulta abre <span class="font-mono text-cyan-300">' + q.length + '</span> listas de postings que, somadas, tocam ' +
+        '<span class="font-mono">' + fmt(touchFrac * 100, 1) + ' %</span> da coleção. ' +
+        'Baixe o λ no Módulo 03 e veja as duas colunas crescerem juntas: é esse o preço da expansão.';
+
+      renderCurve(n);
+    }
+
+    /* Curva "fração da coleção varrida" × λ — recalculada para o texto atual. */
+    function renderCurve(n) {
+      const W = 720, H = 180, L = 52, R = 14, T = 12, B = 30;
+      const pts = [];
+      for (let lam = 0; lam <= 1.2001; lam += 0.05) {
+        const v = encodePruned(S.text, lam);
+        pts.push([lam, Math.min(1, v.reduce((s, d) => s + d.df, 0))]);
+      }
+      const maxY = Math.max(0.05, ...pts.map(p => p[1]));
+      const xs = lam => L + (lam / 1.2) * (W - L - R);
+      const ys = f => T + (1 - f / maxY) * (H - T - B);
+
+      let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" ' +
+        'aria-label="Fração da coleção varrida por consulta em função do lambda de regularização" ' +
+        'style="width:100%;height:auto;display:block;background:#090d16;border-radius:8px;border:1px solid #1e293b">';
+      for (let i = 0; i <= 4; i++) {
+        const f = maxY * i / 4, y = ys(f);
+        s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#1e293b"/>' +
+             '<text x="' + (L - 6) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" font-size="10" fill="#64748b" font-family="monospace">' +
+             fmt(f * 100, 0) + '%</text>';
+      }
+      for (let lam = 0; lam <= 1.2001; lam += 0.3) {
+        s += '<text x="' + xs(lam).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="10" fill="#64748b" font-family="monospace">λ=' +
+             fmt(lam, 1) + '</text>';
+      }
+      s += '<polyline fill="none" stroke="#f59e0b" stroke-width="2.5" points="' +
+           pts.map(p => xs(p[0]).toFixed(1) + ',' + ys(p[1]).toFixed(1)).join(' ') + '"/>';
+      const cur = pts.reduce((a, p) => (Math.abs(p[0] - S.lam) < Math.abs(a[0] - S.lam) ? p : a), pts[0]);
+      s += '<line x1="' + xs(S.lam).toFixed(1) + '" x2="' + xs(S.lam).toFixed(1) + '" y1="' + T + '" y2="' + (H - B) +
+           '" stroke="#6366f1" stroke-dasharray="4 3"/>' +
+           '<circle cx="' + xs(cur[0]).toFixed(1) + '" cy="' + ys(cur[1]).toFixed(1) + '" r="4" fill="#6366f1"/>' +
+           '<text x="' + Math.min(xs(cur[0]) + 8, W - 90).toFixed(1) + '" y="' + Math.max(ys(cur[1]) - 8, T + 10).toFixed(1) +
+           '" font-size="10" fill="#a5b4fc" font-family="monospace">' + fmtN(cur[1] * n) + ' docs tocados</text>' +
+           '</svg>';
+      document.getElementById('cost-curve').innerHTML = s;
+    }
+
+    /* ===================== MÓDULO 05 ===================== */
+    function renderM5() {
+      const qToks = content(tokenize(S.text));
+      document.getElementById('m5-qlabel').textContent = '“' + S.text + '” · λ = ' + fmt(S.lam, 2);
+
+      const bm = bm25(qToks).sort((a, b) => b.score - a.score);
+      const bmMax = Math.max(0.001, bm[0].score);
+      const preset = PRESETS.find(p => p.q === S.text);
+      const rel = preset ? preset.rel : null;
+
+      const qv = encodePruned(S.text, S.lam);
+      const sp = DOCS.map(d => {
+        const r = sparseDot(qv, encodePruned(d.text, S.lam));
+        return { doc: d, score: r.score, rows: r.rows };
+      }).sort((a, b) => b.score - a.score);
+      const spMax = Math.max(0.001, sp[0].score);
+
+      const rank = (list, max, color) => list.map((r, i) => {
+        const pct = Math.max(1.5, (r.score / max) * 100);
+        const good = rel && r.doc.id === rel;
+        return '<div class="flex items-center gap-2 text-[11px]">' +
+          '<span class="w-5 shrink-0 font-mono text-slate-500">' + (i + 1) + 'º</span>' +
+          '<span class="w-8 shrink-0 font-mono font-bold ' + (good ? 'text-emerald-300' : 'text-slate-400') + '">' + r.doc.id + '</span>' +
+          '<div class="flex-1 min-w-0 h-5 rounded bg-surface-950 border border-slate-800 overflow-hidden relative">' +
+            '<div class="h-full transition-all duration-300" style="width:' + pct.toFixed(1) + '%;background:' + (good ? '#10b981' : color) + '"></div>' +
+            '<span class="absolute inset-0 flex items-center px-2 text-[10px] text-slate-200 whitespace-nowrap overflow-hidden">' + esc(r.doc.title) + '</span>' +
+          '</div>' +
+          '<span class="w-9 shrink-0 text-right font-mono ' + (good ? 'text-emerald-300 font-bold' : 'text-slate-400') + '">' + fmt(r.score, 2) + '</span>' +
+        '</div>';
+      }).join('');
+
+      const note = rel
+        ? '<p class="text-[10px] text-slate-500 mt-2">Laudo esperado para esta consulta: <span class="font-mono text-emerald-300">' + rel + '</span>.</p>'
+        : '<p class="text-[10px] text-slate-500 mt-2">Texto livre: sem gabarito definido.</p>';
+
+      document.getElementById('m5-bm25').innerHTML = rank(bm, bmMax, '#475569') + note;
+      document.getElementById('m5-splade').innerHTML = rank(sp, spMax, '#6366f1') + note;
+
+      const win = sp[0];
+      const body = document.getElementById('m5-terms');
+      if (!win.rows.length) {
+        body.innerHTML = '<tr><td colspan="5" class="px-3 py-3 text-rose-300 font-sans text-[11px]">' +
+          'Nenhum termo em comum neste λ — nem por expansão. Reduza o λ ou alargue o texto no Módulo 03.</td></tr>';
+        return;
+      }
+      body.innerHTML = win.rows.slice(0, 10).map(r =>
+        '<tr class="border-t border-slate-800">' +
+          '<td class="px-3 py-2 text-slate-200">' + esc(r.t) + '</td>' +
+          '<td class="px-3 py-2 text-right text-cyan-300">' + fmt(r.wq, 2) + '</td>' +
+          '<td class="px-3 py-2 text-right text-brand-300">' + fmt(r.wd, 2) + '</td>' +
+          '<td class="px-3 py-2 text-right ' + (r.prod > 1 ? 'text-emerald-300 font-bold' : 'text-slate-400') + '">' + fmt(r.prod, 2) + '</td>' +
+          '<td class="px-3 py-2 font-sans text-[10px] ' + (r.lit ? 'text-cyan-400' : 'text-purple-400') + '">' +
+            (r.lit ? 'termo da consulta' : 'expansão do modelo') + '</td>' +
+        '</tr>').join('') +
+        '<tr class="border-t border-brand-500/40 bg-surface-950">' +
+          '<td class="px-3 py-2 font-sans text-slate-400 text-[11px]" colspan="3">score(q, ' + win.doc.id + ') = soma dos produtos</td>' +
+          '<td class="px-3 py-2 text-right text-brand-300 font-bold">' + fmt(win.score, 2) + '</td>' +
+          '<td class="px-3 py-2 font-sans text-[10px] text-slate-500">' +
+            win.rows.filter(r => !r.lit).length + ' de ' + win.rows.length + ' vêm de expansão</td>' +
+        '</tr>';
+    }
+
+    /* ===================== orquestração ===================== */
+    function renderAll() {
+      paintPresets();
+      renderM1();
+      renderM2();
+      renderM3();
+      renderM4();
+      renderM5();
+    }
+
+    Guia.ready(() => {
+      presetButtons('m1-presets');
+      presetButtons('m3-presets');
+
+      const input = document.getElementById('sim-text');
+      input.value = S.text;
+      input.addEventListener('input', () => { S.text = input.value; S.tok = 0; renderAll(); });
+
+      const lam = document.getElementById('sim-lam');
+      lam.addEventListener('input', () => { S.lam = parseFloat(lam.value); renderAll(); });
+
+      const nEl = document.getElementById('cost-n');
+      nEl.addEventListener('input', () => { S.n = parseFloat(nEl.value); renderM4(); });
+
+      renderAll();
+      Guia.toast('Simulador pronto: edite o texto no Módulo 03.', 'fa-flask');
+    });
+
+    /* Os SVGs dependem da largura do container: redesenha ao entrar nos módulos. */
+    Guia.onSlide(2, renderM3);
+    Guia.onSlide(3, renderM4);
+  </script>
+</body>
+</html>

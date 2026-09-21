@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masked Multi-head Attention: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../../assets/guia.css">
+  <script src="../../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Masked Multi-head Attention"
+      data-badge="Infográfico Interativo"
+      data-subtitle="A máscara triangular que impede o modelo de ver a resposta"
+      data-icon="fa-eye-slash"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — O VAZAMENTO ══════════════ -->
+    <section class="slide-section" data-nav="O vazamento" data-icon="fa-triangle-exclamation">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-triangle-exclamation"></i> Módulo 01 • O Problema
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Prever o próximo token vira <span class="bg-gradient-to-r from-rose-400 to-amber-400 bg-clip-text text-transparent">copiar o próximo token</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O decoder é treinado com uma tarefa só: dado o prefixo até a posição $t$, produza o token
+          da posição $t+1$. Se a self-attention da posição $t$ puder atender à posição $t+1$, o
+          alvo está <em>dentro da entrada</em>. A tarefa deixa de ser previsão e vira cópia.
+        </p>
+      </div>
+
+      <!-- O alvo dentro da entrada -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-bullseye text-rose-400"></i> O alvo mora na própria sequência de entrada
+        </h3>
+        <p class="text-slate-400 text-xs leading-relaxed mb-4">
+          No treino por <em>teacher forcing</em>, a mesma sequência serve de entrada e de rótulo,
+          deslocada de uma posição. A entrada é $x_1 \dots x_n$ e o alvo da posição $t$ é $x_{t+1}$.
+          Arraste o seletor e veja o que a posição $t$ deveria prever — e o que estaria ao alcance
+          dela sem máscara.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 pb-4 border-b border-slate-800 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Posição que pergunta $t$: <span id="m1-lbl-t" class="font-mono text-rose-300">2</span></span>
+            <input id="m1-t" type="range" min="0" max="4" step="1" value="2" class="w-40 sm:w-56" aria-label="Posição que pergunta">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <div id="m1-fita" class="flex gap-2 min-w-max pb-1"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1.5">prefixo legítimo</div>
+            <div id="m1-prefixo" class="font-mono text-xs text-slate-200 leading-relaxed"></div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-emerald-400 font-mono mb-1.5">alvo em $t$</div>
+            <div id="m1-alvo" class="font-mono text-xs text-emerald-200 leading-relaxed"></div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-rose-400 font-mono mb-1.5">ao alcance sem máscara</div>
+            <div id="m1-vazado" class="font-mono text-xs text-rose-200 leading-relaxed"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- A cabeça trapaceira -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-user-secret text-rose-400"></i> A solução trivial que o gradiente vai encontrar
+          </h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3">
+            Ninguém precisa programar a trapaça. Basta que ela exista no espaço de parâmetros:
+            uma única cabeça de atenção cujos $Q$ e $K$ aprendam a casar a posição $t$ com a
+            posição $t+1$ já leva o peso $\alpha_{t,\,t+1}$ para perto de $1$. O vetor de saída
+            vira, essencialmente, $v_{t+1}$ — e a camada de saída só precisa desfazer a projeção
+            $W_V$ para cuspir $x_{t+1}$.
+          </p>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-center">
+            <p class="text-slate-200 text-sm">
+              $o_t = \sum_j \alpha_{tj} v_j \;\xrightarrow{\;\alpha_{t,t+1}\to 1\;}\; v_{t+1}$
+            </p>
+          </div>
+          <p class="text-slate-400 text-xs leading-relaxed mt-3">
+            A descida de gradiente não procura a solução <em>interessante</em>; procura a de menor
+            perda. Uma cópia perfeita tem perda perto de zero e é achável em pouquíssimos passos.
+            É o atalho mais barato do problema inteiro.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-plug-circle-xmark text-amber-400"></i> E aí chega a inferência
+          </h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Na geração, a sequência é construída da esquerda para a direita. Quando o modelo
+            calcula a posição $t$, a posição $t+1$ <strong class="text-amber-300">não existe</strong> —
+            não há tensor, não há vetor, não há nada para copiar. O modelo passou o treino inteiro
+            exercitando uma habilidade que some no momento em que ele precisa trabalhar.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs min-w-[420px]">
+              <thead>
+                <tr class="text-slate-500 border-b border-slate-800">
+                  <th class="text-left py-2 pr-4 font-medium"></th>
+                  <th class="text-left py-2 pr-4 font-mono text-rose-400">treino sem máscara</th>
+                  <th class="text-left py-2 font-mono text-cyan-400">inferência</th>
+                </tr>
+              </thead>
+              <tbody class="text-slate-300">
+                <tr class="border-b border-slate-800/60">
+                  <td class="py-2 pr-4 text-slate-500">sequência disponível</td>
+                  <td class="py-2 pr-4">completa, $x_1 \dots x_n$</td>
+                  <td class="py-2">só o prefixo $x_1 \dots x_t$</td>
+                </tr>
+                <tr class="border-b border-slate-800/60">
+                  <td class="py-2 pr-4 text-slate-500">tarefa efetiva</td>
+                  <td class="py-2 pr-4 text-rose-300">cópia de $x_{t+1}$</td>
+                  <td class="py-2 text-cyan-300">previsão de verdade</td>
+                </tr>
+                <tr class="border-b border-slate-800/60">
+                  <td class="py-2 pr-4 text-slate-500">perda observada</td>
+                  <td class="py-2 pr-4 text-rose-300">cai para perto de zero</td>
+                  <td class="py-2 text-rose-300">explode</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4 text-slate-500">diagnóstico</td>
+                  <td class="py-2 pr-4" colspan="2">
+                    <span class="text-amber-300">curva de treino linda, geração incoerente</span> —
+                    a assinatura clássica de <em>label leakage</em>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+        <i class="fa-solid fa-circle-info text-brand-400 mr-1.5"></i>
+        Note que o problema é <strong class="text-slate-200">exclusivo da tarefa autoregressiva</strong>.
+        O <a href="../../encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">encoder</a>
+        (2.1.3) roda sem máscara causal de propósito: o objetivo dele é representar a frase inteira,
+        e olhar para a direita é uma vantagem, não um vazamento. A mesma operação matemática muda de
+        veredito conforme o que se está treinando.
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — A MÁSCARA ══════════════ -->
+    <section class="slide-section" data-nav="A máscara" data-icon="fa-eye-slash">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-eye-slash"></i> Módulo 02 • O Mecanismo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Somar $-\infty$ <span class="bg-gradient-to-r from-rose-400 via-brand-400 to-cyan-400 bg-clip-text text-transparent">antes do softmax</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A correção é uma matriz triangular somada aos <em>scores</em>. Não é um filtro aplicado
+          depois, não é uma arquitetura diferente, não é um bloco novo: é um termo aditivo que
+          entra antes da exponencial. O <em>onde</em> importa tanto quanto o <em>quê</em>.
+        </p>
+      </div>
+
+      <!-- A fórmula -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-rose-400"></i> A fórmula, com a máscara no lugar certo
+        </h3>
+        <p class="text-center my-5 text-sm">
+          $$\mathrm{Attn}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}} + M\right)V,
+          \qquad
+          M_{ij} = \begin{cases} 0, & j \le i \\[2pt] -\infty, & j > i \end{cases}$$
+        </p>
+        <p class="text-slate-400 text-xs leading-relaxed">
+          $M$ é triangular inferior em zeros e triangular superior estrita em $-\infty$. Ela não
+          tem parâmetro, não é aprendida e é a mesma em todas as cabeças e em todas as camadas —
+          depende só do comprimento da sequência. Em <em>multi-head</em>, a mesma $M$ é somada aos
+          scores de cada uma das $h$ cabeças, em paralelo: a máscara é causal por posição, não por
+          cabeça, e nenhuma cabeça pode ser a exceção.
+        </p>
+      </div>
+
+      <!-- Por que antes -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5 sm:p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-mono font-semibold border border-emerald-500/30">CERTO</span>
+            <h3 class="text-sm font-bold text-white">Mascarar antes: o futuro some do numerador <em>e</em> do denominador</h3>
+          </div>
+          <p class="text-center my-4 text-sm">
+            $$\alpha_{ij} = \frac{e^{s_{ij} + M_{ij}}}{\sum_{k} e^{s_{ik} + M_{ik}}}
+            \;=\; \frac{e^{s_{ij}}}{\sum_{k \le i} e^{s_{ik}}} \quad (j \le i)$$
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            Como $e^{-\infty} = 0$, cada termo futuro desaparece das duas somas. O que sobra é
+            <strong class="text-emerald-300">exatamente o softmax do prefixo</strong>: os pesos
+            continuam somando $1$, o vetor de saída continua sendo uma média convexa de valores
+            legítimos, e a escala da camada seguinte não muda.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 text-[10px] font-mono font-semibold border border-rose-500/30">ERRADO</span>
+            <h3 class="text-sm font-bold text-white">Zerar depois: a normalização quebra</h3>
+          </div>
+          <p class="text-center my-4 text-sm">
+            $$\tilde{\alpha}_{ij} = \frac{e^{s_{ij}}}{\sum_{k} e^{s_{ik}}}\;\mathbb{1}[j \le i]
+            \;\Longrightarrow\; \sum_j \tilde{\alpha}_{ij} = 1 - \underbrace{\sum_{k>i} \alpha_{ik}}_{\text{massa perdida}} &lt; 1$$
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            O denominador foi calculado com o futuro dentro. Ao zerar depois, a massa que estava
+            reservada às posições futuras simplesmente evapora: a linha passa a somar menos que $1$,
+            e por um fator que <strong class="text-rose-300">depende dos dados e da posição</strong>.
+            O vetor de saída encolhe de forma irregular — a posição $0$, que "olhava" para toda a
+            frase, é a mais amputada; a posição $n{-}1$ não perde nada. A LayerNorm seguinte vê uma
+            estatística deformada e o gradiente ainda atravessa os logits mascarados, porque eles
+            participaram do denominador.
+          </p>
+        </div>
+      </div>
+
+      <!-- Nota de implementação -->
+      <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30 text-xs text-slate-400 leading-relaxed mb-8">
+        <i class="fa-solid fa-screwdriver-wrench text-amber-400 mr-1.5"></i>
+        <strong class="text-amber-300">Na prática não se soma $-\infty$ literal.</strong>
+        Usa-se o menor valor finito do tipo em uso (em fp16, algo como $-6{,}55\times10^{4}$; em fp32,
+        costuma-se escrever $-10^{9}$). A razão é defensiva: se alguma linha ficasse <em>inteiramente</em>
+        mascarada — o que pode acontecer ao combinar máscara causal com máscara de <em>padding</em> —
+        o softmax de uma linha só de $-\infty$ daria $0/0 = \texttt{NaN}$, e um único NaN contamina
+        o modelo inteiro em uma passada. Com um número muito negativo porém finito, a linha degenera
+        para uma distribuição uniforme sem quebrar nada.
+      </div>
+
+      <!-- ░░░ SIMULADOR — LABORATÓRIO DA MÁSCARA ░░░ -->
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 sm:p-6 glow-indigo">
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-flask text-brand-400"></i> Laboratório da máscara
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Todos os números abaixo são calculados em JavaScript a partir dos vetores dos tokens e
+              dos controles visíveis. Troque o modo e acompanhe a soma de cada linha e o vazamento.
+            </p>
+          </div>
+          <span id="lab-modo-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-emerald-300 whitespace-nowrap">máscara ativa</span>
+        </div>
+
+        <!-- controles -->
+        <div class="flex flex-wrap items-center gap-x-8 gap-y-4 pb-5 border-b border-slate-800">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-slate-400 font-medium mr-1">Modo:</span>
+            <div id="lab-modos" class="flex flex-wrap gap-2" role="group" aria-label="Modo de mascaramento"></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Amplitude $\gamma$: <span id="lab-lbl-gain" class="font-mono text-brand-300">6,0</span></span>
+            <input id="lab-gain" type="range" min="1" max="14" step="0.5" value="6" class="w-32 sm:w-44" aria-label="Amplitude dos scores">
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Linha em foco $t$: <span id="lab-lbl-t" class="font-mono text-cyan-300">3</span></span>
+            <input id="lab-t" type="range" min="0" max="5" step="1" value="3" class="w-32 sm:w-44" aria-label="Linha em foco">
+          </div>
+        </div>
+
+        <!-- matrizes -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 pt-5">
+          <div>
+            <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-2 font-mono">
+              1 · scores brutos $\;s_{ij} + M_{ij}$
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-800 bg-surface-950 p-3">
+              <table id="lab-scores" class="text-[10px] sm:text-[11px] font-mono border-collapse min-w-max"></table>
+            </div>
+            <p id="lab-scores-nota" class="text-[11px] text-slate-500 mt-2 leading-relaxed"></p>
+          </div>
+
+          <div>
+            <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-2 font-mono">
+              2 · pesos $\;\alpha_{ij}$ e soma por linha
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-800 bg-surface-950 p-3">
+              <table id="lab-pesos" class="text-[10px] sm:text-[11px] font-mono border-collapse min-w-max"></table>
+            </div>
+            <p id="lab-pesos-nota" class="text-[11px] text-slate-500 mt-2 leading-relaxed"></p>
+          </div>
+        </div>
+
+        <!-- indicadores -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5 pt-5 border-t border-slate-800">
+          <div id="lab-card-vaz" class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1.5">vazamento médio</div>
+            <div id="lab-vaz" class="text-2xl font-bold font-mono text-emerald-400">0,0%</div>
+            <div class="h-1.5 rounded-full bg-surface-900 mt-2 overflow-hidden">
+              <div id="lab-vaz-bar" class="h-full bg-rose-500 transition-all duration-300" style="width:0%"></div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">
+              Peso médio que cada posição deposita em posições à sua direita, sobre as linhas que têm futuro.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1.5">soma das linhas</div>
+            <div id="lab-somas" class="text-2xl font-bold font-mono text-emerald-400">todas = 1,000</div>
+            <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">
+              Se alguma linha não soma $1$, a saída daquela posição foi encolhida por um fator
+              arbitrário antes de seguir para o Add &amp; Norm.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1.5">vazamento na linha $t$</div>
+            <div id="lab-vaz-t" class="text-2xl font-bold font-mono text-cyan-400">0,0%</div>
+            <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">
+              Fração do vetor de saída de $t$ que veio de tokens que ainda não deveriam existir.
+            </p>
+          </div>
+        </div>
+
+        <!-- o que t enxerga -->
+        <div class="mt-5 p-4 rounded-xl bg-surface-950 border border-slate-800">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-3 font-mono">3 · o que a posição $t$ enxerga</div>
+          <div class="overflow-x-auto">
+            <div id="lab-fita" class="flex gap-2 min-w-max pb-1"></div>
+          </div>
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="p-3 rounded-lg bg-surface-900 border border-slate-800">
+              <div class="text-[10px] font-mono text-slate-500 mb-1">vetor de saída $o_t = \sum_j \alpha_{tj} v_j$</div>
+              <div id="lab-out" class="font-mono text-xs text-brand-300"></div>
+            </div>
+            <div class="p-3 rounded-lg bg-surface-900 border border-slate-800">
+              <div class="text-[10px] font-mono text-slate-500 mb-1">token de maior peso</div>
+              <div id="lab-argmax" class="font-mono text-xs text-slate-200"></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          <i class="fa-solid fa-circle-info mr-1"></i>
+          <strong class="text-slate-400">Simplificação didática:</strong> para que a conta caiba na
+          tela, esta é uma cabeça única com $Q = K = V = X$ e $d_k = 4$, sem as projeções treinadas
+          $W_Q, W_K, W_V$. A máscara, o softmax por linha e a normalização se comportam exatamente
+          como no modelo real — o que muda é só a origem dos vetores.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — TREINO PARALELO ══════════════ -->
+    <section class="slide-section" data-nav="Treino paralelo" data-icon="fa-bolt">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-bolt"></i> Módulo 03 • O Ganho
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A máscara não é só uma trava: é o que <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">torna o treino viável</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Ler a máscara como censura é entender metade. A outra metade é que, com ela, uma única
+          passada produz $n$ exemplos de treino ao mesmo tempo — cada linha $t$ é um modelo rodando
+          sobre o prefixo até $t$, e todas as linhas são calculadas de uma vez.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-equals text-emerald-400"></i> A identidade que sustenta tudo
+        </h3>
+        <p class="text-slate-400 text-xs leading-relaxed mb-4">
+          A afirmação é forte e vale a pena escrever direito. Seja $X_{1:n}$ a sequência inteira e
+          $X_{1:t}$ o prefixo. Então a linha $t$ da atenção mascarada sobre a sequência inteira é
+          <strong class="text-emerald-300">idêntica</strong> à última linha da atenção sobre o prefixo:
+        </p>
+        <p class="text-center my-4 text-sm">
+          $$\big[\mathrm{MaskedAttn}(X_{1:n})\big]_{t} \;=\; \big[\mathrm{Attn}(X_{1:t})\big]_{t}$$
+        </p>
+        <p class="text-slate-400 text-xs leading-relaxed">
+          Isso não é aproximação. O score $s_{tj}$ depende só do par $(t, j)$, e tanto o numerador
+          quanto o denominador do softmax da linha $t$ envolvem apenas $j \le t$. Acrescentar tokens
+          à direita não altera nenhum dos dois. É essa invariância que autoriza trocar $n$ passadas
+          sobre prefixos crescentes por <em>uma</em> passada sobre a sequência inteira.
+        </p>
+
+        <div class="mt-5 pt-5 border-t border-slate-800">
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-3 mb-4">
+            <span class="text-xs text-slate-400 font-medium">Verificar na linha $t$:</span>
+            <div id="m3-toks" class="flex flex-wrap gap-2" role="group" aria-label="Linha a verificar"></div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="text-[10px] font-mono text-slate-500 mb-1.5">linha $t$ da passada mascarada (seq. inteira)</div>
+              <div id="m3-full" class="font-mono text-[11px] text-brand-300 leading-relaxed"></div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+              <div class="text-[10px] font-mono text-slate-500 mb-1.5">última linha da passada só sobre o prefixo</div>
+              <div id="m3-pref" class="font-mono text-[11px] text-cyan-300 leading-relaxed"></div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-surface-950 border border-emerald-500/30">
+              <div class="text-[10px] font-mono text-emerald-400 mb-1.5">maior diferença absoluta</div>
+              <div id="m3-diff" class="font-mono text-lg font-bold text-emerald-300"></div>
+              <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                Calculado agora, célula a célula, a cada clique. Zero exato aqui; em fp16 num modelo real, ruído de arredondamento.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- contador de custo -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-gauge-high text-emerald-400"></i> Uma passada contra $n$ passadas
+        </h3>
+        <p class="text-slate-400 text-xs leading-relaxed mb-4">
+          Sem a máscara, treinar um modelo causal exigiria alimentar cada prefixo separadamente:
+          $n$ passadas, com $1, 2, \dots, n$ posições. Com a máscara, uma passada de $n$ posições
+          entrega os $n$ sinais de treino. Mexa no comprimento e veja a conta.
+        </p>
+        <div class="flex flex-wrap items-center gap-x-8 gap-y-3 pb-4 mb-4 border-b border-slate-800">
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Comprimento $n$: <span id="m3-lbl-n" class="font-mono text-emerald-300">512</span></span>
+            <input id="m3-n" type="range" min="8" max="2048" step="8" value="512" class="w-40 sm:w-64" aria-label="Comprimento da sequência">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-rose-400 font-mono mb-1.5">por prefixo · posições processadas</div>
+            <div id="m3-naive" class="text-lg font-bold font-mono text-rose-300"></div>
+            <p class="text-[11px] text-slate-500 mt-1">$n(n+1)/2$, em $n$ passadas sequenciais</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-emerald-400 font-mono mb-1.5">mascarado · posições processadas</div>
+            <div id="m3-mask" class="text-lg font-bold font-mono text-emerald-300"></div>
+            <p class="text-[11px] text-slate-500 mt-1">$n$, em <strong>1</strong> passada paralela</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-brand-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-brand-400 font-mono mb-1.5">razão</div>
+            <div id="m3-razao" class="text-lg font-bold font-mono text-brand-300"></div>
+            <p class="text-[11px] text-slate-500 mt-1">$(n+1)/2$ vezes menos trabalho</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-amber-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-amber-400 font-mono mb-1.5">células descartadas</div>
+            <div id="m3-desc" class="text-lg font-bold font-mono text-amber-300"></div>
+            <p class="text-[11px] text-slate-500 mt-1">$n(n-1)/2$ de $n^2$ — o preço da implementação ingênua</p>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>
+          A última caixa é a letra miúda: a implementação ingênua calcula a matriz $n \times n$
+          inteira e joga quase metade fora. Kernels que operam por blocos podem simplesmente
+          <em>não visitar</em> os blocos acima da diagonal — a economia é real, mas vem do kernel,
+          não da fórmula.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-900 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+        <i class="fa-solid fa-link text-cyan-400 mr-1.5"></i>
+        Esse regime de treino tem nome: <strong class="text-slate-200">teacher forcing</strong>.
+        O prefixo que a posição $t$ enxerga é sempre o texto correto, nunca o que o próprio modelo
+        teria gerado. É o que permite o paralelismo — e é também a origem do
+        <em>exposure bias</em>, a discrepância entre o que o modelo vê no treino e o que ele vê
+        quando gera. A máscara resolve o vazamento; não resolve essa outra assimetria.
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — INFERÊNCIA E KV-CACHE ══════════════ -->
+    <section class="slide-section" data-nav="KV-cache" data-icon="fa-database">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-database"></i> Módulo 04 • Inferência &amp; Custo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Na geração, a máscara some — e <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">o cache aparece</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          Gerando um token por vez, a sequência disponível já é exatamente o prefixo. Só existe uma
+          query — a da última posição — e ela pode atender a tudo que está presente. A máscara vira
+          uma linha de zeros. O problema deixa de ser <em>o que esconder</em> e passa a ser
+          <em>o que não recalcular</em>.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-right-long text-cyan-400"></i> A máscara trivial
+          </h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3">
+            No passo $t$ da geração o tensor tem $t$ posições e a única linha que interessa é a
+            $t$-ésima. Nela, $M_{tj} = 0$ para todo $j \le t$, e não há $j > t$ para mascarar.
+            Formalmente a máscara continua lá; operacionalmente ela não remove nada.
+          </p>
+          <p class="text-center my-4 text-sm">
+            $$o_t = \mathrm{softmax}\!\left(\frac{q_t K_{1:t}^{\top}}{\sqrt{d_k}}\right) V_{1:t}$$
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            Repare no que sobrou: uma query nova, $q_t$, contra um $K$ e um $V$ que cobrem
+            <em>todo o prefixo</em>. E aqui está a observação que vale bilhões em GPU —
+            $K_{1:t-1}$ e $V_{1:t-1}$ são <strong class="text-cyan-300">bit a bit os mesmos</strong>
+            que foram calculados no passo anterior. A causalidade garante isso: nada do que vem
+            depois pode alterar a chave de uma posição anterior.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-scale-unbalanced text-amber-400"></i> A troca: computação por memória
+          </h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3">
+            Guardar $K$ e $V$ de cada posição, em cada camada, transforma o trabalho por passo de
+            <strong class="text-rose-300">proporcional ao prefixo</strong> em
+            <strong class="text-emerald-300">constante</strong>. Sobre $n$ passos, as projeções
+            de linha caem de $n(n+1)/2$ para $n$ por camada.
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3">
+            O preço é memória que cresce linearmente com o contexto e que
+            <em>não é liberada</em> até a sequência terminar:
+          </p>
+          <p class="text-center my-4 text-sm">
+            $$\text{bytes} = 2 \cdot L \cdot n \cdot d_{\text{model}} \cdot b \cdot B$$
+          </p>
+          <p class="text-slate-400 text-xs leading-relaxed">
+            O $2$ é por guardar $K$ <em>e</em> $V$; $L$ camadas, $n$ posições, $b$ bytes por
+            elemento, $B$ sequências no lote. Essa é a razão de o comprimento de contexto e o
+            tamanho do lote competirem pela mesma VRAM — e a motivação direta de variantes como
+            multi-query e grouped-query attention, que compartilham $K$ e $V$ entre cabeças
+            justamente para encolher esse termo.
+          </p>
+        </div>
+      </div>
+
+      <!-- ░░░ SIMULADOR — PAINEL KV-CACHE ░░░ -->
+      <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-5 sm:p-6 glow-amber">
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-microchip text-amber-400"></i> A última linha, com e sem cache
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Cada célula da fita é uma posição do prefixo no passo atual da geração.
+              <span class="text-emerald-300">Verde</span> = $K,V$ lidos do cache;
+              <span class="text-amber-300">âmbar</span> = $K,V$ recalculados;
+              <span class="text-brand-300">azul</span> = a posição nova, que sempre precisa ser projetada.
+            </p>
+          </div>
+          <span id="kv-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-emerald-300 whitespace-nowrap">cache ligado</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-8 gap-y-4 pb-5 border-b border-slate-800">
+          <label class="flex items-center gap-2 text-xs text-slate-300 font-medium cursor-pointer select-none">
+            <input id="kv-on" type="checkbox" checked class="w-4 h-4 accent-emerald-500" aria-label="Usar KV-cache">
+            usar KV-cache
+          </label>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Tokens gerados $n$: <span id="kv-lbl-n" class="font-mono text-amber-300">512</span></span>
+            <input id="kv-n" type="range" min="8" max="2048" step="8" value="512" class="w-32 sm:w-48" aria-label="Tokens gerados">
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Camadas $L$: <span id="kv-lbl-l" class="font-mono text-amber-300">32</span></span>
+            <input id="kv-l" type="range" min="1" max="96" step="1" value="32" class="w-28 sm:w-40" aria-label="Número de camadas">
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">$d_{model}$: <span id="kv-lbl-d" class="font-mono text-amber-300">4096</span></span>
+            <input id="kv-d" type="range" min="256" max="8192" step="256" value="4096" class="w-28 sm:w-40" aria-label="Dimensão do modelo">
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Lote $B$: <span id="kv-lbl-b" class="font-mono text-amber-300">8</span></span>
+            <input id="kv-b" type="range" min="1" max="64" step="1" value="8" class="w-24 sm:w-32" aria-label="Tamanho do lote">
+          </div>
+        </div>
+
+        <!-- fita da última linha -->
+        <div class="pt-5">
+          <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500 font-mono">
+              linha da última posição no passo <span id="kv-passo" class="text-brand-300">512</span>
+            </div>
+            <div id="kv-fita-nota" class="text-[11px] text-slate-500 font-mono"></div>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-slate-800 bg-surface-950 p-3">
+            <div id="kv-fita" class="flex gap-1 min-w-max items-end"></div>
+          </div>
+        </div>
+
+        <!-- números -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1.5">projeções de linha $K$/$V$ · total</div>
+            <div id="kv-proj" class="text-lg font-bold font-mono text-slate-100"></div>
+            <p id="kv-proj-sub" class="text-[11px] text-slate-500 mt-1"></p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-emerald-400 font-mono mb-1.5">operações economizadas</div>
+            <div id="kv-econ" class="text-lg font-bold font-mono text-emerald-300"></div>
+            <p class="text-[11px] text-slate-500 mt-1">projeções de linha evitadas em relação a recalcular tudo</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-brand-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-brand-400 font-mono mb-1.5">FLOPs de projeção $K$/$V$</div>
+            <div id="kv-flops" class="text-lg font-bold font-mono text-brand-300"></div>
+            <p class="text-[11px] text-slate-500 mt-1">a $\approx 4 d_{model}^2$ por linha ($K$ e $V$)</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-amber-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-amber-400 font-mono mb-1.5">memória do cache no fim</div>
+            <div id="kv-mem" class="text-lg font-bold font-mono text-amber-300"></div>
+            <p class="text-[11px] text-slate-500 mt-1">fp16 (2 bytes), $2 L n d_{model} b B$</p>
+          </div>
+        </div>
+
+        <div id="kv-resumo" class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-300 leading-relaxed"></div>
+
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          <i class="fa-solid fa-circle-info mr-1"></i>
+          <strong class="text-slate-400">Simplificação didática:</strong> contam-se aqui apenas as
+          projeções de $K$ e $V$, que são o que o cache elimina. A projeção de $Q$, a FFN e a
+          camada de saída acontecem uma vez por passo nos dois cenários e foram deixadas de fora
+          justamente por não mudarem a comparação. Os FLOPs usam a aproximação usual de
+          $2 \cdot d^2$ por multiplicação matriz-vetor.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Uma matriz triangular, <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">três consequências</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Somar $M$ antes do softmax é a menor mudança possível na fórmula da atenção — e ela
+          decide, sozinha, se o decoder aprende alguma coisa, se o treino cabe no orçamento e se a
+          geração é barata.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <div class="text-xs font-mono text-rose-400 mb-1">correção</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Sem vazamento, sem cópia</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">$M_{ij} = -\infty$ para $j > i$ tira o alvo do alcance da query. A tarefa volta a ser previsão.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/30">
+          <div class="text-xs font-mono text-emerald-400 mb-1">eficiência de treino</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$n$ exemplos, uma passada</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">A linha $t$ equivale a rodar o modelo no prefixo até $t$, então todas as linhas podem ser calculadas juntas.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1">eficiência de inferência</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Causalidade autoriza o cache</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Se nada à frente altera $K$ e $V$ do passado, eles podem ser guardados. Custo por passo vira constante; memória vira o gargalo.</p>
+        </div>
+      </div>
+
+      <!-- limitações -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation text-rose-400"></i> O que esta página <em>não</em> resolve
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs text-slate-400 leading-relaxed">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-semibold text-rose-300 mb-1">Contexto bidirecional fica proibido</div>
+            A posição $t$ nunca vê $t+1$, nem quando isso seria útil. Para representar um texto já
+            completo — classificar, recuperar, re-rankear — essa cegueira é pura perda. É por isso
+            que <a href="../../encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">encoders</a>
+            e <a href="../../../../ir/densos/cross-encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">cross-encoders</a>
+            existem e não usam máscara causal.
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-semibold text-rose-300 mb-1">A máscara não reduz a complexidade</div>
+            A atenção mascarada continua sendo $O(n^2)$ em tempo e memória na formulação padrão.
+            Metade das células é descartada, não economizada. Ganhar essa metade de volta depende
+            de kernels que pulam blocos acima da diagonal — assunto de implementação, não de fórmula.
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-semibold text-rose-300 mb-1">O cache troca um gargalo por outro</div>
+            Com KV-cache, a geração deixa de ser limitada por computação e passa a ser limitada por
+            largura de banda de memória: a cada token, todo o cache precisa ser lido. Contexto longo
+            com lote grande estoura a VRAM antes de estourar o poder de cálculo.
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="font-semibold text-rose-300 mb-1">Causalidade não é toda a higiene de dados</div>
+            A máscara impede o vazamento <em>dentro</em> da sequência. Ela nada pode contra
+            contaminação do corpus, contra máscara de <em>padding</em> esquecida, ou contra o
+            <em>exposure bias</em> do teacher forcing. Perda de treino baixa continua não sendo
+            prova de que o modelo aprendeu a prever.
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Onde isso se encaixa
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          A atenção mascarada é a primeira sub-camada de cada bloco do
+          <a href="../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">decoder</a> (2.1.4) —
+          o próximo tópico a ler, onde ela aparece empilhada com
+          <a href="../../encoder/cross-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">cross-attention</a> (2.1.3.1),
+          <a href="../../bloco/add-norm/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">Add &amp; Norm</a> (2.1.2.2) e a
+          <a href="../../bloco/ffn/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">FFN position-wise</a> (2.1.2.3).
+          A mecânica de $Q$, $K$ e $V$ sem máscara está em
+          <a href="../../bloco/multi-head-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">Multi-head Attention</a> (2.1.2.1),
+          dentro do <a href="../../bloco/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">bloco Transformer</a> (2.1.2);
+          a noção de posição que torna "futuro" uma palavra com sentido vem de
+          <a href="../../positional-encoding/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">Positional Encoding</a> (2.1.1).
+          Para o quadro completo, volte ao mapa de
+          <a href="../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1 Transformers</a>
+          ou ao <a href="../../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">capítulo 2</a>.
+          Se o interesse é usar tudo isso para buscar, o recorte de recuperação está em
+          <a href="../../../../ir/densos/transformer/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.4 Arquitetura Transformer</a>
+          e em <a href="../../../../ir/densos/embeddings/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.1 Embeddings</a>.
+        </p>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que a máscara realmente faz.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que a máscara é somada aos scores antes do softmax, em vez de zerar os pesos depois?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Somar antes é, se tanto, um pouco mais caro: ainda se calcula a matriz inteira. O motivo não é custo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque somar antes evita calcular as células futuras e economiza memória.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Mascarar antes tira o futuro do numerador e do denominador; zerar depois só tira do numerador, e a linha passa a somar menos que 1 por um fator que depende dos dados.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o denominador do softmax já teria somado os termos futuros; zerar depois faz a linha somar menos que $1$ e quebra a normalização.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A ordem das operações em si não muda a diferenciabilidade: as duas versões são diferenciáveis. O que muda é o resultado.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque zerar depois do softmax tornaria a operação não diferenciável.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A máscara é a mesma em todas as cabeças justamente porque é causal por posição, e não depende de cabeça.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque cada cabeça precisa de uma máscara diferente, e só antes do softmax isso é possível.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Qual propriedade da máscara causal permite treinar todas as posições em uma única passada?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A máscara não reduz a complexidade: a matriz n×n continua sendo calculada na formulação padrão.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Que ela reduz o custo da atenção de $O(n^2)$ para $O(n)$.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A máscara não toca nos parâmetros: ela não tem nenhum e não altera W_Q, W_K ou W_V.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Que ela compartilha os pesos $W_Q$ e $W_K$ entre as posições.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'O softmax da linha t só envolve j ≤ t, então acrescentar tokens à direita não muda nada naquela linha — as n linhas podem ser calculadas juntas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Que a linha $t$ da passada mascarada é idêntica ao resultado de rodar o modelo apenas sobre o prefixo até $t$.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O paralelismo vem da independência entre as linhas, não de um limite de comprimento.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Que ela limita o comprimento máximo da sequência, permitindo alocar tudo de uma vez.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Durante a geração com KV-cache, o que exatamente é reaproveitado e qual é o custo?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Os pesos de atenção mudam a cada passo, porque a query é nova. O que não muda são K e V do passado.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Reaproveitam-se os pesos de atenção $\alpha$ já calculados; o custo é uma pequena perda de precisão.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A causalidade garante que K e V de uma posição não mudam quando tokens novos chegam; guardá-los custa memória proporcional a 2·L·n·d_model·bytes por sequência.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Reaproveitam-se $K$ e $V$ das posições anteriores, em cada camada; o custo é memória crescendo linearmente com o contexto e com o lote.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A query da posição nova nunca está no cache: ela é justamente o que acabou de aparecer.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Reaproveita-se a query $q_t$ do passo anterior; o custo é o modelo repetir tokens.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O cache não altera a saída: ele recalcula menos, mas os valores são os mesmos. E memória é justamente o que ele consome.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Reaproveita-se a máscara $M$, que é sempre a mesma; o custo é nenhum, o cache é grátis.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════
+       Núcleo compartilhado: uma self-attention de brinquedo, Q=K=V=X.
+       Simplificação didática assumida e declarada na própria página.
+       ═══════════════════════════════════════════════════════════════ */
+    const D = 4;
+    const TOKENS = ['o', 'gato', 'preto', 'dormiu', 'no', 'sofá'];
+    const EMB = {
+      'o':      [ 0.20, -0.10,  0.35,  0.05],
+      'gato':   [ 0.85,  0.20, -0.30,  0.15],
+      'preto':  [ 0.60,  0.45, -0.10, -0.25],
+      'dormiu': [-0.25,  0.75,  0.30, -0.15],
+      'no':     [ 0.15, -0.05,  0.40,  0.10],
+      'sofá':   [ 0.30, -0.40,  0.65,  0.50]
+    };
+    const X = TOKENS.map(t => EMB[t]);
+    const N = TOKENS.length;
+
+    function dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+
+    /* scores[i][j] = gamma * (q_i . k_j) / sqrt(d_k), sobre os primeiros `ate` tokens. */
+    function scores(gain, ate) {
+      const n = ate === undefined ? N : ate;
+      const esc = Math.sqrt(D);
+      const S = [];
+      for (let i = 0; i < n; i++) {
+        S.push([]);
+        for (let j = 0; j < n; j++) S[i].push(gain * dot(X[i], X[j]) / esc);
+      }
+      return S;
+    }
+
+    function softmax(row) {
+      let m = -Infinity;
+      for (const v of row) if (v > m) m = v;
+      const e = row.map(v => Math.exp(v - m));
+      const s = e.reduce((a, b) => a + b, 0);
+      return e.map(v => v / s);
+    }
+
+    /* modo: 'off' (sem máscara) | 'pre' (correto) | 'post' (zera depois do softmax) */
+    function pesos(S, modo) {
+      return S.map((row, i) => {
+        if (modo === 'pre') {
+          /* -1e9 em vez de -Infinity: o mesmo truque das implementações reais. */
+          return softmax(row.map((v, j) => (j > i ? -1e9 : v)));
+        }
+        const p = softmax(row);
+        if (modo === 'post') return p.map((v, j) => (j > i ? 0 : v));
+        return p;
+      });
+    }
+
+    function saida(P, i) {
+      const o = new Array(D).fill(0);
+      for (let j = 0; j < P[i].length; j++)
+        for (let c = 0; c < D; c++) o[c] += P[i][j] * X[j][c];
+      return o;
+    }
+
+    /* ── formatação pt-BR ── */
+    const nf = (x, d) => x.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const inteiro = x => Math.round(x).toLocaleString('pt-BR');
+    function pct(x) { return nf(100 * x, 1) + '%'; }
+    function grande(x) {
+      const u = [['T', 1e12], ['G', 1e9], ['M', 1e6], ['k', 1e3]];
+      for (const [s, v] of u) if (Math.abs(x) >= v) return nf(x / v, 2) + ' ' + s;
+      return nf(x, 0) + ' ';
+    }
+    function bytes(x) {
+      const u = [['TiB', 2 ** 40], ['GiB', 2 ** 30], ['MiB', 2 ** 20], ['KiB', 1024]];
+      for (const [s, v] of u) if (x >= v) return nf(x / v, 2) + ' ' + s;
+      return inteiro(x) + ' B';
+    }
+
+    Guia.ready(() => {
+      initM1();
+      initLab();
+      initM3();
+      initKV();
+    });
+
+    /* ═══════════ MÓDULO 01 — a fita entrada/alvo ═══════════ */
+    function initM1() {
+      const sl = document.getElementById('m1-t');
+      if (!sl) return;
+      sl.max = String(N - 2);            /* a última posição não tem alvo dentro da frase */
+      sl.addEventListener('input', renderM1);
+      renderM1();
+    }
+
+    function renderM1() {
+      const t = +document.getElementById('m1-t').value;
+      document.getElementById('m1-lbl-t').textContent = String(t);
+
+      const fita = document.getElementById('m1-fita');
+      fita.innerHTML = TOKENS.map((tok, j) => {
+        let cls = 'border-slate-800 bg-surface-950 text-slate-500';
+        let tag = '';
+        if (j < t) { cls = 'border-slate-700 bg-surface-900 text-slate-300'; tag = 'prefixo'; }
+        if (j === t) { cls = 'border-brand-500 bg-brand-500/15 text-brand-200'; tag = 'pergunta (t)'; }
+        if (j === t + 1) { cls = 'border-rose-500 bg-rose-500/15 text-rose-200'; tag = 'alvo = vazamento'; }
+        if (j > t + 1) { cls = 'border-slate-800 bg-surface-950 text-slate-600'; tag = 'futuro'; }
+        return `<div class="px-3 py-2 rounded-lg border ${cls} text-center min-w-[78px]">
+                  <div class="font-mono text-xs font-semibold">${tok}</div>
+                  <div class="text-[9px] font-mono text-slate-500 mt-0.5">${j}</div>
+                  <div class="text-[9px] font-mono mt-1 opacity-80">${tag}</div>
+                </div>`;
+      }).join('');
+
+      document.getElementById('m1-prefixo').textContent =
+        TOKENS.slice(0, t + 1).map((x, i) => i + ':' + x).join('  ') || '(vazio)';
+      document.getElementById('m1-alvo').textContent = (t + 1) + ':' + TOKENS[t + 1];
+      document.getElementById('m1-vazado').innerHTML =
+        'posição ' + (t + 1) + ' = <strong>' + TOKENS[t + 1] + '</strong> — o próprio alvo, dentro do tensor de entrada';
+    }
+
+    /* ═══════════ MÓDULO 02 — laboratório da máscara ═══════════ */
+    /* Classes escritas por extenso: o JIT do Tailwind não resolve nomes montados em runtime. */
+    const LAB_MODOS = [
+      { id: 'pre',  rotulo: 'máscara antes do softmax', icone: 'fa-circle-check',
+        ativo: 'bg-emerald-500/15 border-emerald-500 text-emerald-200' },
+      { id: 'off',  rotulo: 'sem máscara', icone: 'fa-eye',
+        ativo: 'bg-rose-500/15 border-rose-500 text-rose-200' },
+      { id: 'post', rotulo: 'zerar depois do softmax', icone: 'fa-triangle-exclamation',
+        ativo: 'bg-amber-500/15 border-amber-500 text-amber-200' }
+    ];
+    let labModo = 'pre';
+
+    function initLab() {
+      const box = document.getElementById('lab-modos');
+      if (!box) return;
+      box.innerHTML = LAB_MODOS.map(m => `
+        <button data-modo="${m.id}" class="lab-modo-btn px-3 py-1.5 rounded-lg border text-[11px] font-mono transition flex items-center gap-1.5">
+          <i class="fa-solid ${m.icone}"></i> ${m.rotulo}
+        </button>`).join('');
+      box.querySelectorAll('.lab-modo-btn').forEach(b => {
+        b.addEventListener('click', () => { labModo = b.dataset.modo; renderLab(); });
+      });
+      document.getElementById('lab-gain').addEventListener('input', renderLab);
+      document.getElementById('lab-t').addEventListener('input', renderLab);
+      renderLab();
+    }
+
+    function renderLab() {
+      const gain = +document.getElementById('lab-gain').value;
+      const t = +document.getElementById('lab-t').value;
+      document.getElementById('lab-lbl-gain').textContent = nf(gain, 1);
+      document.getElementById('lab-lbl-t').textContent = String(t);
+
+      document.querySelectorAll('.lab-modo-btn').forEach(b => {
+        const m = LAB_MODOS.find(x => x.id === b.dataset.modo);
+        b.className = 'lab-modo-btn px-3 py-1.5 rounded-lg border text-[11px] font-mono transition flex items-center gap-1.5 ' +
+          (b.dataset.modo === labModo ? m.ativo : 'bg-surface-950 border-slate-800 text-slate-400 hover:border-slate-700');
+      });
+
+      const S = scores(gain, N);
+      const P = pesos(S, labModo);
+
+      /* ── matriz de scores ── */
+      let html = '<thead><tr><th class="px-1.5 py-1 text-slate-600"></th>' +
+        TOKENS.map(tk => `<th class="px-1.5 py-1 text-slate-500 font-normal">${tk}</th>`).join('') +
+        '</tr></thead><tbody>';
+      for (let i = 0; i < N; i++) {
+        html += `<tr><td class="px-1.5 py-1 text-slate-500 text-right whitespace-nowrap">${i} ${TOKENS[i]}</td>`;
+        for (let j = 0; j < N; j++) {
+          const futuro = j > i;
+          if (futuro && labModo === 'pre') {
+            html += '<td class="px-1.5 py-1 text-center text-slate-600 bg-slate-800/30 rounded">&minus;&infin;</td>';
+          } else if (futuro) {
+            html += `<td class="px-1.5 py-1 text-center text-rose-300" style="background:rgba(244,63,94,.18)">${nf(S[i][j], 2)}</td>`;
+          } else {
+            html += `<td class="px-1.5 py-1 text-center text-slate-300">${nf(S[i][j], 2)}</td>`;
+          }
+        }
+        html += '</tr>';
+      }
+      html += '</tbody>';
+      document.getElementById('lab-scores').innerHTML = html;
+
+      document.getElementById('lab-scores-nota').innerHTML = labModo === 'pre'
+        ? 'Acima da diagonal, o score foi substituído por um número muito negativo. Depois da exponencial, isso é zero exato.'
+        : 'Em <span class="text-rose-300">vermelho</span>, as células do futuro — scores que a posição $i$ não deveria nem conhecer.';
+
+      /* ── matriz de pesos ── */
+      let ph = '<thead><tr><th class="px-1.5 py-1 text-slate-600"></th>' +
+        TOKENS.map(tk => `<th class="px-1.5 py-1 text-slate-500 font-normal">${tk}</th>`).join('') +
+        '<th class="px-2 py-1 text-slate-500 font-normal border-l border-slate-800">Σ</th></tr></thead><tbody>';
+      let somaOk = true, vazTotal = 0, linhasComFuturo = 0;
+      for (let i = 0; i < N; i++) {
+        const soma = P[i].reduce((a, b) => a + b, 0);
+        if (Math.abs(soma - 1) > 1e-6) somaOk = false;
+        let vaz = 0;
+        for (let j = i + 1; j < N; j++) vaz += P[i][j];
+        if (i < N - 1) { vazTotal += vaz; linhasComFuturo++; }
+
+        const foco = i === t ? ' ring-1 ring-cyan-500/60' : '';
+        ph += `<tr class="${i === t ? 'bg-cyan-500/5' : ''}"><td class="px-1.5 py-1 text-slate-500 text-right whitespace-nowrap${foco}">${i} ${TOKENS[i]}</td>`;
+        for (let j = 0; j < N; j++) {
+          const w = P[i][j];
+          const futuro = j > i;
+          const rgb = futuro ? '244,63,94' : '99,102,241';
+          const bg = w > 0.001 ? `background:rgba(${rgb},${(0.12 + 0.78 * w).toFixed(3)})` : 'background:transparent';
+          const txt = w > 0.001 ? (futuro ? 'text-rose-100' : 'text-slate-100') : 'text-slate-700';
+          ph += `<td class="px-1.5 py-1 text-center ${txt}" style="${bg}">${nf(w, 3)}</td>`;
+        }
+        const scls = Math.abs(soma - 1) > 1e-6 ? 'text-amber-300 font-semibold' : 'text-emerald-300';
+        ph += `<td class="px-2 py-1 text-center border-l border-slate-800 ${scls}">${nf(soma, 3)}</td></tr>`;
+      }
+      ph += '</tbody>';
+      document.getElementById('lab-pesos').innerHTML = ph;
+
+      document.getElementById('lab-pesos-nota').innerHTML = labModo === 'post'
+        ? 'A coluna Σ denuncia o erro: cada linha soma menos que $1$, e cada uma por um fator diferente.'
+        : 'Cada linha é uma distribuição de probabilidade sobre as posições. A coluna Σ confirma a normalização.';
+
+      /* ── indicadores ── */
+      const vazMedio = linhasComFuturo ? vazTotal / linhasComFuturo : 0;
+      const elVaz = document.getElementById('lab-vaz');
+      elVaz.textContent = pct(vazMedio);
+      elVaz.className = 'text-2xl font-bold font-mono ' + (vazMedio > 0.001 ? 'text-rose-400' : 'text-emerald-400');
+      document.getElementById('lab-vaz-bar').style.width = Math.min(100, 100 * vazMedio) + '%';
+
+      const elSom = document.getElementById('lab-somas');
+      elSom.textContent = somaOk ? 'todas = 1,000' : 'quebrada';
+      elSom.className = 'text-2xl font-bold font-mono ' + (somaOk ? 'text-emerald-400' : 'text-amber-400');
+
+      let vazT = 0;
+      for (let j = t + 1; j < N; j++) vazT += P[t][j];
+      const elVt = document.getElementById('lab-vaz-t');
+      elVt.textContent = pct(vazT);
+      elVt.className = 'text-2xl font-bold font-mono ' + (vazT > 0.001 ? 'text-rose-400' : 'text-cyan-400');
+
+      const badge = document.getElementById('lab-modo-badge');
+      const txtBadge = { pre: 'máscara ativa', off: 'vazando', post: 'normalização quebrada' }[labModo];
+      const corBadge = { pre: 'text-emerald-300', off: 'text-rose-300', post: 'text-amber-300' }[labModo];
+      badge.textContent = txtBadge;
+      badge.className = 'px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono whitespace-nowrap ' + corBadge;
+
+      /* ── o que t enxerga ── */
+      document.getElementById('lab-fita').innerHTML = TOKENS.map((tok, j) => {
+        const w = P[t][j];
+        const futuro = j > t;
+        const visivel = w > 0.001;
+        let borda = 'border-slate-800 bg-surface-900 text-slate-600';
+        if (visivel && !futuro) borda = 'border-brand-500/60 bg-brand-500/10 text-brand-100';
+        if (visivel && futuro) borda = 'border-rose-500/70 bg-rose-500/15 text-rose-100';
+        const marca = j === t ? '<div class="text-[9px] font-mono text-cyan-400 mt-1">query</div>' : '';
+        return `<div class="px-3 py-2 rounded-lg border ${borda} text-center min-w-[72px]">
+                  <div class="font-mono text-xs font-semibold">${tok}</div>
+                  <div class="font-mono text-[10px] mt-1 opacity-90">${nf(w, 3)}</div>
+                  ${marca}
+                </div>`;
+      }).join('');
+
+      const o = saida(P, t);
+      document.getElementById('lab-out').textContent = '[ ' + o.map(v => nf(v, 3)).join(',  ') + ' ]';
+
+      let best = 0;
+      for (let j = 1; j < N; j++) if (P[t][j] > P[t][best]) best = j;
+      document.getElementById('lab-argmax').innerHTML =
+        `<span class="${best > t ? 'text-rose-300' : 'text-emerald-300'}">${best} · ${TOKENS[best]}</span>` +
+        ` <span class="text-slate-500">(${nf(P[t][best], 3)})</span>` +
+        (best > t ? ' <span class="text-rose-400">← está no futuro</span>' : '');
+
+      Guia.renderMath(document.getElementById('lab-scores-nota'));
+      Guia.renderMath(document.getElementById('lab-pesos-nota'));
+    }
+
+    /* ═══════════ MÓDULO 03 — equivalência de prefixo + custo ═══════════ */
+    let m3T = 3;
+
+    function initM3() {
+      const box = document.getElementById('m3-toks');
+      if (!box) return;
+      box.innerHTML = TOKENS.map((tk, i) =>
+        `<button data-t="${i}" class="m3-btn px-2.5 py-1 rounded-lg border text-[11px] font-mono transition">${i} · ${tk}</button>`
+      ).join('');
+      box.querySelectorAll('.m3-btn').forEach(b => {
+        b.addEventListener('click', () => { m3T = +b.dataset.t; renderM3Prefixo(); });
+      });
+      document.getElementById('m3-n').addEventListener('input', renderM3Custo);
+      renderM3Prefixo();
+      renderM3Custo();
+    }
+
+    function renderM3Prefixo() {
+      document.querySelectorAll('.m3-btn').forEach(b => {
+        b.className = 'm3-btn px-2.5 py-1 rounded-lg border text-[11px] font-mono transition ' +
+          (+b.dataset.t === m3T
+            ? 'bg-emerald-500/15 border-emerald-500 text-emerald-200'
+            : 'bg-surface-950 border-slate-800 text-slate-400 hover:border-slate-700');
+      });
+
+      const gain = 6;
+      /* linha t da passada mascarada sobre a sequência inteira */
+      const linhaFull = pesos(scores(gain, N), 'pre')[m3T].slice(0, m3T + 1);
+      /* última linha da passada sobre o prefixo x_0..x_t (sem máscara: não há futuro) */
+      const linhaPref = pesos(scores(gain, m3T + 1), 'off')[m3T];
+
+      let dmax = 0;
+      for (let j = 0; j <= m3T; j++) dmax = Math.max(dmax, Math.abs(linhaFull[j] - linhaPref[j]));
+
+      const fmtLinha = v => '[ ' + v.map(x => nf(x, 4)).join(',  ') + ' ]';
+      document.getElementById('m3-full').textContent = fmtLinha(linhaFull);
+      document.getElementById('m3-pref').textContent = fmtLinha(linhaPref);
+      document.getElementById('m3-diff').textContent =
+        dmax === 0 ? '0 (exato)' : dmax.toExponential(1).replace('.', ',');
+    }
+
+    function renderM3Custo() {
+      const n = +document.getElementById('m3-n').value;
+      document.getElementById('m3-lbl-n').textContent = inteiro(n);
+      const naive = n * (n + 1) / 2;
+      document.getElementById('m3-naive').textContent = inteiro(naive);
+      document.getElementById('m3-mask').textContent = inteiro(n);
+      document.getElementById('m3-razao').textContent = nf(naive / n, 1) + '×';
+      const desc = n * (n - 1) / 2;
+      document.getElementById('m3-desc').textContent =
+        inteiro(desc) + '  (' + pct(desc / (n * n)) + ')';
+    }
+
+    /* ═══════════ MÓDULO 04 — KV-cache ═══════════ */
+    function initKV() {
+      const ids = ['kv-on', 'kv-n', 'kv-l', 'kv-d', 'kv-b'];
+      if (!document.getElementById('kv-n')) return;
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', renderKV);
+        el.addEventListener('change', renderKV);
+      });
+      renderKV();
+    }
+
+    function renderKV() {
+      const on = document.getElementById('kv-on').checked;
+      const n = +document.getElementById('kv-n').value;
+      const L = +document.getElementById('kv-l').value;
+      const d = +document.getElementById('kv-d').value;
+      const B = +document.getElementById('kv-b').value;
+      const BYTES = 2;   /* fp16 */
+
+      document.getElementById('kv-lbl-n').textContent = inteiro(n);
+      document.getElementById('kv-lbl-l').textContent = inteiro(L);
+      document.getElementById('kv-lbl-d').textContent = inteiro(d);
+      document.getElementById('kv-lbl-b').textContent = inteiro(B);
+      document.getElementById('kv-passo').textContent = inteiro(n);
+
+      const badge = document.getElementById('kv-badge');
+      badge.textContent = on ? 'cache ligado' : 'recalculando tudo';
+      badge.className = 'px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono whitespace-nowrap ' +
+        (on ? 'text-emerald-300' : 'text-amber-300');
+
+      /* fita da última linha: n posições, amostradas se n for grande */
+      const MAX = 28;
+      const mostrar = Math.min(n, MAX);
+      const amostrado = n > MAX;
+      let fita = '';
+      for (let k = 0; k < mostrar; k++) {
+        const ultima = k === mostrar - 1;
+        let cls, tit;
+        if (ultima) { cls = 'bg-brand-500 border-brand-400'; tit = 'posição nova · sempre projetada'; }
+        else if (on) { cls = 'bg-emerald-500/70 border-emerald-500/80'; tit = 'lida do cache'; }
+        else { cls = 'bg-amber-500/70 border-amber-500/80'; tit = 'recalculada neste passo'; }
+        fita += `<div class="w-3 sm:w-4 h-8 rounded-sm border ${cls}" title="${tit}"></div>`;
+        if (amostrado && k === mostrar - 2) fita += '<div class="px-1 text-slate-600 font-mono text-[10px] self-center">…</div>';
+      }
+      document.getElementById('kv-fita').innerHTML = fita;
+      document.getElementById('kv-fita-nota').textContent = amostrado
+        ? inteiro(n) + ' posições · fita amostrada em ' + MAX + ' células'
+        : inteiro(n) + ' posições';
+
+      /* contagem de projeções de linha K/V, somando todos os n passos e as L camadas */
+      const semCache = L * n * (n + 1) / 2;
+      const comCache = L * n;
+      const usado = on ? comCache : semCache;
+      const economia = semCache - usado;
+      const flopsPorLinha = 4 * d * d;     /* K e V: 2 matmuls d×d, 2 FLOPs por MAC */
+
+      document.getElementById('kv-proj').textContent = grande(usado).trim() + ' linhas';
+      document.getElementById('kv-proj-sub').innerHTML = on
+        ? '$L \\cdot n$ — uma linha nova por passo, por camada'
+        : '$L \\cdot n(n+1)/2$ — o prefixo inteiro, a cada passo';
+
+      document.getElementById('kv-econ').textContent =
+        economia === 0 ? 'nenhuma' : grande(economia).trim() + ' linhas  (' + nf(semCache / usado, 1) + '× menos)';
+
+      document.getElementById('kv-flops').textContent = grande(usado * flopsPorLinha) + 'FLOPs';
+
+      const mem = 2 * L * n * d * BYTES * B;
+      document.getElementById('kv-mem').textContent = on ? bytes(mem) : '0 B';
+
+      const resumo = document.getElementById('kv-resumo');
+      if (on) {
+        resumo.innerHTML =
+          `Com cache, gerar <strong class="text-brand-300">${inteiro(n)}</strong> tokens custa ` +
+          `<strong class="text-emerald-300">${grande(comCache)}</strong> projeções de linha em vez de ` +
+          `<strong class="text-rose-300">${grande(semCache)}</strong> — um fator de ` +
+          `<strong class="text-emerald-300">${nf(semCache / comCache, 1)}×</strong>, que é exatamente $(n+1)/2$. ` +
+          `Em troca, <strong class="text-amber-300">${bytes(mem)}</strong> de VRAM ficam presos até a sequência terminar. ` +
+          `Dobrar o contexto dobra essa memória; dobrar o lote também.`;
+      } else {
+        resumo.innerHTML =
+          `Sem cache, cada passo reprojeta $K$ e $V$ de todo o prefixo: ` +
+          `<strong class="text-rose-300">${grande(semCache)}</strong> projeções de linha para ` +
+          `<strong class="text-brand-300">${inteiro(n)}</strong> tokens. ` +
+          `O trabalho por token cresce linearmente com o que já foi gerado — a geração fica ` +
+          `progressivamente mais lenta. Ligue o cache para ver o mesmo número com custo constante por passo.`;
+      }
+      Guia.renderMath(document.getElementById('kv-proj-sub'));
+      Guia.renderMath(resumo);
+    }
+  </script>
+</body>
+</html>

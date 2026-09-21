@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-head Attention: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../../assets/guia.css">
+  <script src="../../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Multi-head Attention"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Consulta, chave e valor — e por que várias cabeças em vez de uma"
+      data-icon="fa-network-wired"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — INTUIÇÃO DE Q, K, V ══════════════ -->
+    <section class="slide-section" data-nav="Q, K e V" data-icon="fa-arrows-split-up-and-left">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-arrows-split-up-and-left"></i> Módulo 01 • Fundamentos Conceituais
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Uma <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">busca associativa</span> dentro da própria frase
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          A atenção é um mecanismo de recuperação em miniatura, rodando a cada camada. Cada token
+          <strong class="text-slate-200">emite uma consulta</strong> ($q$), todos os tokens
+          <strong class="text-slate-200">expõem uma chave</strong> ($k$) e um
+          <strong class="text-slate-200">valor</strong> ($v$), e o peso que um token dá a outro é
+          o quanto a consulta casa com a chave. A saída é a mistura dos valores, ponderada por
+          esse casamento.
+        </p>
+      </div>
+
+      <!-- O exemplo concreto -->
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 sm:p-6 mb-6 glow-indigo">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-quote-left text-brand-400"></i> O problema que só se resolve olhando para o resto da frase
+        </h3>
+        <p class="text-center text-lg sm:text-xl text-slate-100 my-5 leading-relaxed">
+          “o animal não atravessou a rua porque
+          <span class="px-2 py-0.5 rounded-lg bg-brand-500/20 border border-brand-500/40 text-brand-200 font-semibold">ele</span>
+          estava cansado”
+        </p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+            A quem “ele” se refere? Ao <strong class="text-brand-300">animal</strong>. Troque uma
+            palavra — “porque <em>ela</em> estava congestionada” — e o referente vira a
+            <strong class="text-cyan-300">rua</strong>. O token “ele”, isolado, não tem como saber:
+            o vetor que entra na camada é o mesmo nos dois casos.
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+            É exatamente esse o serviço da atenção: dar a “ele” uma forma de
+            <strong class="text-slate-200">perguntar à frase inteira</strong> quem é o candidato a
+            antecedente, e absorver o conteúdo de quem responder melhor. O vetor de “ele” na saída
+            da camada já carrega um pedaço de “animal”.
+          </div>
+        </div>
+      </div>
+
+      <!-- Os três papéis -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-brand-500/30">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-magnifying-glass text-brand-400"></i> $q_i$ — a consulta
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            “O que eu estou procurando?” O pronome “ele” emite uma consulta que pede, em linguagem
+            de vetor, <em>uma entidade animada e singular</em>. Sai de $q_i = x_i W^Q$.
+          </p>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-cyan-500/30">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-tag text-cyan-400"></i> $k_j$ — a chave
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            “O que eu anuncio a quem procura?” “animal” anuncia <em>entidade animada</em>; “rua”
+            anuncia <em>entidade inanimada</em>. Sai de $k_j = x_j W^K$.
+          </p>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/30">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-box-open text-emerald-400"></i> $v_j$ — o valor
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            “O que eu entrego a quem me escolher?” Chave e valor são vetores
+            <strong class="text-slate-200">diferentes</strong> do mesmo token: um serve para ser
+            encontrado, o outro para ser lido. Sai de $v_j = x_j W^V$.
+          </p>
+        </div>
+      </div>
+
+      <!-- Por que K e V são separados -->
+      <div class="rounded-2xl bg-surface-900 border border-slate-800 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-circle-question text-amber-400"></i> Por que $K$ e $V$ são matrizes separadas, se saem do mesmo token?
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-3">
+          Porque o critério de <em>ser encontrado</em> e o conteúdo <em>entregue</em> não precisam
+          coincidir. Em uma busca, o que casa com a consulta é o título do documento; o que você lê
+          é o corpo. Se $K = V$, o modelo fica obrigado a usar o mesmo subespaço para as duas coisas
+          — e perde a liberdade de, por exemplo, indexar por categoria gramatical e devolver
+          significado.
+        </p>
+        <div class="p-3.5 rounded-xl bg-brand-500/5 border border-brand-500/25 text-xs text-slate-300 leading-relaxed">
+          <i class="fa-solid fa-key text-brand-400 mr-1"></i>
+          As três matrizes $W^Q, W^K, W^V$ são <strong class="text-white">as mesmas para toda a
+          frase</strong> e para toda posição. O que muda de token para token é só o vetor de entrada
+          $x_i$. É por isso que a atenção funciona em qualquer comprimento de sequência sem
+          parâmetro novo.
+        </div>
+      </div>
+
+      <!-- Prévia ao vivo -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-bolt text-brand-400"></i> Prévia: o que a consulta de “ele” encontra
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">
+            Resultado real do brinquedo numérico desta página (cabeça 1, $d_k = 4$, com a divisão por
+            $\sqrt{d_k}$ ligada). Os vetores e a conta inteira estão no módulo 02.
+          </p>
+        </div>
+        <div id="m1-previa" class="space-y-2"></div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          Nenhuma dessas cabeças foi treinada: os vetores são escolhidos à mão para que a conta
+          fique legível. O que é real aqui é a <em>mecânica</em> — soma ponderada de valores, com
+          pesos vindos de produtos escalares normalizados.
+        </p>
+      </div>
+
+      <p class="text-xs text-slate-500 leading-relaxed">
+        O ponto de vista de recuperação de informação — o Transformer visto de fora, pelo que
+        interessa à busca — está em
+        <a href="../../../../ir/densos/transformer/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.4 Arquitetura Transformer</a>.
+        A origem dos vetores $x_i$ está em
+        <a href="../../../../ir/densos/embeddings/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.1 Embeddings</a>,
+        e a informação de ordem que eles carregam vem de
+        <a href="../../positional-encoding/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.1 Positional Encoding</a>.
+      </p>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — SCALED DOT-PRODUCT ══════════════ -->
+    <section class="slide-section" data-nav="Scaled dot-product" data-icon="fa-square-root-variable">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-square-root-variable"></i> Módulo 02 • A Matemática, Passo a Passo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Quatro operações, e uma delas <span class="bg-gradient-to-r from-cyan-400 to-amber-400 bg-clip-text text-transparent">existe só para o gradiente sobreviver</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A fórmula do paper de Vaswani et al. (2017) cabe em uma linha. Cada símbolo dela tem uma
+          função concreta, e a divisão por $\sqrt{d_k}$ é a que mais gente copia sem saber por quê.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-5 sm:p-6 mb-6">
+        <p class="text-center my-4">
+          $$\mathrm{Attention}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-xs">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-brand-300 font-semibold mb-1 font-mono">1 · $QK^\top$</div>
+            <p class="text-slate-400 leading-relaxed">
+              Matriz $n \times n$ de scores brutos. A entrada $(i,j)$ é $q_i \cdot k_j$: o quanto a
+              consulta de $i$ casa com a chave de $j$.
+            </p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-amber-500/30">
+            <div class="text-amber-300 font-semibold mb-1 font-mono">2 · $\div \sqrt{d_k}$</div>
+            <p class="text-slate-400 leading-relaxed">
+              Normaliza a <strong class="text-slate-200">escala</strong> dos scores, não a direção.
+              É o assunto do painel logo abaixo.
+            </p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-cyan-300 font-semibold mb-1 font-mono">3 · softmax</div>
+            <p class="text-slate-400 leading-relaxed">
+              Aplicado <strong class="text-slate-200">linha a linha</strong>. Transforma cada linha
+              em uma distribuição: pesos positivos que somam 1.
+            </p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-emerald-300 font-semibold mb-1 font-mono">4 · $\cdot\, V$</div>
+            <p class="text-slate-400 leading-relaxed">
+              Soma ponderada: $\mathrm{saída}_i = \sum_j w_{ij} v_j$. É aqui que o vetor de “ele”
+              recebe um pedaço de “animal”.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Por que sqrt(d_k) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-square-root-variable text-amber-400"></i> A conta de variância, em três linhas
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Suponha $q$ e $k$ com entradas independentes, média $0$ e variância $1$. O score é
+            $q \cdot k = \sum_{t=1}^{d_k} q_t k_t$. Cada parcela tem média
+            $\mathbb{E}[q_t k_t] = \mathbb{E}[q_t]\,\mathbb{E}[k_t] = 0$ e variância
+            $\mathrm{Var}(q_t k_t) = \mathbb{E}[q_t^2]\,\mathbb{E}[k_t^2] = 1$. Como as parcelas são
+            independentes, as variâncias somam:
+          </p>
+          <p class="text-center my-4">
+            $$\mathrm{Var}(q \cdot k) = d_k \quad\Longrightarrow\quad \sigma = \sqrt{d_k}$$
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Com $d_k = 64$, os scores brutos passeiam numa faixa de desvio padrão $8$. Diferenças de
+            $15$ ou $20$ entre o maior e o segundo maior score viram rotina — e
+            $e^{20} \approx 4{,}9 \times 10^{8}$.
+          </p>
+          <div class="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/25 text-xs text-slate-300 leading-relaxed">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>
+            Dividir por $\sqrt{d_k}$ devolve a variância para $1$, independentemente de $d_k$. Sem
+            isso o softmax vira praticamente um $\arg\max$: um peso $\approx 1$, todo o resto
+            $\approx 0$.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-skull text-rose-400"></i> E por que isso mata o gradiente
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            A jacobiana do softmax na saída $w$ é
+            $\partial w_i / \partial s_j = w_i(\delta_{ij} - w_j)$. Quando um peso satura em
+            $w_i \to 1$ e os demais em $0$, todos os termos $w_i(1 - w_i)$ e $-w_i w_j$ tendem a
+            zero:
+          </p>
+          <p class="text-center my-4">
+            $$w_i \to 1 \;\Rightarrow\; w_i(1-w_i) \to 0$$
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            O gradiente que deveria voltar por $Q$ e $K$ chega quase nulo. E o pior: a saturação
+            acontece <strong class="text-rose-300">no começo do treino</strong>, quando os pesos
+            ainda são aleatórios — o modelo trava numa escolha arbitrária antes de aprender
+            qualquer coisa.
+          </p>
+          <div class="p-3.5 rounded-xl bg-rose-500/5 border border-rose-500/25 text-xs text-slate-300 leading-relaxed">
+            <i class="fa-solid fa-circle-info text-rose-400 mr-1"></i>
+            O paper original põe isso em uma nota de rodapé: a escala é uma correção de
+            inicialização, não um hiperparâmetro a ajustar. Ela nada tem a ver com a qualidade do
+            casamento entre $q$ e $k$ — só com a magnitude dele.
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR A: variância empírica -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-dice text-amber-400"></i> Simulador A · A variância, medida de verdade
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Amostra $q$ e $k$ gaussianos padrão no navegador (Box–Muller), calcula os produtos
+              escalares e mede a variância. Compare com a previsão $\mathrm{Var} = d_k$.
+            </p>
+          </div>
+          <button id="var-resample" class="px-3 py-1.5 rounded-lg bg-surface-950 border border-slate-700 text-slate-300 hover:text-white hover:border-amber-500/50 text-xs font-mono transition">
+            <i class="fa-solid fa-rotate mr-1"></i> Reamostrar
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Dimensão da cabeça $d_k$</span>
+              <span class="font-mono text-amber-400" id="var-dk-out">64</span>
+            </label>
+            <input id="var-dk" type="range" min="1" max="9" step="1" value="6" class="w-full" aria-label="Dimensão da cabeça">
+            <p class="text-[10px] text-slate-500 mt-1.5 font-mono">potências de 2, de 2 a 512</p>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Amostras de $q \cdot k$</span>
+              <span class="font-mono text-amber-400" id="var-n-out">4000</span>
+            </label>
+            <input id="var-n" type="range" min="200" max="20000" step="200" value="4000" class="w-full" aria-label="Número de amostras">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">variância prevista</div>
+            <div class="font-mono text-xl font-bold text-slate-300" id="var-teo">—</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-amber-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">variância medida</div>
+            <div class="font-mono text-xl font-bold text-amber-300" id="var-emp">—</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">desvio medido $\sigma$</div>
+            <div class="font-mono text-xl font-bold text-slate-300" id="var-sd">—</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">após $\div\sqrt{d_k}$</div>
+            <div class="font-mono text-xl font-bold text-emerald-300" id="var-corr">—</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-xs font-semibold text-rose-300 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-xmark"></i> Uma linha de 8 scores, <strong>sem</strong> a divisão
+            </div>
+            <div id="var-row-raw" class="space-y-1.5"></div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400" id="var-stat-raw"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-xs font-semibold text-emerald-300 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-check"></i> Os mesmos scores, <strong>com</strong> a divisão
+            </div>
+            <div id="var-row-sc" class="space-y-1.5"></div>
+            <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] font-mono text-slate-400" id="var-stat-sc"></div>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-relaxed">
+          Suba o $d_k$ para $256$ e reamostre algumas vezes: à esquerda um peso domina quase sempre,
+          e o maior peso fica colado em $1{,}00$. À direita a distribuição continua espalhada em
+          qualquer $d_k$ — que é exatamente o propósito da escala.
+        </p>
+      </div>
+
+      <!-- SIMULADOR B: calculadora passo a passo -->
+      <div class="bg-surface-900 border border-brand-500/30 rounded-2xl p-5 sm:p-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-calculator text-brand-400"></i> Simulador B · A linha inteira da conta
+          </h3>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            Frase-brinquedo com 8 tokens, $d_k = 4$, três cabeças. Os vetores $Q$, $K$ e $V$ são
+            fixos e estão impressos logo abaixo. Escolha o token que consulta e acompanhe produto
+            escalar → divisão → softmax → soma ponderada, tudo calculado no navegador.
+          </p>
+        </div>
+
+        <!-- controles -->
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-4 mb-5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-slate-400 font-medium">Cabeça:</span>
+            <div id="calc-heads" class="flex flex-wrap gap-2" role="group" aria-label="Escolha a cabeça de atenção"></div>
+          </div>
+          <label class="flex items-center gap-2 text-xs text-slate-400 font-medium cursor-pointer select-none">
+            <input id="calc-scale" type="checkbox" checked class="w-4 h-4 accent-brand-500" aria-label="Dividir por raiz de d_k">
+            dividir por $\sqrt{d_k}$ <span class="font-mono text-amber-300">($\sqrt{4} = 2$)</span>
+          </label>
+        </div>
+
+        <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 mb-5">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-2.5 font-mono">
+            <i class="fa-solid fa-hand-pointer text-brand-400 mr-1"></i> Token que consulta
+          </div>
+          <div id="calc-toks" class="flex flex-wrap gap-2" role="group" aria-label="Escolha o token que consulta"></div>
+        </div>
+
+        <div id="calc-headnote" class="p-3.5 rounded-xl bg-brand-500/5 border border-brand-500/25 text-xs text-slate-300 leading-relaxed mb-5"></div>
+
+        <!-- tabela de vetores -->
+        <details class="rounded-xl bg-surface-950 border border-slate-800 p-4 mb-5">
+          <summary class="cursor-pointer text-xs font-semibold text-brand-300 flex items-center gap-2">
+            <i class="fa-solid fa-table"></i> Os vetores $Q$, $K$ e $V$ desta cabeça (valores fixos)
+          </summary>
+          <div class="overflow-x-auto mt-4">
+            <table class="w-full text-[11px] font-mono border-collapse min-w-[620px]">
+              <thead>
+                <tr class="text-slate-400 border-b border-slate-700">
+                  <th class="py-2 pr-3 text-left">token</th>
+                  <th class="py-2 pr-3 text-left text-brand-300">$q$ (procura)</th>
+                  <th class="py-2 pr-3 text-left text-cyan-300">$k$ (anuncia)</th>
+                  <th class="py-2 text-left text-emerald-300">$v$ (entrega)</th>
+                </tr>
+              </thead>
+              <tbody id="calc-vecs" class="text-slate-300"></tbody>
+            </table>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed" id="calc-dims"></p>
+        </details>
+
+        <!-- a conta -->
+        <div class="overflow-x-auto mb-5">
+          <table class="w-full text-[11px] font-mono border-collapse min-w-[600px]">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-700">
+                <th class="py-2 pr-3 text-left">token $j$</th>
+                <th class="py-2 pr-3 text-right text-brand-300">$q_i \cdot k_j$</th>
+                <th class="py-2 pr-3 text-right text-amber-300" id="calc-th-scaled">$\div \sqrt{d_k}$</th>
+                <th class="py-2 pr-3 text-right">$e^{s}$</th>
+                <th class="py-2 pr-3 text-right text-cyan-300">$w_{ij}$</th>
+                <th class="py-2 text-left w-[34%]">peso</th>
+              </tr>
+            </thead>
+            <tbody id="calc-rows" class="text-slate-300"></tbody>
+            <tfoot>
+              <tr class="border-t border-slate-700 text-slate-400">
+                <td class="py-2 pr-3">soma</td>
+                <td class="py-2 pr-3"></td>
+                <td class="py-2 pr-3"></td>
+                <td class="py-2 pr-3 text-right" id="calc-expsum">—</td>
+                <td class="py-2 pr-3 text-right text-emerald-300" id="calc-wsum">—</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="p-4 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-xs font-semibold text-emerald-300 mb-1 flex items-center gap-2">
+              <i class="fa-solid fa-layer-group"></i> A soma ponderada, coordenada a coordenada
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3">$\mathrm{saída}_i = \sum_j w_{ij}\, v_j$</p>
+            <div id="calc-out" class="space-y-2"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-xs font-semibold text-slate-200 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-chart-simple text-amber-400"></i> O efeito da escala, em números
+            </div>
+            <div id="calc-sat" class="space-y-2.5 text-[11px]"></div>
+            <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+              Com $d_k = 4$ a diferença é moderada — é o máximo que cabe numa tabela legível. Em
+              $d_k = 64$, a escala real de um Transformer, o efeito é o do simulador A.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — MULTI-HEAD ══════════════ -->
+    <section class="slide-section" data-nav="Multi-head" data-icon="fa-network-wired">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-network-wired"></i> Módulo 03 • Por que Várias Cabeças
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Uma média só é <span class="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">uma resposta só</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          O softmax de uma cabeça produz <strong class="text-slate-200">uma</strong> distribuição
+          por token. Se “ele” precisa ao mesmo tempo achar seu antecedente, seu verbo e sua causa,
+          uma distribuição única teria que dividir massa entre os três — e a soma ponderada
+          borraria os três sinais num vetor médio.
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-surface-900 border border-brand-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-brand-400"></i> A construção formal
+        </h3>
+        <p class="text-center my-4">
+          $$\mathrm{head}_h = \mathrm{Attention}\!\left(X W^Q_h,\; X W^K_h,\; X W^V_h\right)$$
+        </p>
+        <p class="text-center my-4">
+          $$\mathrm{MultiHead}(X) = \mathrm{Concat}(\mathrm{head}_1, \dots, \mathrm{head}_H)\, W^O$$
+        </p>
+        <div class="overflow-x-auto mt-5">
+          <table class="w-full text-[11px]">
+            <tbody class="divide-y divide-slate-800">
+              <tr><td class="py-2 pr-3 font-mono text-brand-300 align-top whitespace-nowrap">$W^Q_h, W^K_h$</td><td class="py-2 text-slate-400">$\mathbb{R}^{d_{model} \times d_k}$ — projetam a entrada no subespaço da cabeça $h$.</td></tr>
+              <tr><td class="py-2 pr-3 font-mono text-brand-300 align-top whitespace-nowrap">$W^V_h$</td><td class="py-2 text-slate-400">$\mathbb{R}^{d_{model} \times d_v}$. No paper original, $d_v = d_k$.</td></tr>
+              <tr><td class="py-2 pr-3 font-mono text-brand-300 align-top whitespace-nowrap">$d_k$</td><td class="py-2 text-slate-400">$= d_{model} / H$. Essa divisão é uma <strong class="text-slate-200">escolha de orçamento</strong>, não uma exigência matemática — é o que mantém o custo igual ao de uma cabeça grande.</td></tr>
+              <tr><td class="py-2 pr-3 font-mono text-brand-300 align-top whitespace-nowrap">$W^O$</td><td class="py-2 text-slate-400">$\mathbb{R}^{H d_v \times d_{model}}$ — mistura as $H$ saídas concatenadas e devolve a dimensão do modelo. Sem ela, as cabeças ficariam em fatias estanques do vetor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Contador de parâmetros -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-coins text-cyan-400"></i> $H$ cabeças pequenas custam o mesmo que uma grande
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">
+            Mexa em $d_{model}$ e $H$: toda contagem abaixo é aritmética feita na hora, sem viés,
+            e com $W^O$ contabilizado à parte.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{model}$</span><span class="font-mono text-cyan-400" id="mh-d-out">768</span>
+            </label>
+            <input id="mh-d" type="range" min="128" max="4096" step="64" value="768" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Cabeças $H$</span><span class="font-mono text-cyan-400" id="mh-h-out">8</span>
+            </label>
+            <input id="mh-h" type="range" min="1" max="8" step="1" value="4" class="w-full" aria-label="Número de cabeças">
+            <p class="text-[10px] text-slate-500 mt-1.5 font-mono">potências de 2, de 1 a 128</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-brand-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">$d_k = d_{model}/H$</div>
+            <div class="font-mono text-xl font-bold text-brand-300" id="mh-dk">—</div>
+            <div class="text-[10px] text-slate-500 mt-1" id="mh-dk-note"></div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">$W^Q$ + $W^K$ + $W^V$</div>
+            <div class="font-mono text-xl font-bold text-white" id="mh-qkv">—</div>
+            <div class="text-[10px] text-slate-500 mt-1">$3 \, d_{model}^2$, somando as $H$ cabeças</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">$W^O$</div>
+            <div class="font-mono text-xl font-bold text-white" id="mh-wo">—</div>
+            <div class="text-[10px] text-slate-500 mt-1">$d_{model}^2$</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-emerald-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">total do sublayer</div>
+            <div class="font-mono text-xl font-bold text-emerald-300" id="mh-total">—</div>
+            <div class="text-[10px] text-slate-500 mt-1" id="mh-total-note"></div>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-brand-500/5 border border-brand-500/25 text-xs text-slate-300 leading-relaxed">
+          <i class="fa-solid fa-lightbulb text-brand-400 mr-1"></i>
+          Arraste $H$ de $1$ a $128$ e veja o total <strong class="text-white">não se mexer</strong>:
+          $H \cdot d_{model} \cdot (d_{model}/H) = d_{model}^2$ para cada uma das três projeções,
+          qualquer que seja $H$. Multi-head não é “mais capacidade” comprada com mais parâmetros —
+          é a <strong class="text-white">mesma capacidade reorganizada</strong> em subespaços
+          independentes. O que muda é a expressividade: $H$ distribuições de atenção em vez de uma.
+        </div>
+      </div>
+
+      <!-- SIMULADOR C: as três cabeças lado a lado -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-grip text-brand-400"></i> Simulador C · Três cabeças, a mesma frase
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Mesmos vetores do simulador B, com a escala $\sqrt{d_k}$ sempre ligada. Escolha o
+              token que consulta e compare as três distribuições.
+            </p>
+          </div>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-950 border border-slate-800 mb-5">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-2.5 font-mono">
+            <i class="fa-solid fa-hand-pointer text-brand-400 mr-1"></i> Token que consulta
+          </div>
+          <div id="cmp-toks" class="flex flex-wrap gap-2" role="group" aria-label="Escolha o token que consulta na comparação"></div>
+        </div>
+        <div id="cmp-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        <div class="mt-5 p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+          <div class="text-xs font-semibold text-slate-200 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-object-group text-emerald-400"></i> A concatenação que entra em $W^O$
+          </div>
+          <div id="cmp-concat" class="font-mono text-[11px] text-slate-300 overflow-x-auto"></div>
+          <p class="text-[11px] text-slate-500 mt-2.5 leading-relaxed">
+            $3$ cabeças $\times\; d_v = 4$ devolvem um vetor de $12$ casas — que é o $d_{model}$
+            deste brinquedo. $W^O$ seria uma matriz $12 \times 12$; não a inventamos aqui porque
+            pesos não treinados só produziriam ruído com cara de resultado.
+          </p>
+        </div>
+      </div>
+
+      <!-- Honestidade sobre especialização -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/25">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-eye text-emerald-400"></i> O que se observa em modelos treinados
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Inspeções de mapas de atenção em modelos como o BERT mostram, de forma recorrente,
+            cabeças com comportamento <em>legível</em>: algumas concentram peso no token seguinte
+            ou anterior, outras no separador final, outras em pares que um parser marcaria como
+            relacionados. Não é uma conjectura — é o que aparece ao plotar as matrizes.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A intuição barata, então, é razoável: cabeças diferentes acabam olhando para coisas
+            diferentes, e é isso que o simulador C encena.
+          </p>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-amber-500/30">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> E onde a história é exagerada
+          </h4>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc pl-4">
+            <li>
+              Os rótulos (“cabeça de correferência”) são <strong class="text-slate-200">nossos</strong>,
+              atribuídos depois de olhar. Nada no treino pede esse papel, e a mesma cabeça costuma
+              se comportar diferente em outra frase.
+            </li>
+            <li>
+              Boa parte das cabeças não é interpretável: o peso se espalha, ou gruda em um token
+              frequente sem função clara.
+            </li>
+            <li>
+              Há trabalhos de poda mostrando que muitas cabeças podem ser removidas de um modelo já
+              treinado com perda pequena. Redundância é a regra, não a exceção — o que enfraquece a
+              leitura de “cada cabeça, um papel indispensável”.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — CUSTO E MÁSCARA ══════════════ -->
+    <section class="slide-section" data-nav="Custo & máscara" data-icon="fa-gauge-high">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-gauge-high"></i> Módulo 04 • O Preço e os Detalhes de Implementação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A matriz $n \times n$ é o <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">gargalo de toda a área</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Cada token compara-se com cada token. Isso é $n^2$ pares, e a conta não tem para onde
+          fugir enquanto a atenção for densa. Praticamente toda a literatura de “atenção eficiente”
+          existe por causa deste módulo.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-amber-500/30 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-clock text-amber-400"></i> Tempo: $O(n^2 d)$
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            $QK^\top$ multiplica $n \times d$ por $d \times n$: $n^2 d$ multiplicações-acumulações.
+            Depois, $WV$ multiplica $n \times n$ por $n \times d$: outras $n^2 d$. Somando as
+            cabeças, $d_k \cdot H = d$, então o total do núcleo de atenção é
+            $\approx 2 n^2 d$ MACs — independentemente de $H$.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            As projeções $W^Q, W^K, W^V, W^O$ custam $4 n d^2$ MACs. A razão entre as duas parcelas
+            é $\frac{2 n^2 d}{4 n d^2} = \frac{n}{2d}$: enquanto $n < 2d$, quem domina o custo são
+            as projeções, não a atenção.
+          </p>
+        </div>
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-memory text-rose-400"></i> Memória: $O(n^2)$ por cabeça, por camada
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            O tempo é ruim; a memória é pior. A implementação ingênua
+            <strong class="text-slate-200">materializa</strong> a matriz de pesos para poder
+            guardá-la para o backward. São $n^2$ números por cabeça e por camada, e eles se
+            multiplicam por $H$, por $L$ e pelo tamanho do batch.
+          </p>
+          <div class="p-3.5 rounded-xl bg-rose-500/5 border border-rose-500/25 text-xs text-slate-300 leading-relaxed">
+            <i class="fa-solid fa-circle-info text-rose-400 mr-1"></i>
+            É por isso que núcleos como o <em>FlashAttention</em> atacam a memória antes do tempo:
+            processam a atenção em blocos que cabem na SRAM e nunca escrevem a matriz completa.
+            O resultado numérico é o mesmo; o que muda é não precisar guardar $n^2$.
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR D: calculadora de custo -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-calculator text-amber-400"></i> Simulador D · Onde o custo muda de dono
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">
+            Contagem de MACs por camada, sem batch. Números de aritmética pura — não são benchmark
+            de hardware nenhum.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Tokens $n$</span><span class="font-mono text-amber-400" id="cost-n-out">2048</span>
+            </label>
+            <input id="cost-n" type="range" min="128" max="32768" step="128" value="2048" class="w-full" aria-label="Número de tokens">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>$d_{model}$</span><span class="font-mono text-amber-400" id="cost-d-out">768</span>
+            </label>
+            <input id="cost-d" type="range" min="128" max="4096" step="64" value="768" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Cabeças $H$ · camadas $L$</span><span class="font-mono text-amber-400" id="cost-hl-out">12 · 12</span>
+            </label>
+            <input id="cost-l" type="range" min="1" max="96" step="1" value="12" class="w-full" aria-label="Número de camadas">
+            <p class="text-[10px] text-slate-500 mt-1.5 font-mono">$H$ fixo em 12; o slider move $L$</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">projeções · $4nd^2$</div>
+            <div class="font-mono text-lg font-bold text-slate-300" id="cost-proj">—</div>
+            <div class="text-[10px] text-slate-500 mt-1">MACs / camada</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-amber-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">atenção · $2n^2d$</div>
+            <div class="font-mono text-lg font-bold text-amber-300" id="cost-attn">—</div>
+            <div class="text-[10px] text-slate-500 mt-1">MACs / camada</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-brand-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">razão $n / 2d$</div>
+            <div class="font-mono text-lg font-bold text-brand-300" id="cost-ratio">—</div>
+            <div class="text-[10px] text-slate-500 mt-1" id="cost-ratio-note"></div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-rose-500/30">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 font-mono mb-1">matrizes de atenção</div>
+            <div class="font-mono text-lg font-bold text-rose-300" id="cost-mem">—</div>
+            <div class="text-[10px] text-slate-500 mt-1">$n^2 H L$ em fp16 (2 bytes)</div>
+          </div>
+        </div>
+
+        <div class="space-y-2 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="text-[11px] font-mono text-slate-400 w-24 shrink-0">projeções</span>
+            <div class="flex-1 h-4 rounded-md bg-surface-950 border border-slate-800 overflow-hidden">
+              <div id="cost-bar-proj" class="h-full bg-slate-500 transition-all" style="width:0%"></div>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400 w-14 text-right" id="cost-pct-proj">—</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-[11px] font-mono text-amber-400 w-24 shrink-0">atenção</span>
+            <div class="flex-1 h-4 rounded-md bg-surface-950 border border-slate-800 overflow-hidden">
+              <div id="cost-bar-attn" class="h-full bg-amber-500 transition-all" style="width:0%"></div>
+            </div>
+            <span class="text-[11px] font-mono text-amber-400 w-14 text-right" id="cost-pct-attn">—</span>
+          </div>
+        </div>
+
+        <div id="cost-note" class="p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed"></div>
+      </div>
+
+      <!-- Máscara de padding -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-eraser text-cyan-400"></i> Máscara de padding: apagar o que nem existe
+          </h3>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            Frases de um batch têm comprimentos diferentes; para virarem um tensor retangular, as
+            curtas recebem tokens <span class="font-mono text-slate-300">[PAD]</span>. Esses tokens
+            têm vetor, produzem chave e, se ninguém impedir, <strong class="text-slate-200">ganham
+            peso no softmax</strong> — contaminando a saída com conteúdo inventado.
+          </p>
+        </div>
+
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          A correção é somar $-\infty$ aos scores das posições inválidas
+          <strong class="text-slate-200">antes</strong> do softmax, e não zerar os pesos depois:
+          zerar depois quebraria a normalização, porque os pesos restantes já não somariam 1. Na
+          prática usa-se um número muito negativo — $-10^{9}$, ou o menor valor do tipo — cuja
+          exponencial dá $0$ em ponto flutuante.
+        </p>
+        <p class="text-center my-4">
+          $$s'_{ij} = s_{ij} + m_{ij}, \qquad m_{ij} = \begin{cases} 0 & \text{se } j \text{ é válido} \\ -\infty & \text{se } j \text{ é padding} \end{cases}$$
+        </p>
+
+        <div class="mb-4">
+          <label class="flex items-center gap-2 text-xs text-slate-400 font-medium cursor-pointer select-none">
+            <input id="pad-on" type="checkbox" checked class="w-4 h-4 accent-cyan-500" aria-label="Aplicar máscara de padding">
+            aplicar a máscara nos dois últimos tokens
+          </label>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-[11px] font-mono border-collapse min-w-[540px]">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-700">
+                <th class="py-2 pr-3 text-left">token $j$</th>
+                <th class="py-2 pr-3 text-right">$s_{ij}$</th>
+                <th class="py-2 pr-3 text-right">$m_{ij}$</th>
+                <th class="py-2 pr-3 text-right text-cyan-300">$w_{ij}$</th>
+                <th class="py-2 text-left w-[40%]">peso</th>
+              </tr>
+            </thead>
+            <tbody id="pad-rows" class="text-slate-300"></tbody>
+          </table>
+        </div>
+        <div id="pad-note" class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-xs text-slate-400 leading-relaxed"></div>
+        <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+          Aqui tratamos “estava cansado” como se fossem <span class="font-mono">[PAD]</span> só para
+          a demonstração ficar concreta com os mesmos vetores da página — num batch real esses
+          lugares não teriam palavra alguma.
+        </p>
+      </div>
+
+      <!-- padding vs causal -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-cyan-500/30">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-eraser text-cyan-400"></i> Máscara de padding
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Depende <strong class="text-slate-200">do exemplo</strong>, não da posição: varia de
+            frase para frase dentro do mesmo batch. É a mesma para toda linha $i$ — ninguém deve
+            olhar para o preenchimento. Existe tanto no encoder quanto no decoder, e some se o batch
+            tiver uma frase só.
+          </p>
+        </div>
+        <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-eye-slash text-slate-400"></i> Máscara causal — outra coisa
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Depende <strong class="text-slate-200">da posição</strong>, não do exemplo: é a mesma
+            matriz triangular para todo mundo, e existe para impedir que a posição $t$ veja o
+            futuro durante o treino. As duas se somam quando coexistem. O assunto é de
+            <a href="../../decoder/masked-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4.1 Masked Multi-head Attention</a>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese & Quiz" data-icon="fa-graduation-cap">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-graduation-cap"></i> Módulo 05 • Síntese & Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que a atenção <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">faz, e o que ela não faz</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          A multi-head attention é o único ponto do bloco em que os tokens
+          <strong class="text-slate-200">trocam informação entre si</strong>. Tudo o mais no bloco
+          — normalização, residual, FFN — opera em cada posição isoladamente.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-brand-500/30">
+          <div class="text-xs font-mono text-brand-400 mb-1">a intuição</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Consulta, chave, valor</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Busca associativa dentro da frase. $K$ serve para ser encontrado, $V$ para ser lido — e
+            por isso são matrizes distintas.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1">a escala</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$\div \sqrt{d_k}$</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            $\mathrm{Var}(q \cdot k) = d_k$. Sem a correção o softmax satura, a jacobiana
+            $w_i(1-w_i)$ vai a zero e o treino trava na inicialização.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-1">a multiplicidade</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$H$ subespaços, um orçamento</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            $d_k = d_{model}/H$ mantém $3 d_{model}^2$ parâmetros para qualquer $H$. Ganha-se
+            $H$ distribuições de atenção pelo mesmo preço.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-rose-500/30">
+          <div class="text-xs font-mono text-rose-400 mb-1">o preço</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$O(n^2 d)$ e $O(n^2)$</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A matriz $n \times n$ domina a partir de $n \approx 2 d$, e a memória explode antes do
+            tempo. Daí toda a linha de atenção eficiente.
+          </p>
+        </div>
+      </div>
+
+      <!-- Limitações -->
+      <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-5 sm:p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Os limites do que foi ensinado aqui
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs text-slate-400 leading-relaxed">
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <strong class="text-rose-300">Peso de atenção não é explicação.</strong> É tentador ler
+            a matriz como “o modelo decidiu por causa disto”. Existe literatura em ambos os lados
+            dessa discussão, e o consenso prático é modesto: o mapa mostra
+            <em>para onde a informação fluiu</em>, não <em>por quê</em> nem o quanto aquilo pesou na
+            saída final, que ainda atravessa residual, FFN e mais dezenas de camadas.
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <strong class="text-rose-300">Os rótulos das cabeças são nossos.</strong> O brinquedo
+            desta página tem cabeças com papéis limpos porque escolhemos os números para isso. Em
+            modelos treinados, muitas cabeças são redundantes ou ilegíveis, e podar parte delas
+            costuma custar pouco.
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <strong class="text-rose-300">$d_k = 4$ é caricatura.</strong> A escala real é $64$ ou
+            $128$. Tudo o que depende da magnitude do produto escalar — a saturação do softmax, em
+            primeiro lugar — aparece atenuado numa tabela de 4 colunas. Foi para isso que o
+            simulador A existe.
+          </div>
+          <div class="p-3.5 rounded-xl bg-surface-950 border border-slate-800">
+            <strong class="text-rose-300">A atenção sozinha é linear em $V$.</strong> Fixados os
+            pesos, a saída é uma combinação convexa dos valores: nenhuma não-linearidade, nenhum
+            processamento por posição. É a FFN que acrescenta isso — sem ela, empilhar blocos
+            renderia bem menos.
+          </div>
+        </div>
+      </div>
+
+      <!-- Onde se encaixa -->
+      <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Onde isso se encaixa
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-3">
+          A saída da multi-head attention não segue direto: ela é somada à entrada do sublayer e
+          normalizada — o próximo tópico,
+          <a href="../add-norm/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted font-medium">2.1.2.2 Add &amp; Norm</a>,
+          que é o que permite empilhar dezenas de blocos sem o gradiente sumir. Depois vem a
+          <a href="../ffn/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.3 FFN position-wise</a>,
+          fechando o <a href="../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">bloco (2.1.2)</a>.
+        </p>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          A mesma conta reaparece com $Q$ de um lado e $K, V$ do outro em
+          <a href="../../encoder/cross-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.3.1 Cross-attention</a>,
+          e com máscara triangular em
+          <a href="../../decoder/masked-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.4.1 Masked attention</a>.
+          Para o quadro inteiro, volte ao mapa de
+          <a href="../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1 Transformers</a>
+          ou ao <a href="../../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">capítulo 2</a>.
+          O uso de $Q$, $K$ e $V$ para pontuar par consulta-documento está em
+          <a href="../../../../ir/densos/cross-encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.5 Cross-Encoder</a>.
+        </p>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que realmente sustenta a atenção.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que o score é dividido por $\sqrt{d_k}$, e não por $d_k$ ou por nada?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O softmax já devolve pesos que somam 1 — a divisão não tem nada a ver com normalizar a soma.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Para garantir que os pesos do softmax somem exatamente 1.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Var(q·k) = d_k, logo o desvio padrão é a raiz de d_k: dividir por ela devolve variância 1 e evita a saturação do softmax.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque o produto escalar de vetores com entradas independentes de variância 1 tem variância $d_k$ — logo desvio padrão $\sqrt{d_k}$, que é a escala a corrigir.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Não há nenhuma economia de cálculo: a divisão é uma operação a mais, não a menos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque reduz o custo da multiplicação $QK^\top$ de $n^2 d$ para $n^2 \sqrt{d}$.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A escala não muda quem é o maior score: ela é uma divisão por constante positiva, e a ordem se preserva.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Para corrigir a ordem dos scores, que fica invertida em dimensões altas.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Um modelo tem $d_{model} = 768$. O que muda ao passar de $H = 1$ para $H = 12$, mantendo $d_k = d_{model}/H$?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O total é 3·d_model² para qualquer H: as cabeças encolhem na mesma proporção em que aumentam de número.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) O número de parâmetros de $W^Q, W^K, W^V$ é multiplicado por 12.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O custo do núcleo de atenção é 2n²d somando as cabeças, e não depende de H.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O custo em MACs do $QK^\top$ é multiplicado por 12.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Mesmo orçamento de parâmetros e de MACs; o ganho é ter 12 distribuições de atenção em subespaços distintos em vez de uma média só.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Praticamente nada em parâmetros e em MACs — muda a expressividade: 12 distribuições de atenção independentes em vez de uma.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A memória da atenção é n² por cabeça, mas 12 cabeças de d_k=64 guardam n²·12 pesos, exatamente como uma cabeça guardaria n² — a memória de atenção cresce com H, não cai.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) A memória ocupada pelas matrizes de atenção cai por um fator de 12.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              Por que a máscara de padding soma $-\infty$ antes do softmax em vez de zerar os pesos depois?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button data-correct onclick="Guia.answer(this, true, 'Zerar depois destrói a normalização: os pesos restantes somariam menos de 1. Somar -infinito antes tira o token da conta e o softmax renormaliza sozinho sobre os válidos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque zerar depois deixaria a linha somando menos de 1; somando $-\infty$ antes, o softmax renormaliza sobre os tokens válidos.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A ordem das operações não muda o custo: em ambos os casos é uma soma elemento a elemento sobre a matriz n×n.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque mascarar antes é mais barato: evita calcular as exponenciais das colunas inválidas.
+              </button>
+              <button onclick="Guia.answer(this, false, 'Essa é a máscara causal, que depende da posição e não do exemplo. A de padding depende do comprimento de cada frase do batch.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque assim a posição $t$ deixa de enxergar o futuro durante o treino.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O padding não afeta a escala: a divisão por raiz de d_k é uma constante, aplicada igualmente a todas as colunas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque o token $[PAD]$ estragaria a divisão por $\sqrt{d_k}$, que depende de quantas colunas existem.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════════
+       Brinquedo numérico: 8 tokens, d_model = 12, H = 3, d_k = d_v = 4.
+       Os vetores são escolhidos à mão para que a conta fique legível —
+       nada aqui foi treinado. Toda a aritmética abaixo é real.
+       ═══════════════════════════════════════════════════════════════ */
+
+    const TOKENS = ['animal', 'não', 'atravessou', 'rua', 'porque', 'ele', 'estava', 'cansado'];
+    const DK = 4;
+
+    const CABECAS = [
+      {
+        nome: 'Cabeça 1 · correferência',
+        cor: 'brand',
+        hex: '#818cf8',
+        dims: ['animado', 'entidade', 'verbo', 'causa'],
+        papel: 'Esta cabeça indexa por <strong class="text-white">tipo de entidade</strong>. A consulta de “ele” pede algo animado e nominal — e é “animal” quem melhor anuncia isso. É a leitura que resolve a correferência.',
+        Q: [
+          [0.2, 0.2, 1.2, 0.0],
+          [0.0, 0.0, 1.6, 0.0],
+          [0.6, 1.2, 0.0, 0.0],
+          [0.0, 0.2, 1.2, 0.0],
+          [0.3, 0.5, 1.0, 0.0],
+          [1.9, 1.5, 0.0, 0.0],
+          [1.5, 1.1, 0.0, 0.0],
+          [1.6, 0.9, 0.0, 0.2]
+        ],
+        K: [
+          [1.8, 1.7, 0.1, 0.0],
+          [0.0, 0.1, 0.3, 0.0],
+          [0.2, 0.0, 1.8, 0.0],
+          [0.0, 1.6, 0.1, 0.0],
+          [0.0, 0.1, 0.0, 1.9],
+          [1.4, 1.5, 0.0, 0.0],
+          [0.1, 0.0, 1.4, 0.0],
+          [0.7, 0.2, 0.3, 0.4]
+        ],
+        V: [
+          [0.9, 0.8, 0.0, 0.0],
+          [0.0, 0.0, 0.2, 0.1],
+          [0.1, 0.0, 0.9, 0.0],
+          [0.0, 0.7, 0.1, 0.0],
+          [0.0, 0.0, 0.0, 1.0],
+          [0.8, 0.7, 0.0, 0.0],
+          [0.0, 0.0, 0.6, 0.0],
+          [0.3, 0.1, 0.2, 0.3]
+        ]
+      },
+      {
+        nome: 'Cabeça 2 · sintática local',
+        cor: 'cyan',
+        hex: '#22d3ee',
+        dims: ['verbo', 'nominal', 'conectivo', 'predicativo'],
+        papel: 'Esta cabeça liga <strong class="text-white">argumentos a predicados</strong>. Os nominais procuram verbos, os verbos procuram nominais, e “cansado” procura a cópula que o sustenta. O mesmo “ele”, aqui, olha para outro lugar.',
+        Q: [
+          [1.7, 0.1, 0.0, 0.0],
+          [1.8, 0.0, 0.0, 0.0],
+          [0.1, 1.8, 0.0, 0.0],
+          [1.6, 0.2, 0.0, 0.0],
+          [1.5, 0.0, 0.3, 0.0],
+          [1.7, 0.2, 0.0, 0.0],
+          [0.2, 1.4, 0.0, 1.5],
+          [1.0, 0.1, 0.0, 1.2]
+        ],
+        K: [
+          [0.1, 1.8, 0.0, 0.0],
+          [0.2, 0.0, 1.5, 0.0],
+          [1.9, 0.2, 0.0, 0.0],
+          [0.0, 1.7, 0.0, 0.0],
+          [0.0, 0.0, 1.9, 0.0],
+          [0.0, 1.5, 0.0, 0.0],
+          [1.6, 0.0, 0.0, 1.2],
+          [0.0, 0.3, 0.0, 1.9]
+        ],
+        V: [
+          [0.0, 0.9, 0.0, 0.0],
+          [0.1, 0.0, 0.8, 0.0],
+          [1.0, 0.1, 0.0, 0.0],
+          [0.0, 0.9, 0.0, 0.0],
+          [0.0, 0.0, 1.0, 0.0],
+          [0.0, 0.8, 0.0, 0.0],
+          [0.8, 0.0, 0.0, 0.2],
+          [0.0, 0.2, 0.0, 1.0]
+        ]
+      },
+      {
+        nome: 'Cabeça 3 · causal / discursiva',
+        cor: 'emerald',
+        hex: '#34d399',
+        dims: ['causa', 'estado', 'evento', 'nominal'],
+        papel: 'Esta cabeça segue a <strong class="text-white">relação de causa</strong> que “porque” abre: o evento e o estado procuram o conectivo que abre a causa. “ele” aqui se liga ao próprio estado, “cansado”.',
+        Q: [
+          [0.0, 0.2, 1.4, 0.0],
+          [0.0, 0.0, 1.6, 0.0],
+          [1.5, 1.3, 0.0, 0.0],
+          [0.0, 0.0, 1.5, 0.2],
+          [0.0, 1.8, 0.6, 0.0],
+          [0.2, 1.7, 0.0, 0.0],
+          [0.0, 0.3, 0.2, 1.5],
+          [1.4, 0.0, 0.7, 0.0]
+        ],
+        K: [
+          [0.0, 0.0, 0.0, 1.6],
+          [0.3, 0.0, 0.4, 0.0],
+          [0.0, 0.0, 1.9, 0.1],
+          [0.0, 0.0, 0.0, 1.5],
+          [2.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 1.4],
+          [0.0, 1.5, 0.0, 0.0],
+          [0.2, 1.9, 0.0, 0.0]
+        ],
+        V: [
+          [0.0, 0.0, 0.0, 0.9],
+          [0.2, 0.0, 0.3, 0.0],
+          [0.0, 0.0, 1.0, 0.0],
+          [0.0, 0.0, 0.0, 0.8],
+          [1.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.8],
+          [0.0, 0.8, 0.0, 0.0],
+          [0.1, 1.0, 0.0, 0.0]
+        ]
+      }
+    ];
+
+    /* ═══════════════════════════════════════════════════════════════
+       Núcleo numérico
+       ═══════════════════════════════════════════════════════════════ */
+
+    function dot(a, b) { let s = 0; for (let t = 0; t < a.length; t++) s += a[t] * b[t]; return s; }
+
+    /* Softmax estável: subtrai o máximo antes de exponenciar. */
+    function softmax(scores) {
+      const m = Math.max.apply(null, scores);
+      const ex = scores.map(s => Math.exp(s - m));
+      const soma = ex.reduce((a, b) => a + b, 0);
+      return { ex: ex, soma: soma, w: ex.map(e => e / soma) };
+    }
+
+    function entropia(w) {
+      let h = 0;
+      for (let i = 0; i < w.length; i++) if (w[i] > 1e-12) h -= w[i] * Math.log2(w[i]);
+      return h;
+    }
+
+    /* Uma linha completa da atenção: scores, escala, softmax, soma ponderada. */
+    function linhaAtencao(cab, i, escalar, mascara) {
+      const bruto = TOKENS.map((_, j) => dot(cab.Q[i], cab.K[j]));
+      let s = escalar ? bruto.map(x => x / Math.sqrt(DK)) : bruto.slice();
+      if (mascara) s = s.map((x, j) => mascara[j] ? -Infinity : x);
+      const sm = softmax(s);
+      const out = new Array(DK).fill(0);
+      for (let j = 0; j < TOKENS.length; j++)
+        for (let t = 0; t < DK; t++) out[t] += sm.w[j] * cab.V[j][t];
+      return { bruto: bruto, s: s, ex: sm.ex, soma: sm.soma, w: sm.w, out: out };
+    }
+
+    function num(x, casas) {
+      if (!isFinite(x)) return x < 0 ? '−∞' : '∞';
+      return x.toFixed(casas === undefined ? 2 : casas).replace('.', ',');
+    }
+    function br(n) { return n.toLocaleString('pt-BR'); }
+
+    /* Formata contagens grandes em k / M / G. */
+    function grande(x) {
+      if (x >= 1e9) return num(x / 1e9, 2) + ' G';
+      if (x >= 1e6) return num(x / 1e6, 2) + ' M';
+      if (x >= 1e3) return num(x / 1e3, 2) + ' k';
+      return br(Math.round(x));
+    }
+    function bytes(x) {
+      if (x >= 1024 ** 3) return num(x / 1024 ** 3, 2) + ' GiB';
+      if (x >= 1024 ** 2) return num(x / 1024 ** 2, 1) + ' MiB';
+      if (x >= 1024) return num(x / 1024, 1) + ' KiB';
+      return br(Math.round(x)) + ' B';
+    }
+
+    function barra(frac, hex) {
+      const p = Math.max(0, Math.min(100, frac * 100));
+      return '<div class="h-2.5 rounded-full bg-surface-900 border border-slate-800 overflow-hidden">'
+           + '<div class="h-full rounded-full transition-all" style="width:' + p.toFixed(1) + '%;background:' + hex + '"></div></div>';
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       Inicialização
+       ═══════════════════════════════════════════════════════════════ */
+
+    Guia.ready(() => {
+      initPrevia();
+      initVariancia();
+      initCalculadora();
+      initParametros();
+      initComparacao();
+      initCusto();
+      initPadding();
+    });
+
+    /* ─────────── módulo 01: prévia da consulta de "ele" ─────────── */
+    function initPrevia() {
+      const el = document.getElementById('m1-previa');
+      const cab = CABECAS[0];
+      const iEle = TOKENS.indexOf('ele');
+      const r = linhaAtencao(cab, iEle, true, null);
+      const ordem = TOKENS.map((t, j) => j).sort((a, b) => r.w[b] - r.w[a]);
+
+      el.innerHTML = ordem.map(j => {
+        const destaque = j === ordem[0];
+        return '<div class="flex items-center gap-3">'
+          + '<span class="font-mono text-[11px] w-24 shrink-0 ' + (destaque ? 'text-brand-300 font-semibold' : 'text-slate-400') + '">' + TOKENS[j] + '</span>'
+          + '<div class="flex-1">' + barra(r.w[j], destaque ? '#818cf8' : '#475569') + '</div>'
+          + '<span class="font-mono text-[11px] w-14 text-right ' + (destaque ? 'text-brand-300' : 'text-slate-500') + '">' + num(r.w[j] * 100, 1) + '%</span>'
+          + '</div>';
+      }).join('');
+    }
+
+    /* ─────────── módulo 02, simulador A: variância empírica ─────────── */
+    function gauss() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    function initVariancia() {
+      const sDk = document.getElementById('var-dk');
+      const sN = document.getElementById('var-n');
+      const btn = document.getElementById('var-resample');
+
+      function render() {
+        const dk = Math.pow(2, +sDk.value);
+        const n = +sN.value;
+        document.getElementById('var-dk-out').textContent = br(dk);
+        document.getElementById('var-n-out').textContent = br(n);
+
+        /* amostra n produtos escalares de vetores gaussianos padrão */
+        let soma = 0, soma2 = 0;
+        for (let a = 0; a < n; a++) {
+          let s = 0;
+          for (let t = 0; t < dk; t++) s += gauss() * gauss();
+          soma += s; soma2 += s * s;
+        }
+        const media = soma / n;
+        const varia = soma2 / n - media * media;
+
+        document.getElementById('var-teo').textContent = br(dk);
+        document.getElementById('var-emp').textContent = num(varia, 2);
+        document.getElementById('var-sd').textContent = num(Math.sqrt(varia), 2);
+        document.getElementById('var-corr').textContent = num(varia / dk, 3);
+
+        /* uma linha de 8 scores amostrada com o mesmo processo */
+        const linha = [];
+        for (let j = 0; j < 8; j++) {
+          let s = 0;
+          for (let t = 0; t < dk; t++) s += gauss() * gauss();
+          linha.push(s);
+        }
+        pintaLinha('var-row-raw', 'var-stat-raw', linha, '#f43f5e');
+        pintaLinha('var-row-sc', 'var-stat-sc', linha.map(x => x / Math.sqrt(dk)), '#34d399');
+      }
+
+      function pintaLinha(idBarras, idStat, scores, hex) {
+        const sm = softmax(scores);
+        document.getElementById(idBarras).innerHTML = scores.map((s, j) =>
+          '<div class="flex items-center gap-2">'
+          + '<span class="font-mono text-[10px] text-slate-500 w-14 shrink-0">j = ' + j + '</span>'
+          + '<div class="flex-1">' + barra(sm.w[j], hex) + '</div>'
+          + '<span class="font-mono text-[10px] text-slate-400 w-14 text-right">' + num(sm.w[j], 3) + '</span>'
+          + '</div>'
+        ).join('');
+        const mx = Math.max.apply(null, sm.w);
+        document.getElementById(idStat).innerHTML =
+          'maior peso <span class="text-slate-200">' + num(mx, 3) + '</span> · '
+          + 'entropia <span class="text-slate-200">' + num(entropia(sm.w), 2) + '</span> de 3,00 bits';
+      }
+
+      sDk.addEventListener('input', render);
+      sN.addEventListener('input', render);
+      btn.addEventListener('click', () => { render(); Guia.toast('Nova amostra de $q$ e $k$', 'fa-dice'); });
+      render();
+    }
+
+    /* ─────────── módulo 02, simulador B: calculadora passo a passo ─────────── */
+    let calcCab = 0, calcTok = 5;
+
+    function initCalculadora() {
+      const boxH = document.getElementById('calc-heads');
+      boxH.innerHTML = CABECAS.map((c, h) =>
+        '<button type="button" data-h="' + h + '" class="calc-h px-2.5 py-1.5 rounded-lg border text-[11px] font-mono transition"></button>'
+      ).join('');
+      boxH.querySelectorAll('.calc-h').forEach((b, h) => {
+        b.textContent = 'cabeça ' + (h + 1);
+        b.addEventListener('click', () => { calcCab = h; renderCalc(); });
+      });
+
+      const boxT = document.getElementById('calc-toks');
+      boxT.innerHTML = TOKENS.map((t, i) =>
+        '<button type="button" data-i="' + i + '" class="calc-t px-2.5 py-1.5 rounded-lg border text-[11px] font-mono transition">' + t + '</button>'
+      ).join('');
+      boxT.querySelectorAll('.calc-t').forEach((b, i) => {
+        b.addEventListener('click', () => { calcTok = i; renderCalc(); });
+      });
+
+      document.getElementById('calc-scale').addEventListener('change', renderCalc);
+      renderCalc();
+    }
+
+    function renderCalc() {
+      const cab = CABECAS[calcCab];
+      const escalar = document.getElementById('calc-scale').checked;
+      const r = linhaAtencao(cab, calcTok, escalar, null);
+      const rAlt = linhaAtencao(cab, calcTok, !escalar, null);
+
+      document.querySelectorAll('.calc-h').forEach((b, h) => {
+        b.className = 'calc-h px-2.5 py-1.5 rounded-lg border text-[11px] font-mono transition '
+          + (h === calcCab ? 'bg-brand-500/20 border-brand-500/60 text-brand-200'
+                           : 'bg-surface-950 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500');
+      });
+      document.querySelectorAll('.calc-t').forEach((b, i) => {
+        b.className = 'calc-t px-2.5 py-1.5 rounded-lg border text-[11px] font-mono transition '
+          + (i === calcTok ? 'bg-brand-500/20 border-brand-500/60 text-brand-200'
+                           : 'bg-surface-950 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500');
+      });
+
+      const nota = document.getElementById('calc-headnote');
+      nota.innerHTML = '<i class="fa-solid fa-circle-info mr-1" style="color:' + cab.hex + '"></i> '
+        + '<strong class="text-white">' + cab.nome + '</strong> — ' + cab.papel;
+
+      /* tabela dos vetores fixos */
+      document.getElementById('calc-vecs').innerHTML = TOKENS.map((t, j) => {
+        const sel = j === calcTok;
+        return '<tr class="border-b border-slate-800/60 ' + (sel ? 'bg-brand-500/10' : '') + '">'
+          + '<td class="py-1.5 pr-3 ' + (sel ? 'text-brand-300 font-semibold' : 'text-slate-300') + '">' + t + '</td>'
+          + '<td class="py-1.5 pr-3 text-slate-400">[' + cab.Q[j].map(x => num(x, 1)).join('; ') + ']</td>'
+          + '<td class="py-1.5 pr-3 text-slate-400">[' + cab.K[j].map(x => num(x, 1)).join('; ') + ']</td>'
+          + '<td class="py-1.5 text-slate-400">[' + cab.V[j].map(x => num(x, 1)).join('; ') + ']</td>'
+          + '</tr>';
+      }).join('');
+      document.getElementById('calc-dims').innerHTML =
+        'As 4 dimensões desta cabeça: <span class="font-mono text-slate-300">'
+        + cab.dims.join('</span>, <span class="font-mono text-slate-300">') + '</span>. '
+        + 'Em um modelo real elas não têm nome — os eixos do subespaço emergem do treino.';
+
+      /* a conta, linha a linha */
+      const maxW = Math.max.apply(null, r.w);
+      document.getElementById('calc-rows').innerHTML = TOKENS.map((t, j) => {
+        const top = r.w[j] === maxW;
+        return '<tr class="border-b border-slate-800/60">'
+          + '<td class="py-1.5 pr-3 ' + (top ? 'font-semibold' : 'text-slate-300') + '" ' + (top ? 'style="color:' + cab.hex + '"' : '') + '>' + t + '</td>'
+          + '<td class="py-1.5 pr-3 text-right text-brand-300">' + num(r.bruto[j]) + '</td>'
+          + '<td class="py-1.5 pr-3 text-right text-amber-300">' + (escalar ? num(r.s[j]) : '—') + '</td>'
+          + '<td class="py-1.5 pr-3 text-right text-slate-400">' + num(Math.exp(r.s[j]), 3) + '</td>'
+          + '<td class="py-1.5 pr-3 text-right text-cyan-300">' + num(r.w[j], 3) + '</td>'
+          + '<td class="py-1.5">' + barra(r.w[j], top ? cab.hex : '#475569') + '</td>'
+          + '</tr>';
+      }).join('');
+
+      const somaExp = TOKENS.reduce((a, _, j) => a + Math.exp(r.s[j]), 0);
+      document.getElementById('calc-expsum').textContent = num(somaExp, 3);
+      document.getElementById('calc-wsum').textContent = num(r.w.reduce((a, b) => a + b, 0), 3);
+      document.getElementById('calc-th-scaled').innerHTML = escalar ? '$\\div \\sqrt{d_k}$' : 'sem escala';
+
+      /* soma ponderada, coordenada a coordenada */
+      document.getElementById('calc-out').innerHTML = cab.dims.map((d, t) => {
+        const parcelas = TOKENS.map((tk, j) => num(r.w[j], 2) + '·' + num(cab.V[j][t], 1));
+        return '<div>'
+          + '<div class="flex items-center justify-between mb-0.5">'
+          + '<span class="font-mono text-[11px] text-slate-400">' + d + '</span>'
+          + '<span class="font-mono text-[11px] text-emerald-300">' + num(r.out[t], 3) + '</span>'
+          + '</div>'
+          + '<div class="font-mono text-[9px] text-slate-600 leading-tight break-words">' + parcelas.join(' + ') + '</div>'
+          + '</div>';
+      }).join('');
+
+      /* efeito da escala */
+      const comEsc = escalar ? r : rAlt;
+      const semEsc = escalar ? rAlt : r;
+      document.getElementById('calc-sat').innerHTML =
+        linhaStat('maior peso, sem escala', num(Math.max.apply(null, semEsc.w), 3), '#f43f5e')
+        + linhaStat('maior peso, com escala', num(Math.max.apply(null, comEsc.w), 3), '#34d399')
+        + linhaStat('entropia, sem escala', num(entropia(semEsc.w), 2) + ' bits', '#f43f5e')
+        + linhaStat('entropia, com escala', num(entropia(comEsc.w), 2) + ' bits', '#34d399')
+        + '<div class="pt-2 mt-1 border-t border-slate-800 text-slate-500">'
+        + 'O máximo possível é 3,00 bits (peso igual nos 8 tokens). Quanto menor a entropia, mais concentrada — e mais próxima do $\\arg\\max$ que mata o gradiente.'
+        + '</div>';
+
+      Guia.renderMath(document.getElementById('calc-sat'));
+      Guia.renderMath(document.getElementById('calc-th-scaled'));
+    }
+
+    function linhaStat(rotulo, valor, hex) {
+      return '<div class="flex items-center justify-between">'
+        + '<span class="text-slate-400">' + rotulo + '</span>'
+        + '<span class="font-mono font-semibold" style="color:' + hex + '">' + valor + '</span>'
+        + '</div>';
+    }
+
+    /* ─────────── módulo 03: contador de parâmetros ─────────── */
+    function initParametros() {
+      const sD = document.getElementById('mh-d');
+      const sH = document.getElementById('mh-h');
+
+      function render() {
+        const d = +sD.value;
+        const H = Math.pow(2, +sH.value - 1);
+        document.getElementById('mh-d-out').textContent = br(d);
+        document.getElementById('mh-h-out').textContent = br(H);
+
+        const dk = d / H;
+        const qkv = 3 * H * d * dk;   /* H matrizes d × dk, três vezes */
+        const wo = H * dk * d;        /* concat (H·dk) projetada de volta em d */
+
+        document.getElementById('mh-dk').textContent = Number.isInteger(dk) ? br(dk) : num(dk, 2);
+        document.getElementById('mh-dk-note').textContent =
+          Number.isInteger(dk) ? ('' + br(H) + ' × ' + br(dk) + ' = ' + br(d))
+                               : 'não inteiro: H não divide $d_{model}$';
+        document.getElementById('mh-qkv').textContent = grande(qkv);
+        document.getElementById('mh-wo').textContent = grande(wo);
+        document.getElementById('mh-total').textContent = grande(qkv + wo);
+        document.getElementById('mh-total-note').textContent = '= 4 · ' + br(d) + '² , para qualquer H';
+        Guia.renderMath(document.getElementById('mh-dk-note'));
+      }
+
+      sD.addEventListener('input', render);
+      sH.addEventListener('input', render);
+      render();
+    }
+
+    /* ─────────── módulo 03, simulador C: três cabeças lado a lado ─────────── */
+    let cmpTok = 5;
+
+    function initComparacao() {
+      const box = document.getElementById('cmp-toks');
+      box.innerHTML = TOKENS.map((t, i) =>
+        '<button type="button" class="cmp-t px-2.5 py-1.5 rounded-lg border text-[11px] font-mono transition">' + t + '</button>'
+      ).join('');
+      box.querySelectorAll('.cmp-t').forEach((b, i) => {
+        b.addEventListener('click', () => { cmpTok = i; renderCmp(); });
+      });
+      renderCmp();
+    }
+
+    function renderCmp() {
+      document.querySelectorAll('.cmp-t').forEach((b, i) => {
+        b.className = 'cmp-t px-2.5 py-1.5 rounded-lg border text-[11px] font-mono transition '
+          + (i === cmpTok ? 'bg-brand-500/20 border-brand-500/60 text-brand-200'
+                          : 'bg-surface-950 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500');
+      });
+
+      const saidas = [];
+      document.getElementById('cmp-grid').innerHTML = CABECAS.map((cab, h) => {
+        const r = linhaAtencao(cab, cmpTok, true, null);
+        saidas.push(r.out);
+        const maxW = Math.max.apply(null, r.w);
+        const alvo = TOKENS[r.w.indexOf(maxW)];
+        const barras = TOKENS.map((t, j) =>
+          '<div class="flex items-center gap-2">'
+          + '<span class="font-mono text-[10px] w-[72px] shrink-0 ' + (r.w[j] === maxW ? 'text-slate-100' : 'text-slate-500') + '">' + t + '</span>'
+          + '<div class="flex-1">' + barra(r.w[j], r.w[j] === maxW ? cab.hex : '#334155') + '</div>'
+          + '<span class="font-mono text-[10px] text-slate-500 w-10 text-right">' + num(r.w[j] * 100, 0) + '%</span>'
+          + '</div>'
+        ).join('');
+        return '<div class="p-4 rounded-xl bg-surface-950 border" style="border-color:' + cab.hex + '55">'
+          + '<div class="text-xs font-semibold mb-1" style="color:' + cab.hex + '">' + cab.nome + '</div>'
+          + '<div class="text-[10px] text-slate-500 font-mono mb-3">olha sobretudo para <span class="text-slate-300">' + alvo + '</span> · entropia ' + num(entropia(r.w), 2) + ' bits</div>'
+          + '<div class="space-y-1.5">' + barras + '</div>'
+          + '<div class="mt-3 pt-2 border-t border-slate-800 font-mono text-[10px] text-slate-400">saída: [' + r.out.map(x => num(x, 2)).join('; ') + ']</div>'
+          + '</div>';
+      }).join('');
+
+      const concat = saidas.reduce((a, b) => a.concat(b), []);
+      document.getElementById('cmp-concat').innerHTML =
+        '<span class="text-slate-500">Concat(head₁, head₂, head₃) =</span> ['
+        + concat.map((x, t) => '<span class="' + (t < 4 ? 'text-brand-300' : t < 8 ? 'text-cyan-300' : 'text-emerald-300') + '">' + num(x, 2) + '</span>').join('; ')
+        + '] <span class="text-slate-500">· 12 casas</span>';
+    }
+
+    /* ─────────── módulo 04, simulador D: custo ─────────── */
+    function initCusto() {
+      const sN = document.getElementById('cost-n');
+      const sD = document.getElementById('cost-d');
+      const sL = document.getElementById('cost-l');
+      const H = 12;
+
+      function render() {
+        const n = +sN.value, d = +sD.value, L = +sL.value;
+        document.getElementById('cost-n-out').textContent = br(n);
+        document.getElementById('cost-d-out').textContent = br(d);
+        document.getElementById('cost-hl-out').textContent = H + ' · ' + L;
+
+        const proj = 4 * n * d * d;     /* W^Q, W^K, W^V, W^O aplicadas a n tokens */
+        const attn = 2 * n * n * d;     /* QK^T e W·V, somadas as cabeças */
+        const razao = n / (2 * d);
+        const mem = n * n * H * L * 2;  /* fp16: 2 bytes por peso */
+
+        document.getElementById('cost-proj').textContent = grande(proj);
+        document.getElementById('cost-attn').textContent = grande(attn);
+        document.getElementById('cost-ratio').textContent = num(razao, 2) + '×';
+        document.getElementById('cost-ratio-note').textContent =
+          razao >= 1 ? 'a atenção domina' : 'as projeções dominam';
+        document.getElementById('cost-mem').textContent = bytes(mem);
+
+        const total = proj + attn;
+        const pp = proj / total, pa = attn / total;
+        document.getElementById('cost-bar-proj').style.width = (pp * 100).toFixed(1) + '%';
+        document.getElementById('cost-bar-attn').style.width = (pa * 100).toFixed(1) + '%';
+        document.getElementById('cost-pct-proj').textContent = num(pp * 100, 1) + '%';
+        document.getElementById('cost-pct-attn').textContent = num(pa * 100, 1) + '%';
+
+        const cruz = 2 * d;
+        document.getElementById('cost-note').innerHTML =
+          '<i class="fa-solid fa-arrows-left-right text-brand-400 mr-1"></i> '
+          + 'Com $d_{model} = ' + br(d) + '$, o ponto de virada é $n = 2d = ' + br(cruz) + '$ tokens. '
+          + (n < cruz
+              ? 'Em $n = ' + br(n) + '$ ainda são as projeções que pagam a conta — a atenção responde por ' + num(pa * 100, 1) + '% dos MACs, e otimizá-la renderia pouco.'
+              : 'Em $n = ' + br(n) + '$ a atenção já responde por ' + num(pa * 100, 1) + '% dos MACs, e cada duplicação de contexto a multiplica por quatro.')
+          + ' A memória acima é só das matrizes de pesos guardadas para o backward, em fp16, com batch 1: '
+          + 'ela cresce com $n^2$ e não com $n$, e é o que estoura primeiro.';
+        Guia.renderMath(document.getElementById('cost-note'));
+      }
+
+      sN.addEventListener('input', render);
+      sD.addEventListener('input', render);
+      sL.addEventListener('input', render);
+      render();
+    }
+
+    /* ─────────── módulo 04: máscara de padding ─────────── */
+    function initPadding() {
+      const chk = document.getElementById('pad-on');
+
+      function render() {
+        const cab = CABECAS[0];
+        const i = TOKENS.indexOf('ele');
+        const ligada = chk.checked;
+        const mascara = TOKENS.map((_, j) => ligada && j >= 6);
+        const r = linhaAtencao(cab, i, true, ligada ? mascara : null);
+        const maxW = Math.max.apply(null, r.w);
+
+        document.getElementById('pad-rows').innerHTML = TOKENS.map((t, j) => {
+          const pad = ligada && j >= 6;
+          const rotulo = pad ? '[PAD]' : t;
+          return '<tr class="border-b border-slate-800/60 ' + (pad ? 'opacity-50' : '') + '">'
+            + '<td class="py-1.5 pr-3 ' + (pad ? 'text-slate-500 italic' : r.w[j] === maxW ? 'text-brand-300 font-semibold' : 'text-slate-300') + '">' + rotulo + '</td>'
+            + '<td class="py-1.5 pr-3 text-right text-slate-400">' + num(dot(cab.Q[i], cab.K[j]) / Math.sqrt(DK)) + '</td>'
+            + '<td class="py-1.5 pr-3 text-right ' + (pad ? 'text-rose-400' : 'text-slate-600') + '">' + (pad ? '−∞' : '0') + '</td>'
+            + '<td class="py-1.5 pr-3 text-right text-cyan-300">' + num(r.w[j], 4) + '</td>'
+            + '<td class="py-1.5">' + barra(r.w[j], pad ? '#f43f5e' : (r.w[j] === maxW ? '#818cf8' : '#475569')) + '</td>'
+            + '</tr>';
+        }).join('');
+
+        const perdido = r.w[6] + r.w[7];
+        document.getElementById('pad-note').innerHTML = ligada
+          ? '<i class="fa-solid fa-check text-emerald-400 mr-1"></i> Com a máscara, os dois <span class="font-mono">[PAD]</span> recebem peso exatamente $0$ e os seis tokens válidos ficam somando $1{,}0000$ — o softmax renormalizou sozinho.'
+          : '<i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i> Sem a máscara, <strong class="text-amber-300">' + num(perdido * 100, 1) + '%</strong> do peso de “ele” vaza para posições que, num batch real, seriam preenchimento — e esse conteúdo entra na soma ponderada como se fosse texto.';
+        Guia.renderMath(document.getElementById('pad-note'));
+      }
+
+      chk.addEventListener('change', render);
+      render();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decoder: Infográfico Interativo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../../assets/guia.css">
+  <script src="../../../assets/guia.js"></script>
+</head>
+
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white antialiased"
+      data-title="Decoder"
+      data-badge="Infográfico Interativo"
+      data-subtitle="Geração autoregressiva: um token por vez, olhando só para trás"
+      data-icon="fa-right-from-bracket"
+      data-up="../index.html">
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ══════════════ MÓDULO 1 — O LAÇO AUTOREGRESSIVO ══════════════ -->
+    <section class="slide-section" data-nav="O laço" data-icon="fa-rotate-right">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-rotate-right"></i> Módulo 01 • O Mecanismo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          A saída de um passo é a <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">entrada do próximo</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O <em>encoder</em> (<a href="../encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.3</a>)
+          recebe a sequência inteira de uma vez e devolve a sequência inteira contextualizada. O decoder
+          não tem essa sorte: ele precisa <strong class="text-purple-300">produzir</strong> a sequência, e no
+          instante em que produz o token $t$ o token $t+1$ ainda não existe. A única saída é repetir o modelo
+          inteiro a cada token, realimentando o que já saiu.
+        </p>
+      </div>
+
+      <!-- A fatoração -->
+      <div class="rounded-2xl bg-surface-900 border border-purple-500/30 p-6 mb-6 glow-indigo">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-square-root-variable text-purple-400"></i> A regra da cadeia, e nada além disso
+        </h3>
+        <p class="text-slate-400 text-xs leading-relaxed mb-3">
+          Modelar a probabilidade de uma sequência inteira $y = (y_1, \dots, y_T)$ dada uma entrada $x$ é
+          intratável de frente: o número de sequências possíveis é $|V|^T$. A regra da cadeia da probabilidade
+          quebra isso em $T$ problemas pequenos, cada um uma distribuição sobre o vocabulário:
+        </p>
+        <p class="text-center my-4">
+          $$p(y \mid x) \;=\; \prod_{t=1}^{T} p\!\left(y_t \mid y_{&lt;t},\, x\right)$$
+        </p>
+        <p class="text-slate-400 text-xs leading-relaxed">
+          A fatoração é <strong class="text-slate-200">exata</strong> — não há aproximação nenhuma aqui. O que o
+          decoder faz é aprender um único modelo $p_\theta(y_t \mid y_{&lt;t}, x)$ e aplicá-lo $T$ vezes. Toda a
+          arquitetura do decoder existe para honrar a condicional $y_{&lt;t}$: a posição $t$ <em>não pode</em> ver
+          $y_t$ nem nada à frente, senão a fatoração estaria sendo violada e o treino aprenderia a copiar a resposta.
+        </p>
+      </div>
+
+      <!-- O laço explícito -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-slate-800 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-code text-cyan-400"></i> O laço, escrito sem eufemismo
+          </h3>
+          <pre class="bg-surface-950 rounded-xl border border-slate-800 p-4 text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed">y = prompt                      <span class="text-slate-500"># contexto inicial</span>
+<span class="text-purple-300">enquanto</span> True:
+    h    = decoder(y)           <span class="text-slate-500"># passada completa</span>
+    z    = W_out · h[-1]        <span class="text-slate-500"># logits da ÚLTIMA posição</span>
+    p    = softmax(z / T)       <span class="text-slate-500"># T = temperatura</span>
+    novo = amostrar(p)
+    y    = y + [novo]           <span class="text-slate-500"># realimenta</span>
+    <span class="text-purple-300">se</span> novo == &lt;fim&gt;:      <span class="text-rose-300">break</span>   <span class="text-slate-500"># parada 1</span>
+    <span class="text-purple-300">se</span> len(y) &gt;= L_max:   <span class="text-rose-300">break</span>   <span class="text-slate-500"># parada 2</span></pre>
+          <p class="text-xs text-slate-400 leading-relaxed mt-4">
+            Repare na linha <span class="font-mono text-slate-200">h[-1]</span>: o modelo calcula uma saída para
+            <em>toda</em> posição, mas na inferência só a última interessa — as anteriores já tiveram seu token
+            escolhido. Essa assimetria é a origem do desperdício que o KV-cache resolve (módulo 03).
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-hand text-rose-400"></i> Onde o laço termina
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4">
+            Um laço <span class="font-mono">while True</span> sem condição de parada não é um modelo, é um travamento.
+            O decoder tem duas saídas, e a diferença entre elas importa na prática:
+          </p>
+          <div class="space-y-3">
+            <div class="p-3.5 rounded-xl bg-surface-950 border border-emerald-500/30">
+              <div class="text-[11px] font-mono text-emerald-400 mb-1">parada 1 · aprendida</div>
+              <h4 class="font-bold text-white text-sm mb-1.5">Token de fim de sequência</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                O vocabulário tem um símbolo especial — <span class="font-mono text-slate-200">&lt;eos&gt;</span>,
+                <span class="font-mono text-slate-200">&lt;/s&gt;</span>, o nome varia. Ele é um token como
+                qualquer outro: recebe um logit, disputa o softmax e pode ser amostrado. Durante o treino ele
+                aparece no fim de cada exemplo, e o modelo aprende <em>quando</em> uma resposta está completa.
+                Terminar assim é o caso bom: o modelo decidiu parar.
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-surface-950 border border-rose-500/30">
+              <div class="text-[11px] font-mono text-rose-400 mb-1">parada 2 · imposta</div>
+              <h4 class="font-bold text-white text-sm mb-1.5">Limite de comprimento</h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Um corte externo — <span class="font-mono text-slate-200">max_new_tokens</span> — ou o fim da
+                janela de contexto. É uma rede de segurança do sistema, não uma decisão do modelo: a frase é
+                cortada no meio. Quando uma resposta termina abruptamente sem pontuação, quase sempre foi esta
+                parada que agiu, e não a primeira.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─────────── SIMULADOR: laço de geração ─────────── -->
+      <div class="bg-surface-900 border border-purple-500/30 rounded-2xl p-5 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-play text-purple-400"></i> Simulador · O laço, passo a passo
+            </h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Cada clique executa um passo do laço acima: a sequência cresce, a máscara causal ganha uma linha,
+              o softmax é recalculado com a temperatura atual e o custo do passo é somado ao acumulado.
+              Todos os números são calculados no navegador a partir dos controles.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="gen-step" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition flex items-center gap-2">
+              <i class="fa-solid fa-forward-step"></i> Gerar próximo token
+            </button>
+            <button id="gen-reset" class="px-3 py-2 rounded-xl bg-surface-950 border border-slate-700 hover:border-slate-600 text-slate-300 text-xs font-semibold transition flex items-center gap-2">
+              <i class="fa-solid fa-rotate-left"></i> Reiniciar
+            </button>
+          </div>
+        </div>
+
+        <!-- controles -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Dimensão $d_{model}$</span>
+              <span class="font-mono text-purple-300" id="gen-d-out">512</span>
+            </label>
+            <input id="gen-d" type="range" min="64" max="1024" step="64" value="512" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Camadas $L$</span>
+              <span class="font-mono text-purple-300" id="gen-l-out">6</span>
+            </label>
+            <input id="gen-l" type="range" min="1" max="32" step="1" value="6" class="w-full" aria-label="Número de camadas">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Temperatura $\tau$</span>
+              <span class="font-mono text-cyan-300" id="gen-t-out">1,00</span>
+            </label>
+            <input id="gen-t" type="range" min="5" max="200" step="5" value="100" class="w-full" aria-label="Temperatura">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3 flex flex-col justify-center">
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input id="gen-cache" type="checkbox" checked class="w-4 h-4 accent-purple-500 shrink-0">
+              <span class="text-[11px] text-slate-300 leading-tight">
+                <strong class="text-white">KV-cache ligado</strong><br>
+                <span class="text-slate-500">desligue para ver a conta sem cache</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- sequência -->
+        <div class="bg-surface-950 rounded-xl border border-slate-800 p-4 mb-5">
+          <div class="text-[11px] text-slate-500 font-mono mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-stream text-purple-400"></i> sequência atual
+            <span class="text-slate-600">— cinza: prompt · roxo: gerado</span>
+          </div>
+          <div id="gen-seq" class="flex flex-wrap gap-2 items-center"></div>
+          <div id="gen-stop" class="hidden mt-3 text-[11px] p-2.5 rounded-lg"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- máscara causal -->
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-xs font-semibold text-slate-200 mb-1 flex items-center gap-2">
+              <i class="fa-solid fa-table-cells text-purple-400"></i> Máscara causal
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">
+              Linha = query (quem pergunta). Coluna = key (quem é olhado). Célula acesa: o par entra no softmax.
+              Célula apagada: score forçado a $-\infty$ antes do softmax, peso exatamente zero.
+            </p>
+            <div class="overflow-x-auto">
+              <table class="text-[10px] font-mono border-separate" style="border-spacing:2px">
+                <thead><tr id="gen-mask-head"></tr></thead>
+                <tbody id="gen-mask-body"></tbody>
+              </table>
+            </div>
+            <div id="gen-mask-note" class="text-[11px] text-slate-400 mt-3 leading-relaxed"></div>
+          </div>
+
+          <!-- distribuição -->
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-xs font-semibold text-slate-200 mb-1 flex items-center gap-2">
+              <i class="fa-solid fa-chart-simple text-cyan-400"></i> Distribuição do próximo token
+            </div>
+            <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">
+              $p_i = \dfrac{e^{z_i/\tau}}{\sum_j e^{z_j/\tau}}$ — softmax real sobre os logits do último token,
+              recalculado a cada movimento do slider de temperatura.
+            </p>
+            <div id="gen-dist" class="space-y-1.5"></div>
+            <div id="gen-entropy" class="text-[11px] text-slate-400 mt-3 leading-relaxed"></div>
+          </div>
+        </div>
+
+        <!-- custo -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5">
+          <div class="p-4 rounded-xl bg-surface-950 border border-amber-500/30">
+            <div class="text-[11px] font-mono text-amber-400 mb-1">custo deste passo</div>
+            <div id="gen-cost-step" class="text-2xl font-extrabold font-mono text-amber-300">—</div>
+            <div id="gen-cost-step-note" class="text-[11px] text-slate-500 mt-1.5 leading-relaxed"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-purple-500/30">
+            <div class="text-[11px] font-mono text-purple-400 mb-1">acumulado na geração</div>
+            <div id="gen-cost-acc" class="text-2xl font-extrabold font-mono text-purple-300">—</div>
+            <div id="gen-cost-acc-note" class="text-[11px] text-slate-500 mt-1.5 leading-relaxed"></div>
+          </div>
+          <div class="p-4 rounded-xl bg-surface-950 border border-cyan-500/30">
+            <div class="text-[11px] font-mono text-cyan-400 mb-1">memória do KV-cache</div>
+            <div id="gen-mem" class="text-2xl font-extrabold font-mono text-cyan-300">—</div>
+            <div id="gen-mem-note" class="text-[11px] text-slate-500 mt-1.5 leading-relaxed"></div>
+          </div>
+        </div>
+
+        <div class="mt-5 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
+          <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>
+          <strong class="text-slate-200">Simplificação didática, dita na cara:</strong> os logits vêm de uma
+          tabela escrita à mão, indexada pelo último token — <em>não</em> há modelo treinado aqui, e por isso o
+          vocabulário tem 8 itens em vez de dezenas de milhares. O que é real: o softmax com temperatura, a
+          amostragem, a geometria da máscara e as fórmulas de custo, todas avaliadas com os valores dos sliders.
+          A contagem de operações é um modelo de primeira ordem (só as multiplicações de matriz, contadas em
+          MACs); LayerNorm, softmax, vieses e o custo de reorganizar as cabeças ficam de fora por serem
+          desprezíveis diante das matrizes.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 2 — OS TRÊS SUBLAYERS ══════════════ -->
+    <section class="slide-section" data-nav="Três sublayers" data-icon="fa-layer-group">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-layer-group"></i> Módulo 02 • Anatomia
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Três sublayers, e a ordem <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">não é arbitrária</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O bloco do encoder tem dois sublayers (<a href="../bloco/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2</a>):
+          atenção e FFN. O bloco do decoder tem três — e o do meio é o que liga as duas pilhas. Cada um é
+          envolvido por residual e normalização
+          (<a href="../bloco/add-norm/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2.2</a>).
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="p-5 rounded-2xl bg-surface-900 border border-purple-500/40 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-purple-400 font-mono font-bold text-xs">sublayer 1</span>
+            <i class="fa-solid fa-eye-slash text-purple-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-2">Masked multi-head self-attention</h4>
+          <p class="text-center my-2 text-sm">$$h^{(1)} = \mathrm{LN}\!\left(x + \mathrm{MHA}_{\text{mask}}(x,x,x)\right)$$</p>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1">
+            $Q$, $K$ e $V$ vêm todos do próprio decoder. A máscara causal apaga tudo à direita da diagonal.
+            Resultado: cada posição vira um resumo contextual <strong class="text-slate-200">do que já foi
+            gerado</strong> — e só disso. Detalhe completo em
+            <a href="masked-attention/index.html" class="text-purple-300 hover:text-purple-200 underline decoration-dotted">2.1.4.1</a>.
+          </p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-surface-900 border border-cyan-500/40 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-cyan-400 font-mono font-bold text-xs">sublayer 2</span>
+            <i class="fa-solid fa-arrow-right-arrow-left text-cyan-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-2">Cross-attention (encoder–decoder)</h4>
+          <p class="text-center my-2 text-sm">$$h^{(2)} = \mathrm{LN}\!\left(h^{(1)} + \mathrm{MHA}(h^{(1)}, H_{enc}, H_{enc})\right)$$</p>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1">
+            $Q$ vem do decoder; $K$ e $V$ vêm da saída do encoder, $H_{enc}$. <strong class="text-slate-200">Sem
+            máscara</strong>: a entrada inteira já existe, não há futuro a esconder ali. É a única porta entre as
+            duas pilhas —
+            <a href="../encoder/cross-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.3.1</a>.
+          </p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-surface-900 border border-emerald-500/40 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-emerald-400 font-mono font-bold text-xs">sublayer 3</span>
+            <i class="fa-solid fa-arrows-left-right-to-line text-emerald-400"></i>
+          </div>
+          <h4 class="font-bold text-white text-sm mb-2">Positionwise FFN</h4>
+          <p class="text-center my-2 text-sm">$$h^{(3)} = \mathrm{LN}\!\left(h^{(2)} + \mathrm{FFN}(h^{(2)})\right)$$</p>
+          <p class="text-xs text-slate-400 leading-relaxed flex-1">
+            Nenhuma mistura entre posições: a mesma rede densa aplicada a cada vetor separadamente. É onde mora a
+            maior parte dos parâmetros e onde a informação já reunida é efetivamente
+            <em>transformada</em> —
+            <a href="../bloco/ffn/index.html" class="text-emerald-400 hover:text-emerald-300 underline decoration-dotted">2.1.2.3</a>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Por que essa ordem -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sort text-purple-400"></i> Por que essa ordem e não outra
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Troque a ordem e veja o que quebra. Nenhuma permutação é ilegal do ponto de vista de formato —
+              todas produzem tensores da forma certa. O que muda é o que cada sublayer <em>tem em mãos</em> quando roda.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2" id="ordem-botoes"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-[11px] text-slate-500 font-mono mb-3">pilha do bloco, de baixo para cima</div>
+            <div id="ordem-pilha" class="space-y-2"></div>
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-4">
+            <div class="text-[11px] text-slate-500 font-mono mb-3">consequência</div>
+            <div id="ordem-texto" class="text-xs text-slate-400 leading-relaxed space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-key text-cyan-400"></i> Um detalhe que economiza muito
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Os $K$ e $V$ da cross-attention são projeções de $H_{enc}$, que <strong class="text-slate-200">não
+            muda durante a geração inteira</strong>. Calcule-os uma vez, guarde, reutilize nos $T$ passos.
+            A cross-attention é a parte barata do laço: o que cresce a cada token é o cache da atenção
+            mascarada, não o da cruzada.
+          </p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-slate-800">
+          <h4 class="font-bold text-white text-sm flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-code-compare text-amber-400"></i> Post-LN e Pre-LN
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            As fórmulas acima estão em <strong class="text-slate-200">Post-LN</strong>, como no paper original
+            (Vaswani et al., 2017): normaliza depois de somar o residual. Implementações modernas quase sempre
+            usam <strong class="text-slate-200">Pre-LN</strong> — $x + \mathrm{Sub}(\mathrm{LN}(x))$ — porque o
+            caminho residual fica limpo e o treino de pilhas profundas estabiliza sem aquecimento agressivo do
+            learning rate. A ordem dos <em>sublayers</em> é a mesma nos dois casos.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 3 — TREINO x INFERÊNCIA ══════════════ -->
+    <section class="slide-section" data-nav="Treino x inferência" data-icon="fa-scale-unbalanced">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-scale-unbalanced"></i> Módulo 03 • Custo
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          No treino é <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">tudo de uma vez</span>;
+          na inferência é <span class="bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text text-transparent">um de cada vez</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O mesmo modelo, o mesmo peso, dois regimes completamente diferentes de execução. Entender essa
+          assimetria explica por que treinar um modelo é caro em GPU e servir um modelo é caro em latência.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-emerald-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-chalkboard-user text-emerald-400"></i> Treino · teacher forcing
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            No treino a sequência-alvo inteira já é conhecida. Em vez de gerar token a token, alimenta-se o
+            decoder com a resposta correta deslocada de uma posição
+            (<em>shifted right</em>) e calcula-se a perda em todas as posições ao mesmo tempo:
+          </p>
+          <p class="text-center my-4">
+            $$\mathcal{L} = -\sum_{t=1}^{T} \log p_\theta\!\left(y_t \mid y_{&lt;t},\, x\right)$$
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Isso se chama <strong class="text-emerald-300">teacher forcing</strong>: a posição $t$ recebe sempre o
+            prefixo <em>verdadeiro</em>, nunca o que o modelo teria produzido. E é exatamente a máscara causal que
+            torna esse atalho legítimo — ela garante que a posição $t$ não enxergue $y_t$, mesmo estando tudo na
+            mesma matriz de entrada.
+          </p>
+          <div class="p-3 rounded-xl bg-surface-950 border border-emerald-500/25 text-xs text-slate-400 leading-relaxed">
+            <strong class="text-emerald-300">Uma passada</strong> calcula as $T$ condicionais. Sem a máscara, esse
+            paralelismo seria impossível: seria preciso $T$ passadas, e treinar um LLM deixaria de ser viável.
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-rose-500/30 p-6">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-hourglass-half text-rose-400"></i> Inferência · um token por vez
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Aqui não existe resposta correta para alimentar. O prefixo é o que o próprio modelo produziu, então
+            o passo $t+1$ depende do resultado do passo $t$: a dependência é <strong class="text-rose-300">serial
+            por construção</strong>, não por limitação de hardware. Nenhuma GPU paraleliza isso.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Daí uma consequência de qualidade, não só de custo: o modelo foi treinado sempre com prefixos
+            perfeitos e, na hora de usar, recebe prefixos que ele mesmo escreveu — inclusive os ruins. O nome
+            disso é <strong class="text-rose-300">exposure bias</strong>, e é uma das razões pelas quais um erro
+            no começo da geração tende a contaminar tudo o que vem depois.
+          </p>
+          <div class="p-3 rounded-xl bg-surface-950 border border-rose-500/25 text-xs text-slate-400 leading-relaxed">
+            A latência percebida tem duas partes: o <em>prefill</em> (processar o prompt inteiro de uma vez, como
+            no treino, rápido) e o <em>decode</em> (um passo serial por token gerado, lento). O tempo até a
+            primeira palavra e o tempo entre palavras têm causas diferentes.
+          </div>
+        </div>
+      </div>
+
+      <!-- KV-cache -->
+      <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-6 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-database text-cyan-400"></i> O que o KV-cache salva — e o que ele não salva
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Sem cache, cada passo refaz a passada sobre a sequência toda: as $K$ e $V$ das posições antigas são
+            recalculadas do zero, apesar de serem <strong class="text-slate-200">exatamente as mesmas de antes</strong>
+            — a máscara causal garante que nenhuma posição antiga dependa das novas, então nada delas muda quando
+            um token é acrescentado no fim. Guardar $K$ e $V$ por camada e concatenar apenas a linha nova elimina
+            esse recálculo inteiro.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            O que <em>não</em> some: a atenção do token novo ainda precisa olhar as $n$ chaves guardadas, logo
+            sobra um termo que cresce linearmente com o contexto — e, somado ao longo da geração, volta a ser
+            quadrático. E há um preço em memória: o cache ocupa
+            $2 \cdot L \cdot n \cdot d$ números por sequência, que em contextos longos passa a competir com os
+            próprios pesos pela VRAM. Troca-se computação por memória, não se ganha de graça.
+          </p>
+        </div>
+      </div>
+
+      <!-- SIMULADOR: contas de custo -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-calculator text-amber-400"></i> A conta dos três regimes
+          </h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-3xl">
+            Mesmo modelo, mesma sequência de $T$ tokens, três formas de executá-lo. Os totais abaixo somam as
+            fórmulas por camada avaliadas com os sliders; nada é fixo.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Dimensão $d_{model}$</span>
+              <span class="font-mono text-amber-300" id="cst-d-out">512</span>
+            </label>
+            <input id="cst-d" type="range" min="64" max="1024" step="64" value="512" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Camadas $L$</span>
+              <span class="font-mono text-amber-300" id="cst-l-out">6</span>
+            </label>
+            <input id="cst-l" type="range" min="1" max="48" step="1" value="6" class="w-full" aria-label="Número de camadas">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Tokens $T$</span>
+              <span class="font-mono text-amber-300" id="cst-t-out">256</span>
+            </label>
+            <input id="cst-t" type="range" min="8" max="2048" step="8" value="256" class="w-full" aria-label="Tokens gerados">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-[11px] min-w-[520px]">
+            <thead class="text-slate-500 border-b border-slate-800">
+              <tr>
+                <th class="text-left py-2 pr-3">regime</th>
+                <th class="text-left pr-3">passadas</th>
+                <th class="text-right pr-3">MACs totais</th>
+                <th class="text-right pr-3">vs. treino</th>
+                <th class="text-left pl-3">o que domina</th>
+              </tr>
+            </thead>
+            <tbody id="cst-tbl" class="divide-y divide-slate-800 font-mono text-slate-300"></tbody>
+          </table>
+        </div>
+
+        <div id="cst-nota" class="mt-5 p-3.5 rounded-xl bg-surface-950 border border-amber-500/25 text-[11px] text-slate-400 leading-relaxed"></div>
+
+        <div class="mt-4 p-3.5 rounded-xl bg-surface-950 border border-slate-800 text-[11px] text-slate-500 leading-relaxed">
+          <i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>
+          Fórmula por camada, para $q$ posições processadas e $P$ pares (query, key) avaliados:
+          $4qd^2$ nas projeções $W_Q, W_K, W_V, W_O$ &nbsp;+&nbsp; $2Pd$ na atenção (scores e média ponderada)
+          &nbsp;+&nbsp; $8qd^2$ na FFN com expansão $4d$. A cabeça de saída soma $qd|V|$ com
+          $|V| = 32\,000$ fixo. Contagem em MACs (uma multiplicação e uma soma); em FLOPs, dobre tudo.
+          O gradiente do treino custa mais ou menos o dobro da passada direta e não está incluído.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 4 — ENCODER-DECODER x DECODER-ONLY ══════════════ -->
+    <section class="slide-section" data-nav="Enc-dec x dec-only" data-icon="fa-code-branch">
+      <div class="mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-code-branch"></i> Módulo 04 • A Escolha de Arquitetura
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Por que quase todo LLM atual é <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">decoder-only</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm sm:text-base leading-relaxed">
+          O paper original é encoder-decoder, feito para tradução. A maioria dos modelos generativos de hoje
+          joga fora o encoder e empilha só decoders. Vale dizer de saída:
+          <strong class="text-amber-300">isso é uma escolha de engenharia e de escala, não um teorema</strong> —
+          não existe prova de que uma pilha só seja mais expressiva.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="rounded-2xl bg-surface-900 border border-cyan-500/30 p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-right-left text-cyan-400"></i>
+            <h3 class="text-sm font-bold text-white">Encoder–decoder</h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">duas pilhas</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            A entrada passa por um encoder <strong class="text-slate-200">bidirecional</strong>: cada token da
+            origem vê todos os outros, inclusive os posteriores. A saída é gerada por um decoder causal que lê
+            essa representação pela cross-attention. Separação explícita de papéis:
+            <em>compreender</em> de um lado, <em>produzir</em> do outro.
+          </p>
+          <div class="space-y-2 text-xs">
+            <div class="flex gap-2"><i class="fa-solid fa-plus text-emerald-400 mt-0.5 shrink-0"></i><span class="text-slate-400">Codificação bidirecional da origem — representação mais rica por token de entrada.</span></div>
+            <div class="flex gap-2"><i class="fa-solid fa-plus text-emerald-400 mt-0.5 shrink-0"></i><span class="text-slate-400">$K$ e $V$ da origem calculados uma vez; o custo por token gerado não cresce com o tamanho da entrada da mesma forma.</span></div>
+            <div class="flex gap-2"><i class="fa-solid fa-plus text-emerald-400 mt-0.5 shrink-0"></i><span class="text-slate-400">Encaixa naturalmente em tarefas de mapeamento fixo: tradução, sumarização, correção.</span></div>
+            <div class="flex gap-2"><i class="fa-solid fa-minus text-rose-400 mt-0.5 shrink-0"></i><span class="text-slate-400">Duas pilhas de pesos, cross-attention a mais, dois regimes de máscara — mais peças para escalar e servir.</span></div>
+            <div class="flex gap-2"><i class="fa-solid fa-minus text-rose-400 mt-0.5 shrink-0"></i><span class="text-slate-400">O objetivo de pré-treino precisa ser inventado (corrupção de span, denoising); não é simplesmente "prever o próximo token de qualquer texto".</span></div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+            Família: o Transformer original, BART, T5. Continuam competitivos justamente nas tarefas de
+            entrada fixa → saída fixa.
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-900 border border-purple-500/40 p-6 glow-indigo">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-right-from-bracket text-purple-400"></i>
+            <h3 class="text-sm font-bold text-white">Decoder-only</h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300">uma pilha</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            Não há entrada e saída, há <strong class="text-slate-200">uma sequência só</strong>. O prompt é
+            simplesmente o prefixo; a resposta é a continuação. Sem cross-attention: o sublayer 2 desaparece e o
+            bloco volta a ter dois sublayers, com a máscara causal cobrindo tudo.
+          </p>
+          <div class="space-y-2 text-xs">
+            <div class="flex gap-2"><i class="fa-solid fa-plus text-emerald-400 mt-0.5 shrink-0"></i><span class="text-slate-400">Um objetivo único — prever o próximo token — aplicável a <em>qualquer</em> texto cru, sem rótulo e sem par. É o que permite pré-treinar em escala de web.</span></div>
+            <div class="flex gap-2"><i class="fa-solid fa-plus text-emerald-400 mt-0.5 shrink-0"></i><span class="text-slate-400">Todo parâmetro é treinado por todo token: não há metade da rede dedicada a uma origem que às vezes nem existe.</span></div>
+            <div class="flex gap-2"><i class="fa-solid fa-plus text-emerald-400 mt-0.5 shrink-0"></i><span class="text-slate-400">Qualquer tarefa vira texto → texto pela forma do prompt; um único cache, um único caminho de execução para servir.</span></div>
+            <div class="flex gap-2"><i class="fa-solid fa-minus text-rose-400 mt-0.5 shrink-0"></i><span class="text-slate-400">O prompt é codificado <strong class="text-rose-300">causalmente</strong>: um token do prompt não vê o que vem depois dele no próprio prompt. É uma perda real de representação, compensada por escala, não eliminada.</span></div>
+            <div class="flex gap-2"><i class="fa-solid fa-minus text-rose-400 mt-0.5 shrink-0"></i><span class="text-slate-400">Prompt e geração dividem o mesmo KV-cache: entrada longa custa memória durante a resposta inteira.</span></div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed">
+            Família: GPT e praticamente todos os LLMs generativos abertos e fechados em uso hoje.
+          </p>
+        </div>
+      </div>
+
+      <!-- SIMULADOR: parâmetros -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 sm:p-6 mb-6">
+        <div class="pb-4 mb-5 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-weight-hanging text-purple-400"></i> O preço da segunda pilha, em parâmetros
+          </h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-3xl">
+            Mesmo orçamento de $L$ camadas no total. No decoder-only, as $L$ são de um tipo só; no
+            encoder-decoder, metade vira encoder e metade vira decoder — e cada camada de decoder carrega uma
+            cross-attention extra. Só os blocos, sem embeddings nem cabeça de saída.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Dimensão $d_{model}$</span>
+              <span class="font-mono text-purple-300" id="par-d-out">768</span>
+            </label>
+            <input id="par-d" type="range" min="128" max="4096" step="128" value="768" class="w-full" aria-label="Dimensão do modelo">
+          </div>
+          <div class="bg-surface-950 rounded-xl border border-slate-800 p-3">
+            <label class="text-[11px] text-slate-400 flex items-center justify-between mb-2">
+              <span>Camadas no total $L$</span>
+              <span class="font-mono text-purple-300" id="par-l-out">12</span>
+            </label>
+            <input id="par-l" type="range" min="2" max="96" step="2" value="12" class="w-full" aria-label="Camadas no total">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-[11px] min-w-[520px]">
+            <thead class="text-slate-500 border-b border-slate-800">
+              <tr>
+                <th class="text-left py-2 pr-3">arquitetura</th>
+                <th class="text-left pr-3">composição</th>
+                <th class="text-right pr-3">atenção</th>
+                <th class="text-right pr-3">FFN</th>
+                <th class="text-right pl-3">total</th>
+              </tr>
+            </thead>
+            <tbody id="par-tbl" class="divide-y divide-slate-800 font-mono text-slate-300"></tbody>
+          </table>
+        </div>
+        <div id="par-nota" class="mt-5 p-3.5 rounded-xl bg-surface-950 border border-purple-500/25 text-[11px] text-slate-400 leading-relaxed"></div>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-surface-900 border border-amber-500/30">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-scale-balanced text-amber-400"></i> A resposta honesta
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-3">
+          O decoder-only não venceu por ser matematicamente superior. Venceu porque
+          <strong class="text-slate-200">o objetivo de pré-treino dele é o mais simples que existe</strong> e
+          casa com a quantidade de texto disponível: qualquer corpus cru vira supervisão, sem precisar de pares
+          entrada→saída. Com isso, escalar dados e parâmetros virou uma questão de orçamento, e a generalidade
+          apareceu como efeito colateral do tamanho. A pilha única também é mais simples de treinar em paralelo
+          e de servir, o que importa quando o modelo roda milhões de vezes por dia.
+        </p>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          O que se perde é concreto e mensurável em tarefas de compreensão: codificação causal do prompt é
+          estritamente menos informativa por token que a bidirecional. Tanto que, em recuperação de informação,
+          <strong class="text-slate-200">o encoder bidirecional continua sendo a escolha padrão para gerar o vetor
+          do documento</strong> — há embeddings derivados de decoders, mas quase sempre com a máscara causal
+          relaxada ou com um estágio bidirecional acrescentado. A referência de uso está em
+          <a href="../../../ir/densos/embeddings/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.1 Embeddings</a>
+          e em
+          <a href="../../../ir/densos/cross-encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.5 Cross-Encoder</a>.
+          Arquiteturas diferentes para trabalhos diferentes — a conversa sobre o Transformer visto de fora,
+          pelo que interessa à busca, está em
+          <a href="../../../ir/densos/transformer/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.4</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════ MÓDULO 5 — SÍNTESE & QUIZ ══════════════ -->
+    <section class="slide-section" data-nav="Síntese &amp; Quiz" data-icon="fa-timeline">
+      <div class="mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-mono mb-3">
+          <i class="fa-solid fa-timeline"></i> Módulo 05 • Síntese &amp; Avaliação
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          O que o decoder <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">resolve, e o que ele cobra</span>
+        </h2>
+        <p class="text-slate-400 mt-2 max-w-3xl text-sm leading-relaxed">
+          Uma peça com um trabalho só: transformar um modelo de probabilidade condicional em um gerador de
+          sequências, sem nunca deixar uma posição espiar o próprio futuro.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="p-4 rounded-xl bg-surface-900 border border-purple-500/30">
+          <div class="text-xs font-mono text-purple-400 mb-1">o laço</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">$p(y) = \prod_t p(y_t \mid y_{&lt;t})$</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Fatoração exata. Uma passada por token, realimentando a saída, até $\langle\text{eos}\rangle$ ou o limite de comprimento.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-cyan-500/30">
+          <div class="text-xs font-mono text-cyan-400 mb-1">os sublayers</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Mascarada → cruzada → FFN</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Contextualiza o que já saiu, consulta a entrada com uma pergunta já contextualizada, processa o resultado posição a posição.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-amber-500/30">
+          <div class="text-xs font-mono text-amber-400 mb-1">os dois regimes</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Paralelo x serial</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Teacher forcing + máscara causal dão $T$ condicionais numa passada. Na inferência, $T$ passadas — e o KV-cache tira o recálculo, não a serialidade.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-surface-900 border border-emerald-500/30">
+          <div class="text-xs font-mono text-emerald-400 mb-1">a escolha</div>
+          <h4 class="font-bold text-white text-sm mb-1.5">Decoder-only por escala</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">Objetivo simples sobre texto cru vence em escala; o preço é codificar o prompt causalmente.</p>
+        </div>
+      </div>
+
+      <!-- limitações -->
+      <div class="p-5 rounded-2xl bg-surface-900 border border-rose-500/30 mb-6">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Os limites do que esta página ensinou
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-xs text-slate-400">
+          <div class="flex gap-2"><i class="fa-solid fa-circle-minus text-rose-400 mt-0.5 shrink-0"></i>
+            <span><strong class="text-slate-200">Os logits são de mentira.</strong> A tabela do simulador foi escrita à mão para produzir uma frase plausível. Um decoder real aprende $p(y_t \mid y_{&lt;t})$ de bilhões de tokens; nada aqui foi treinado.</span></div>
+          <div class="flex gap-2"><i class="fa-solid fa-circle-minus text-rose-400 mt-0.5 shrink-0"></i>
+            <span><strong class="text-slate-200">Amostrar com temperatura é o método mais simples.</strong> A prática usa top-$k$, top-$p$ (nucleus), penalidade de repetição e, em tradução, <em>beam search</em> — que mantém várias hipóteses vivas em vez de decidir na hora.</span></div>
+          <div class="flex gap-2"><i class="fa-solid fa-circle-minus text-rose-400 mt-0.5 shrink-0"></i>
+            <span><strong class="text-slate-200">A conta de MACs não prevê o relógio.</strong> O <em>decode</em> de um token é limitado por banda de memória — o gargalo é reler os pesos da VRAM, não multiplicar. Por isso dobrar o FLOP disponível não dobra a velocidade de geração.</span></div>
+          <div class="flex gap-2"><i class="fa-solid fa-circle-minus text-rose-400 mt-0.5 shrink-0"></i>
+            <span><strong class="text-slate-200">O cache modelado é o de multi-head clássico.</strong> MQA e GQA compartilham $K$/$V$ entre cabeças e cortam essa memória por um fator grande; quantização corta mais. A fórmula $2Lnd$ é o teto ingênuo.</span></div>
+          <div class="flex gap-2"><i class="fa-solid fa-circle-minus text-rose-400 mt-0.5 shrink-0"></i>
+            <span><strong class="text-slate-200">Serialidade continua de pé.</strong> Batching, decodificação especulativa e paralelismo escondem latência, mas a dependência $y_{t+1}$ de $y_t$ é da definição do modelo — nenhuma engenharia a remove.</span></div>
+          <div class="flex gap-2"><i class="fa-solid fa-circle-minus text-rose-400 mt-0.5 shrink-0"></i>
+            <span><strong class="text-slate-200">A máscara ficou no nível do desenho.</strong> Como o $-\infty$ entra nos scores, o que acontece com o softmax de uma linha quase toda mascarada e como isso se combina com multi-head é o assunto da próxima página.</span></div>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-surface-900 border border-slate-800 mb-8">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-purple-400"></i> Onde isso se encaixa
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+          O decoder é a pilha que fecha a arquitetura: recebe embeddings
+          (<a href="../../../ir/densos/embeddings/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">1.2.1</a>)
+          somados ao positional encoding
+          (<a href="../positional-encoding/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.1</a>),
+          empilha blocos
+          (<a href="../bloco/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.2</a>)
+          com um sublayer a mais, e conversa com o encoder
+          (<a href="../encoder/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.3</a>)
+          pela cross-attention
+          (<a href="../encoder/cross-attention/index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1.3.1</a>).
+          O quadro completo está no mapa de
+          <a href="../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">2.1 Transformers</a>
+          e no
+          <a href="../../index.html" class="text-cyan-400 hover:text-cyan-300 underline decoration-dotted">capítulo 2</a>.
+        </p>
+        <a href="masked-attention/index.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition">
+          <i class="fa-solid fa-eye-slash"></i> Próximo: 2.1.4.1 — Masked Multi-head Attention, por dentro
+          <i class="fa-solid fa-arrow-right text-[10px]"></i>
+        </a>
+      </div>
+
+      <!-- Quiz -->
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-800">
+          <div>
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-graduation-cap text-purple-400"></i> Desafio de Fixação
+            </h3>
+            <p class="text-xs text-slate-400">Três perguntas sobre o que realmente sustenta a geração autoregressiva.</p>
+          </div>
+          <span id="quiz-score-badge" class="px-3 py-1 rounded-lg bg-surface-950 border border-slate-700 text-xs font-mono text-purple-300">Pontuação: 0 / 3</span>
+        </div>
+
+        <div class="space-y-6">
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">1</span>
+              Por que o treino do decoder consegue calcular todas as posições em paralelo e a inferência não?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'A máscara é aplicada igualmente nos dois regimes — ela é o que torna o paralelismo legítimo, não o que o impede.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque no treino a máscara causal é desligada, liberando cada posição para ver a sequência inteira.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'Teacher forcing fornece o prefixo verdadeiro de todas as posições de antemão; na inferência o prefixo é o que o próprio modelo acabou de produzir.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque no treino a sequência-alvo inteira já é conhecida e entra de uma vez, enquanto na inferência o prefixo do passo $t+1$ só existe depois do passo $t$.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A GPU é a mesma; a dependência serial vem da definição do modelo, não do hardware.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque o treino roda em GPU e a inferência roda em CPU, que não tem paralelismo.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O KV-cache elimina recálculo, mas não cria paralelismo entre passos: ele existe justamente porque os passos são sequenciais.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque o KV-cache só funciona no treino, e sem ele a inferência precisa serializar.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">2</span>
+              Por que a cross-attention vem <em>depois</em> da atenção mascarada, e não antes?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'Os formatos batem em qualquer ordem: os três sublayers preservam a dimensão d. A questão é o conteúdo, não a forma.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) Porque as dimensões não fecham na ordem inversa — a cross-attention exige uma entrada já normalizada.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A cross-attention não usa máscara causal: a entrada inteira já existe e pode ser vista por completo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) Porque a cross-attention precisa da máscara causal já aplicada para não vazar o futuro da entrada.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'O Q da cross-attention sai do fluxo do decoder: vindo depois da atenção mascarada, ele pergunta em nome de todo o prefixo gerado, e não de um token isolado.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Porque a query que consulta o encoder fica melhor se já resumir todo o prefixo gerado — invertendo, o token consultaria a entrada sabendo apenas de si mesmo.
+              </button>
+              <button onclick="Guia.answer(this, false, 'A ordem dos sublayers não muda a contagem de parâmetros: as mesmas matrizes existem nos dois arranjos.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) Porque assim o bloco usa menos parâmetros do que na ordem inversa.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+
+          <div class="quiz-card p-4 rounded-xl bg-surface-950 border border-slate-800 text-xs space-y-3">
+            <div class="font-semibold text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-brand-500/20 text-brand-300 flex items-center justify-center font-mono text-[10px]">3</span>
+              O que exatamente o KV-cache elimina do laço de geração?
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="Guia.answer(this, false, 'O número de passadas continua sendo um por token: a serialidade é da fatoração p(y_t | y_<t), não da implementação.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                A) A necessidade de uma passada por token — com cache, a sequência inteira sai de uma vez.
+              </button>
+              <button data-correct onclick="Guia.answer(this, true, 'A máscara causal garante que as K e V antigas não dependem dos tokens novos, logo elas nunca mudam e podem ser guardadas em vez de recalculadas.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                B) O recálculo de $K$ e $V$ das posições antigas, que a máscara causal garante serem idênticas a cada passo — ao custo de guardá-las na memória.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O token novo ainda precisa atender a todas as chaves guardadas: sobra um termo que cresce com o comprimento do contexto.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                C) Toda a dependência do custo em relação ao comprimento do contexto: com cache, cada passo custa o mesmo, qualquer que seja o tamanho da sequência.
+              </button>
+              <button onclick="Guia.answer(this, false, 'O cache é pura troca de computação por memória: ele aumenta o uso de VRAM em vez de reduzi-lo.')" class="quiz-opt p-2.5 rounded-lg bg-surface-900 border border-slate-800 hover:border-slate-700 text-left text-slate-300 transition">
+                D) O consumo de memória da geração, já que as ativações antigas podem ser descartadas.
+              </button>
+            </div>
+            <div class="q-feedback hidden text-[11px] p-2 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ═══════════ helpers de formatação e de custo ═══════════ */
+    const VOCAB_MODELO = 32000;   /* |V| assumido para a cabeça de saída */
+    const BYTES_POR_NUM = 2;      /* fp16 */
+
+    function br(n) { return Math.round(n).toLocaleString('pt-BR'); }
+
+    function grande(n) {
+      if (n >= 1e12) return (n / 1e12).toFixed(2).replace('.', ',') + ' T';
+      if (n >= 1e9) return (n / 1e9).toFixed(2).replace('.', ',') + ' G';
+      if (n >= 1e6) return (n / 1e6).toFixed(2).replace('.', ',') + ' M';
+      if (n >= 1e3) return (n / 1e3).toFixed(2).replace('.', ',') + ' k';
+      return br(n);
+    }
+
+    function bytes(b) {
+      if (b >= 1024 ** 3) return (b / 1024 ** 3).toFixed(2).replace('.', ',') + ' GiB';
+      if (b >= 1024 ** 2) return (b / 1024 ** 2).toFixed(2).replace('.', ',') + ' MiB';
+      if (b >= 1024) return (b / 1024).toFixed(1).replace('.', ',') + ' KiB';
+      return br(b) + ' B';
+    }
+
+    function dec(x, casas) { return x.toFixed(casas).replace('.', ','); }
+
+    /* Custo de uma passada, em MACs.
+       q = posições processadas · pares = pares (query, key) avaliados na atenção
+       Por camada: 4qd² (W_Q,W_K,W_V,W_O) + 2·pares·d (scores + média) + 8qd² (FFN com expansão 4d).
+       Cabeça de saída: qCabeca · d · |V|. */
+    function macs(d, L, q, pares, qCabeca) {
+      const porCamada = 12 * q * d * d + 2 * pares * d;
+      return L * porCamada + qCabeca * d * VOCAB_MODELO;
+    }
+
+    /* ═══════════ inicialização ═══════════ */
+    Guia.ready(() => {
+      initGerador();
+      initOrdem();
+      initCusto();
+      initParametros();
+    });
+
+    /* ═══════════════════════════════════════════════════════════
+       MÓDULO 01 — simulador do laço de geração
+       ═══════════════════════════════════════════════════════════ */
+
+    const PROMPT = ['o', 'exame', 'exige'];
+    const VOCAB = ['jejum', 'de', 'oito', 'horas', 'sem', 'água', 'e', '<fim>'];
+    const MAX_NOVOS = 10;
+
+    /* Tabela de logits escrita à mão, indexada pelo último token. NÃO é um modelo treinado —
+       serve só para que a amostragem produza uma frase reconhecível. */
+    const LOGITS = {
+      'exige': [4.2, -1.0, 0.3, 0.1, 1.2, -0.5, -0.8, -4.0],
+      'jejum': [-2.0, 4.0, 0.2, 0.0, 1.0, -0.3, 1.4, -1.5],
+      'de':    [-1.5, -2.0, 3.8, 1.0, -0.5, 0.6, -1.0, -3.5],
+      'oito':  [-2.0, -1.5, -1.0, 4.5, 0.0, -0.8, 0.2, -2.5],
+      'horas': [-1.0, -0.5, -1.2, -2.0, 1.8, -0.4, 1.9, 2.6],
+      'sem':   [1.0, -1.0, -1.5, -0.6, -2.0, 3.6, -0.7, -2.0],
+      'água':  [-1.5, -0.8, -1.0, -1.2, -1.0, -2.5, 1.1, 3.2],
+      'e':     [0.6, -1.0, -0.4, -0.2, 2.8, 0.4, -2.0, -2.2]
+    };
+    const LOGITS_PADRAO = [0.4, 0.1, -0.2, -0.1, 0.3, -0.3, 0.2, 0.6];
+
+    const G = { seq: PROMPT.slice(), acc: 0, accOutro: 0, parado: null, ultimoPasso: null };
+
+    function genParams() {
+      return {
+        d: parseInt(document.getElementById('gen-d').value, 10),
+        L: parseInt(document.getElementById('gen-l').value, 10),
+        tau: parseInt(document.getElementById('gen-t').value, 10) / 100,
+        cache: document.getElementById('gen-cache').checked
+      };
+    }
+
+    function softmaxTemp(z, tau) {
+      const t = Math.max(tau, 0.01);
+      const m = Math.max(...z);
+      const e = z.map(v => Math.exp((v - m) / t));
+      const s = e.reduce((a, b) => a + b, 0);
+      return e.map(v => v / s);
+    }
+
+    function distribuicaoAtual(tau) {
+      const ultimo = G.seq[G.seq.length - 1];
+      const z = LOGITS[ultimo] || LOGITS_PADRAO;
+      return { z, p: softmaxTemp(z, tau) };
+    }
+
+    function initGerador() {
+      ['gen-d', 'gen-l', 'gen-t'].forEach(id => {
+        document.getElementById(id).addEventListener('input', renderGerador);
+      });
+      document.getElementById('gen-cache').addEventListener('change', renderGerador);
+      document.getElementById('gen-step').addEventListener('click', passoGeracao);
+      document.getElementById('gen-reset').addEventListener('click', () => {
+        G.seq = PROMPT.slice();
+        G.acc = 0; G.accOutro = 0; G.parado = null; G.ultimoPasso = null;
+        Guia.toast('Laço reiniciado no prompt.', 'fa-rotate-left');
+        renderGerador();
+      });
+      renderGerador();
+    }
+
+    function passoGeracao() {
+      if (G.parado) {
+        Guia.toast('O laço já terminou. Reinicie para gerar de novo.', 'fa-circle-info');
+        return;
+      }
+      const p = genParams();
+
+      /* custo do passo, calculado ANTES de crescer a sequência:
+         n = contexto atual; com cache processa-se 1 posição e n pares;
+         sem cache reprocessa-se as n posições, com n² pares (a matriz inteira é montada
+         e depois mascarada). A cabeça de saída roda só na última posição. */
+      const n = G.seq.length;
+      const comCache = macs(p.d, p.L, 1, n, 1);
+      const semCache = macs(p.d, p.L, n, n * n, 1);
+      G.acc += p.cache ? comCache : semCache;
+      G.accOutro += p.cache ? semCache : comCache;
+      G.ultimoPasso = { n, comCache, semCache };
+
+      const { p: probs } = distribuicaoAtual(p.tau);
+      let r = Math.random(), i = 0;
+      while (i < probs.length - 1 && r > probs[i]) { r -= probs[i]; i++; }
+      const escolhido = VOCAB[i];
+      G.seq.push(escolhido);
+
+      if (escolhido === '<fim>') {
+        G.parado = 'fim';
+        Guia.toast('Token de fim amostrado — o modelo decidiu parar.', 'fa-flag-checkered');
+      } else if (G.seq.length - PROMPT.length >= MAX_NOVOS) {
+        G.parado = 'limite';
+        Guia.toast('Limite de comprimento atingido — corte externo.', 'fa-scissors');
+      }
+      renderGerador();
+    }
+
+    function renderGerador() {
+      const p = genParams();
+      document.getElementById('gen-d-out').textContent = p.d;
+      document.getElementById('gen-l-out').textContent = p.L;
+      document.getElementById('gen-t-out').textContent = dec(p.tau, 2);
+
+      /* sequência */
+      document.getElementById('gen-seq').innerHTML = G.seq.map((t, i) => {
+        const novo = i >= PROMPT.length;
+        const ultimo = i === G.seq.length - 1;
+        const cls = novo
+          ? 'bg-purple-500/15 border-purple-500/50 text-purple-200'
+          : 'bg-surface-900 border-slate-700 text-slate-400';
+        const anel = ultimo && novo ? ' ring-2 ring-purple-400/50' : '';
+        return `<span class="px-2.5 py-1 rounded-lg border text-[11px] font-mono ${cls}${anel}">
+                  <span class="text-slate-600 mr-1">${i}</span>${t}
+                </span>`;
+      }).join('') + (G.parado ? '' :
+        `<span class="px-2.5 py-1 rounded-lg border border-dashed border-slate-700 text-[11px] font-mono text-slate-600 animate-pulse-subtle">
+           <span class="mr-1">${G.seq.length}</span>?
+         </span>`);
+
+      const stop = document.getElementById('gen-stop');
+      if (G.parado === 'fim') {
+        stop.className = 'mt-3 text-[11px] p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300';
+        stop.innerHTML = '<i class="fa-solid fa-flag-checkered mr-1"></i> <strong>Parada 1 (aprendida):</strong> '
+          + `o token <span class="font-mono">&lt;fim&gt;</span> foi amostrado no passo ${G.seq.length - PROMPT.length}. `
+          + 'A sequência terminou porque o modelo achou que estava completa.';
+      } else if (G.parado === 'limite') {
+        stop.className = 'mt-3 text-[11px] p-2.5 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-300';
+        stop.innerHTML = '<i class="fa-solid fa-scissors mr-1"></i> <strong>Parada 2 (imposta):</strong> '
+          + `${MAX_NOVOS} tokens novos, o limite externo. O modelo não pediu para parar — a frase foi cortada.`;
+      } else {
+        stop.className = 'hidden';
+      }
+      document.getElementById('gen-step').disabled = !!G.parado;
+      document.getElementById('gen-step').classList.toggle('opacity-40', !!G.parado);
+      document.getElementById('gen-step').classList.toggle('cursor-not-allowed', !!G.parado);
+
+      renderMascara();
+      renderDistribuicao(p);
+      renderCustoPasso(p);
+      Guia.renderMath(document.getElementById('gen-mask-note'));
+    }
+
+    function renderMascara() {
+      const n = G.seq.length;
+      const cabeca = ['<th class="text-slate-600 pr-1"></th>']
+        .concat(G.seq.map((t, j) =>
+          `<th class="text-slate-600 font-normal text-[9px] px-0.5" title="${t}">${j}</th>`))
+        .join('');
+      document.getElementById('gen-mask-head').innerHTML = cabeca;
+
+      let corpo = '';
+      for (let i = 0; i < n; i++) {
+        const nova = (i === n - 1) && (n > PROMPT.length);
+        let linha = `<td class="text-slate-500 text-[9px] pr-1 text-right whitespace-nowrap">${i} ${G.seq[i]}</td>`;
+        for (let j = 0; j < n; j++) {
+          const visivel = j <= i;
+          const cls = visivel
+            ? (nova ? 'bg-purple-400' : 'bg-purple-500/45')
+            : 'bg-surface-900 border border-slate-800';
+          linha += `<td><div class="w-4 h-4 rounded-sm ${cls}" title="q=${i} k=${j} · ${visivel ? 'visível' : 'mascarado (-∞)'}"></div></td>`;
+        }
+        corpo += `<tr>${linha}</tr>`;
+      }
+      document.getElementById('gen-mask-body').innerHTML = corpo;
+
+      const pares = n * (n + 1) / 2;
+      document.getElementById('gen-mask-note').innerHTML =
+        `Contexto de <span class="font-mono text-purple-300">${n}</span> tokens: a máscara é
+         ${n}×${n} e tem <span class="font-mono text-purple-300">${pares}</span> pares vivos
+         de ${n * n} possíveis — pouco mais da metade.
+         Cada token novo acrescenta <strong class="text-slate-200">uma linha e uma coluna</strong>, e a
+         linha nova (destacada) é a única que precisa ser calculada quando o KV-cache está ligado:
+         as linhas antigas não mudam, porque nenhuma delas olha para a coluna nova.`;
+    }
+
+    function renderDistribuicao(p) {
+      const { z, p: probs } = distribuicaoAtual(p.tau);
+      const maxP = Math.max(...probs);
+      document.getElementById('gen-dist').innerHTML = VOCAB.map((t, i) => {
+        const larg = Math.max(1.5, (probs[i] / maxP) * 100);
+        const topo = probs[i] === maxP;
+        const cor = t === '<fim>' ? 'bg-rose-500' : (topo ? 'bg-cyan-400' : 'bg-cyan-500/50');
+        return `<div class="flex items-center gap-2 text-[10px] font-mono">
+            <span class="w-14 shrink-0 text-right ${topo ? 'text-white font-bold' : 'text-slate-400'}">${t}</span>
+            <span class="w-12 shrink-0 text-right text-slate-600">${dec(z[i], 1)}</span>
+            <div class="flex-1 h-3 bg-surface-900 rounded overflow-hidden min-w-[40px]">
+              <div class="${cor} h-full rounded" style="width:${larg.toFixed(1)}%"></div>
+            </div>
+            <span class="w-12 shrink-0 text-right ${topo ? 'text-cyan-300' : 'text-slate-500'}">${dec(probs[i] * 100, 1)}%</span>
+          </div>`;
+      }).join('');
+
+      /* Entropia em bits: mede em números o que a temperatura faz com a distribuição. */
+      const H = -probs.reduce((s, q) => s + (q > 0 ? q * Math.log2(q) : 0), 0);
+      const Hmax = Math.log2(VOCAB.length);
+      document.getElementById('gen-entropy').innerHTML =
+        `<i class="fa-solid fa-wave-square text-cyan-400 mr-1"></i>
+         Entropia: <span class="font-mono text-cyan-300">${dec(H, 3)} bits</span>
+         de no máximo <span class="font-mono text-slate-400">${dec(Hmax, 3)}</span>
+         (uniforme sobre ${VOCAB.length} tokens). Topo:
+         <span class="font-mono text-slate-300">${dec(maxP * 100, 1)}%</span>.
+         Baixe $\\tau$ e a massa colapsa no maior logit — geração previsível e repetitiva.
+         Suba e a distribuição achata em direção à uniforme — geração criativa e, passado certo ponto,
+         incoerente. Os logits não mudam: a temperatura só reescala o expoente.`;
+      Guia.renderMath(document.getElementById('gen-entropy'));
+    }
+
+    function renderCustoPasso(p) {
+      const passo = G.ultimoPasso;
+      const custoEl = document.getElementById('gen-cost-step');
+      const notaEl = document.getElementById('gen-cost-step-note');
+
+      if (!passo) {
+        /* Ainda nenhum passo: mostra o custo que o PRÓXIMO passo terá. */
+        const n = G.seq.length;
+        const prev = p.cache ? macs(p.d, p.L, 1, n, 1) : macs(p.d, p.L, n, n * n, 1);
+        custoEl.textContent = grande(prev);
+        notaEl.innerHTML = `previsão para o próximo passo, com contexto de ${n} tokens `
+          + `(${p.cache ? 'com' : 'sem'} cache). Clique em gerar.`;
+      } else {
+        const usado = p.cache ? passo.comCache : passo.semCache;
+        const outro = p.cache ? passo.semCache : passo.comCache;
+        custoEl.textContent = grande(usado);
+        notaEl.innerHTML = `MACs com contexto de ${passo.n} tokens, `
+          + `<strong class="text-slate-300">${p.cache ? 'com' : 'sem'} cache</strong>. `
+          + `No outro modo seria <span class="font-mono text-slate-400">${grande(outro)}</span> `
+          + `(${dec(outro / usado, 1)}×).`;
+      }
+
+      const accEl = document.getElementById('gen-cost-acc');
+      const accNota = document.getElementById('gen-cost-acc-note');
+      const passos = G.seq.length - PROMPT.length;
+      accEl.textContent = grande(G.acc);
+      accNota.innerHTML = passos === 0
+        ? 'nenhum passo executado ainda.'
+        : `soma de ${passos} passo${passos > 1 ? 's' : ''}. `
+          + `No modo oposto o acumulado seria <span class="font-mono text-slate-400">${grande(G.accOutro)}</span>`
+          + (G.acc > 0 ? ` — <span class="font-mono ${G.accOutro > G.acc ? 'text-rose-300' : 'text-emerald-300'}">${dec(G.accOutro / G.acc, 2)}×</span>.` : '.');
+
+      const n = G.seq.length;
+      const elementos = 2 * p.L * n * p.d;
+      document.getElementById('gen-mem').textContent = bytes(elementos * BYTES_POR_NUM);
+      document.getElementById('gen-mem-note').innerHTML =
+        `$2 \\cdot L \\cdot n \\cdot d$ = 2 · ${p.L} · ${n} · ${p.d} = `
+        + `<span class="font-mono text-slate-400">${br(elementos)}</span> números em fp16. `
+        + `Cresce a cada token: é o preço do cache.`;
+      Guia.renderMath(document.getElementById('gen-mem-note'));
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       MÓDULO 02 — ordem dos sublayers
+       ═══════════════════════════════════════════════════════════ */
+
+    const SUB = {
+      mask:  { nome: 'Masked self-attention', icone: 'fa-eye-slash',
+               borda: 'border-purple-500/30', chip: 'bg-purple-500/20 text-purple-300', icn: 'text-purple-400' },
+      cross: { nome: 'Cross-attention', icone: 'fa-arrow-right-arrow-left',
+               borda: 'border-cyan-500/30', chip: 'bg-cyan-500/20 text-cyan-300', icn: 'text-cyan-400' },
+      ffn:   { nome: 'Positionwise FFN', icone: 'fa-arrows-left-right-to-line',
+               borda: 'border-emerald-500/30', chip: 'bg-emerald-500/20 text-emerald-300', icn: 'text-emerald-400' }
+    };
+
+    const ORDENS = [
+      {
+        id: 'original', rotulo: 'ordem original', ordem: ['mask', 'cross', 'ffn'], ok: true,
+        texto: [
+          '<strong class="text-emerald-300">É esta que o paper usa.</strong> A atenção mascarada roda primeiro, então o vetor da posição $t$ já resume todo o prefixo gerado quando vira a <em>query</em> da cross-attention. A pergunta feita ao encoder é, portanto, uma pergunta informada: <em>"dado tudo o que já escrevi, de que parte da entrada eu preciso agora?"</em>',
+          'A FFN fica por último de propósito: ela é o único sublayer que não mistura posições. Colocá-la no fim significa que ela transforma um vetor que já reuniu as duas fontes de informação — o passado gerado e a entrada. É o passo de "processar" depois dos dois passos de "buscar".'
+        ]
+      },
+      {
+        id: 'cross-antes', rotulo: 'cross antes da mascarada', ordem: ['cross', 'mask', 'ffn'], ok: false,
+        texto: [
+          'Nada estoura: os formatos batem e o modelo treina. O que muda é o conteúdo da <em>query</em>. A cross-attention passa a consultar o encoder com o vetor <strong class="text-rose-300">isolado</strong> do token $t$ — praticamente só o embedding daquela palavra mais a posição.',
+          'Perguntar "onde na entrada está algo relacionado à palavra <em>de</em>?" é muito menos útil do que perguntar em nome do prefixo inteiro. O bloco continua funcional, mas gasta uma das camadas para reconstruir contexto que já poderia ter.'
+        ]
+      },
+      {
+        id: 'ffn-meio', rotulo: 'FFN no meio', ordem: ['mask', 'ffn', 'cross'], ok: false,
+        texto: [
+          'Aqui a FFN é aplicada a um vetor que ainda <strong class="text-rose-300">não viu a entrada</strong>. Ela gasta seus parâmetros — a maior fatia do bloco — transformando uma representação incompleta, e logo depois a cross-attention injeta informação nova que já não passa por nenhum processamento denso naquela camada.',
+          'O resultado sai do bloco direto de uma operação de mistura, sem a transformação não linear que normalmente a sucede. Em pilhas profundas a diferença se dilui, porque a próxima camada compensa; em pilhas rasas ela aparece. Nenhuma lei é violada — o arranjo é só desperdiçado.'
+        ]
+      }
+    ];
+
+    let ordemAtual = 'original';
+
+    function initOrdem() {
+      document.getElementById('ordem-botoes').innerHTML = ORDENS.map(o =>
+        `<button data-ordem="${o.id}" class="ordem-btn px-3 py-1.5 rounded-lg border text-[11px] font-mono transition">${o.rotulo}</button>`
+      ).join('');
+      document.querySelectorAll('.ordem-btn').forEach(b => {
+        b.addEventListener('click', () => { ordemAtual = b.dataset.ordem; renderOrdem(); });
+      });
+      renderOrdem();
+    }
+
+    function renderOrdem() {
+      const o = ORDENS.find(x => x.id === ordemAtual);
+
+      document.querySelectorAll('.ordem-btn').forEach(b => {
+        const ativo = b.dataset.ordem === ordemAtual;
+        b.className = 'ordem-btn px-3 py-1.5 rounded-lg border text-[11px] font-mono transition '
+          + (ativo
+            ? 'bg-purple-500/20 border-purple-500/60 text-purple-200'
+            : 'bg-surface-950 border-slate-800 text-slate-400 hover:border-slate-700');
+      });
+
+      /* de baixo para cima: o primeiro sublayer aparece embaixo */
+      const pilha = o.ordem.slice().reverse().map((k, idx) => {
+        const s = SUB[k];
+        const n = o.ordem.length - idx;
+        return `<div class="flex items-center gap-2.5 p-2.5 rounded-lg bg-surface-900 border ${s.borda}">
+            <span class="w-5 h-5 rounded-full ${s.chip} flex items-center justify-center font-mono text-[10px] shrink-0">${n}</span>
+            <i class="fa-solid ${s.icone} ${s.icn} shrink-0"></i>
+            <span class="text-xs text-slate-200">${s.nome}</span>
+            <span class="ml-auto text-[10px] font-mono text-slate-600">+ Add &amp; Norm</span>
+          </div>`;
+      }).join('<div class="text-center text-slate-700 text-[10px] leading-none">↑</div>');
+
+      document.getElementById('ordem-pilha').innerHTML =
+        '<div class="text-[10px] font-mono text-slate-600 text-center pb-1">saída do bloco ↑</div>'
+        + pilha
+        + '<div class="text-[10px] font-mono text-slate-600 text-center pt-1">↑ entrada do bloco</div>';
+
+      const marca = o.ok
+        ? '<div class="text-[11px] font-mono text-emerald-400 mb-1"><i class="fa-solid fa-circle-check mr-1"></i>arranjo usado na prática</div>'
+        : '<div class="text-[11px] font-mono text-amber-400 mb-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>roda, mas desperdiça</div>';
+
+      const el = document.getElementById('ordem-texto');
+      el.innerHTML = marca + o.texto.map(t => `<p>${t}</p>`).join('');
+      Guia.renderMath(el);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       MÓDULO 03 — custo dos três regimes
+       ═══════════════════════════════════════════════════════════ */
+
+    function initCusto() {
+      ['cst-d', 'cst-l', 'cst-t'].forEach(id => {
+        document.getElementById(id).addEventListener('input', renderCusto);
+      });
+      renderCusto();
+    }
+
+    function renderCusto() {
+      const d = parseInt(document.getElementById('cst-d').value, 10);
+      const L = parseInt(document.getElementById('cst-l').value, 10);
+      const T = parseInt(document.getElementById('cst-t').value, 10);
+      document.getElementById('cst-d-out').textContent = d;
+      document.getElementById('cst-l-out').textContent = L;
+      document.getElementById('cst-t-out').textContent = br(T);
+
+      /* Treino: uma passada com T posições; a máscara zera metade dos pares, mas a matriz
+         T×T é montada inteira. A cabeça roda em todas as posições (todas entram na loss). */
+      const treino = macs(d, L, T, T * T, T);
+
+      /* Inferência com cache: passo n processa 1 posição e atende a n chaves. */
+      let infCache = 0;
+      for (let n = 1; n <= T; n++) infCache += macs(d, L, 1, n, 1);
+
+      /* Inferência sem cache: passo n reprocessa as n posições, com n² pares. */
+      let infSem = 0;
+      for (let n = 1; n <= T; n++) infSem += macs(d, L, n, n * n, 1);
+
+      const linhas = [
+        { nome: 'Treino (teacher forcing)', passadas: '1', v: treino, cor: 'text-emerald-300',
+          dom: 'matrizes grandes, GPU saturada' },
+        { nome: 'Inferência com KV-cache', passadas: br(T), v: infCache, cor: 'text-cyan-300',
+          dom: 'banda de memória: reler os pesos a cada passo' },
+        { nome: 'Inferência sem cache', passadas: br(T), v: infSem, cor: 'text-rose-300',
+          dom: 'recálculo puro do prefixo, jogado fora' }
+      ];
+
+      document.getElementById('cst-tbl').innerHTML = linhas.map(l => `
+        <tr>
+          <td class="py-2.5 pr-3 font-sans text-slate-200">${l.nome}</td>
+          <td class="pr-3 text-slate-400">${l.passadas}</td>
+          <td class="pr-3 text-right font-bold ${l.cor}">${grande(l.v)}</td>
+          <td class="pr-3 text-right text-slate-400">${dec(l.v / treino, 2)}×</td>
+          <td class="pl-3 font-sans text-slate-500">${l.dom}</td>
+        </tr>`).join('');
+
+      const razao = infSem / infCache;
+      document.getElementById('cst-nota').innerHTML =
+        `<i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i>
+         Com $d = ${d}$, $L = ${L}$ e $T = ${br(T)}$: o cache corta
+         <span class="font-mono text-emerald-300">${dec(razao, 1)}×</span> do trabalho da inferência.
+         Mas olhe a primeira linha — gerar $T$ tokens com cache custa
+         <span class="font-mono text-cyan-300">${dec(infCache / treino, 2)}×</span> o que custa uma
+         passada de treino sobre a mesma sequência. Em MACs os dois são da mesma ordem; em tempo de
+         relógio não são nem de longe. O treino processa ${br(T)} posições de uma vez em matrizes
+         gordas, e a GPU trabalha perto do pico; a inferência faz ${br(T)} passos com uma posição cada,
+         e em cada passo os pesos inteiros do modelo precisam ser lidos da memória para multiplicar um
+         único vetor. O gargalo deixa de ser aritmética e passa a ser <strong class="text-slate-200">banda
+         de memória</strong> — motivo pelo qual servir modelos vive de <em>batching</em>: juntar várias
+         sequências no mesmo passo reaproveita a mesma leitura de pesos.`;
+      Guia.renderMath(document.getElementById('cst-nota'));
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       MÓDULO 04 — parâmetros das duas arquiteturas
+       ═══════════════════════════════════════════════════════════ */
+
+    function initParametros() {
+      ['par-d', 'par-l'].forEach(id => {
+        document.getElementById(id).addEventListener('input', renderParametros);
+      });
+      renderParametros();
+    }
+
+    function renderParametros() {
+      const d = parseInt(document.getElementById('par-d').value, 10);
+      const L = parseInt(document.getElementById('par-l').value, 10);
+      document.getElementById('par-d-out').textContent = br(d);
+      document.getElementById('par-l-out').textContent = L;
+
+      const d2 = d * d;
+      const attnPorBloco = 4 * d2;   /* W_Q, W_K, W_V, W_O */
+      const ffnPorBloco = 8 * d2;    /* d→4d e 4d→d */
+
+      /* decoder-only: L blocos de 2 sublayers */
+      const soAttn = L * attnPorBloco;
+      const soFfn = L * ffnPorBloco;
+
+      /* encoder-decoder: L/2 blocos de encoder + L/2 blocos de decoder (com cross-attention) */
+      const meio = L / 2;
+      const edAttn = meio * attnPorBloco + meio * (2 * attnPorBloco);
+      const edFfn = L * ffnPorBloco;
+
+      const linhas = [
+        { nome: 'Decoder-only', comp: `${L} blocos causais (2 sublayers)`,
+          a: soAttn, f: soFfn, cor: 'text-purple-300' },
+        { nome: 'Encoder–decoder', comp: `${meio} encoder + ${meio} decoder (3 sublayers)`,
+          a: edAttn, f: edFfn, cor: 'text-cyan-300' }
+      ];
+
+      document.getElementById('par-tbl').innerHTML = linhas.map(l => `
+        <tr>
+          <td class="py-2.5 pr-3 font-sans text-slate-200">${l.nome}</td>
+          <td class="pr-3 font-sans text-slate-500">${l.comp}</td>
+          <td class="pr-3 text-right text-slate-400">${grande(l.a)}</td>
+          <td class="pr-3 text-right text-slate-400">${grande(l.f)}</td>
+          <td class="pl-3 text-right font-bold ${l.cor}">${grande(l.a + l.f)}</td>
+        </tr>`).join('');
+
+      const totalSo = soAttn + soFfn;
+      const totalEd = edAttn + edFfn;
+      const extra = totalEd - totalSo;
+
+      document.getElementById('par-nota').innerHTML =
+        `<i class="fa-solid fa-plus text-purple-400 mr-1"></i>
+         Com $d = ${br(d)}$ e $L = ${L}$, a segunda pilha custa
+         <span class="font-mono text-purple-300">${grande(extra)}</span> parâmetros a mais
+         (<span class="font-mono">${dec((totalEd / totalSo - 1) * 100, 1)}%</span>), e toda a diferença
+         está na atenção: são ${meio} cross-attentions inteiras — $4d^2$ cada — que o decoder-only
+         simplesmente não tem. A FFN é idêntica nas duas, porque o número total de blocos é o mesmo.
+         <br><br>
+         Só que parâmetro não é o argumento principal: ${dec((totalEd / totalSo - 1) * 100, 1)}% se
+         resolve com um cheque um pouco maior. O que decidiu a disputa foi o
+         <strong class="text-slate-200">objetivo de pré-treino</strong> — prever o próximo token
+         funciona sobre qualquer texto cru, e é isso que existe em abundância na escala em que esses
+         modelos são treinados.`;
+      Guia.renderMath(document.getElementById('par-nota'));
+    }
+  </script>
+</body>
+</html>
